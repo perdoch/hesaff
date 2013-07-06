@@ -17,8 +17,6 @@ using namespace cv;
 
 struct PyramidParams
 {
-   // shall input image be upscaled ( > 0)
-   int upscaleInputImage;
    // number of scale per octave
    int  numberOfScales;
    // amount of smoothing applied to the initial level of first octave
@@ -31,7 +29,6 @@ struct PyramidParams
    int  border;
    PyramidParams()
       {
-         upscaleInputImage = 0;
          numberOfScales = 3;
          initialSigma = 1.6f;
          threshold = 16.0f/3.0f; //0.04f * 256 / 3;

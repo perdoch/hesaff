@@ -7,6 +7,9 @@
  * 
  */
 
+// Main File. Includes and uses the other files
+// Defines the HessAff Parameters
+
 #include <iostream>
 #include <fstream>
 
@@ -14,6 +17,12 @@
 #include "helpers.h"
 #include "affine.h"
 #include "siftdesc.h"
+
+#ifdef WIN32 
+    #ifndef snprintf
+    #define snprintf _snprintf
+    #endif
+#endif
 
 using namespace cv;
 using namespace std;
@@ -59,16 +68,25 @@ public:
       image(image),
       sift(sp)
       {
-         this->setHessianKeypointCallback(this);
-         this->setAffineShapeCallback(this);
+         this->setHessianKeypointCallback(this); //Inherited from pyramid.h HessianDetector::setHessianKeypointCallback
+         this->setAffineShapeCallback(this); // Inherited from affine.h AffineShape::setAffineShapeCallback
       }
    
+   // Called in pyramid.cpp HessianDetector::localizeKeypoint
+   // when a scale/translation invariant point is found
    void onHessianKeypointDetected(const Mat &blur, float x, float y, float s, float pixelDistance, int type, float response)
       {
          g_numberOfPoints++;
          findAffineShape(blur, x, y, s, pixelDistance, type, response);
       }
    
+   // Called in affine.cpp in AffineShape::findAffineShape
+   // Step 4:
+   // main
+   //   0: void HessianDetector::detectPyramidKeypoints(const Mat &image)
+   //   1: void HessianDetector::detectOctaveKeypoints(const Mat &firstLevel, float pixelDistance, Mat &nextOctaveFirstLevel)
+   //   2: void HessianDetector::localizeKeypoint(int r, int c, float curScale, float pixelDistance)
+   //   3: bool AffineShape::findAffineShape(const Mat &blur, float x, float y, float s, float pixelDistance, int type, float response)
    void onAffineShapeFound(
       const Mat &blur, float x, float y, float s, float pixelDistance,
       float a11, float a12,
@@ -76,10 +94,10 @@ public:
       int type, float response, int iters) 
       {
          // convert shape into a up is up frame
-         rectifyAffineTransformationUpIsUp(a11, a12, a21, a22);
+         rectifyAffineTransformationUpIsUp(a11, a12, a21, a22); //Helper
          
          // now sample the patch
-         if (!normalizeAffine(image, x, y, s, a11, a12, a21, a22))
+         if (!normalizeAffine(image, x, y, s, a11, a12, a21, a22)) //affine.cpp
          {
             // compute SIFT
             sift.computeSiftDescriptor(this->patch);
@@ -134,6 +152,7 @@ int main(int argc, char **argv)
 {
    if (argc>1)
    {
+      // Read in image
       Mat tmp = imread(argv[1]);
       Mat image(tmp.rows, tmp.cols, CV_32FC1, Scalar(0));
       
@@ -151,28 +170,36 @@ int main(int argc, char **argv)
       double t1 = 0;
       {
          // copy params 
-         PyramidParams p;
-         p.threshold = par.threshold;
-         
-         AffineShapeParams ap;
-         ap.maxIterations = par.max_iter;
-         ap.patchSize = par.patch_size;
-         ap.mrSize = par.desc_factor;
-         
-         SIFTDescriptorParams sp;
-         sp.patchSize = par.patch_size;
+         PyramidParams pyrParams; 
+         pyrParams.threshold = par.threshold;
+         AffineShapeParams affShapeParams;
+         affShapeParams.maxIterations = par.max_iter;
+         affShapeParams.patchSize = par.patch_size;
+         affShapeParams.mrSize = par.desc_factor;
+         SIFTDescriptorParams siftParams;
+         siftParams.patchSize = par.patch_size;
                 
-         AffineHessianDetector detector(image, p, ap, sp);
-         t1 = getTime(); g_numberOfPoints = 0;
+         // Perform detection
+         AffineHessianDetector detector(image, pyrParams, affShapeParams, siftParams);
+		 g_numberOfPoints = 0;
+         // Call AffineHessianDetector's inherited function of pyramid.cpp, HessianDetector::detectPyramidKeypoints
          detector.detectPyramidKeypoints(image);
-         cout << "Detected " << g_numberOfPoints << " keypoints and " << g_numberOfAffinePoints << " affine shapes in " << getTime()-t1 << " sec." << endl;
-
-         char suffix[] = ".hesaff.sift";
+		 char suffix[] = ".hesaff.sift";
          int len = strlen(argv[1])+strlen(suffix)+1;
-         char buf[len];
-         snprintf(buf, len, "%s%s", argv[1], suffix); buf[len-1]=0;      
-         ofstream out(buf);
+         
+		 cout << "Detected " << g_numberOfPoints << " keypoints and " << g_numberOfAffinePoints << " affine shapes " << endl;
+#ifdef WIN32
+		 char* buf = new char[len];
+#else
+		 char buf[len];
+#endif
+		 snprintf(buf, len, "%s%s", argv[1], suffix); buf[len-1]=0; 
+		 ofstream out(buf);
          detector.exportKeypoints(out);
+#ifdef WIN32
+         delete[] buf;
+#endif
+
       }
    } else {
       printf("\nUsage: hesaff image_name.ppm\nDetects Hessian Affine points and describes them using SIFT descriptor.\nThe detector assumes that the vertical orientation is preserved.\n\n");

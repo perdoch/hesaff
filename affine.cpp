@@ -32,6 +32,12 @@ void computeGradient(const Mat &img, Mat &gradx, Mat &grady)
       }
 }
 
+// Step 3:
+// main
+//   0: void HessianDetector::detectPyramidKeypoints(const Mat &image)
+//   1: void HessianDetector::detectOctaveKeypoints(const Mat &firstLevel, float pixelDistance, Mat &nextOctaveFirstLevel)
+// 1.2: void HessianDetector::findLevelKeypoints(float curScale, float pixelDistance)
+//   2: void HessianDetector::localizeKeypoint(int r, int c, float curScale, float pixelDistance)
 bool AffineShape::findAffineShape(const Mat &blur, float x, float y, float s, float pixelDistance, int type, float response)
 {
    float eigen_ratio_act = 0.0f, eigen_ratio_bef = 0.0f;   
@@ -44,16 +50,17 @@ bool AffineShape::findAffineShape(const Mat &blur, float x, float y, float s, fl
    for (int l = 0; l < par.maxIterations; l ++)
    { 
       // warp input according to current shape matrix
-      interpolate(blur, lx, ly, u11*ratio, u12*ratio, u21*ratio, u22*ratio, img);
+      interpolate(blur, lx, ly, u11*ratio, u12*ratio, u21*ratio, u22*ratio, img); //Helper function
       
       // compute SMM on the warped patch
       float a = 0, b = 0, c = 0;
       float *maskptr = mask.ptr<float>(0);
       float *pfx = fx.ptr<float>(0), *pfy = fy.ptr<float>(0);
       
-      computeGradient(img, fx, fy);
+      computeGradient(img, fx, fy); // Defined in this file
       
       // estimate SMM
+      // http://en.wikipedia.org/wiki/Scattering-matrix_method ???
       for (int i = 0; i < maskPixels; ++i)
       {
          const float v = (*maskptr);
@@ -92,13 +99,16 @@ bool AffineShape::findAffineShape(const Mat &blur, float x, float y, float s, fl
       if (eigen_ratio_act < par.convergenceThreshold && eigen_ratio_bef < par.convergenceThreshold)
       {
          if (affineShapeCallback)
-            affineShapeCallback->onAffineShapeFound(blur, x, y, s, pixelDistance, u11, u12, u21, u22, type, response, l);
+         {
+            affineShapeCallback->onAffineShapeFound(blur, x, y, s, pixelDistance, u11, u12, u21, u22, type, response, l); // Call Step 4
+         }
          return true;
       }
    }
    return false;
 }
 
+//Called by hessaff.cpp
 bool AffineShape::normalizeAffine(const Mat &img, float x, float y, float s, float a11, float a12, float a21, float a22)
 {
    // determinant == 1 assumed (i.e. isotropic scaling should be separated in mrScale
@@ -109,7 +119,7 @@ bool AffineShape::normalizeAffine(const Mat &img, float x, float y, float s, flo
    float imageToPatchScale = float(patchImageSize) / float(par.patchSize);  // patch size in the image / patch size -> amount of down/up sampling
 
    // is patch touching boundary? if yes, ignore this feature
-   if (interpolateCheckBorders(img, x, y, a11*imageToPatchScale, a12*imageToPatchScale, a21*imageToPatchScale, a22*imageToPatchScale, patch))
+   if (interpolateCheckBorders(img, x, y, a11*imageToPatchScale, a12*imageToPatchScale, a21*imageToPatchScale, a22*imageToPatchScale, this->patch)) //helper, this->patch is outvar
       return true;
    
    if (imageToPatchScale > 0.4)
@@ -128,7 +138,7 @@ bool AffineShape::normalizeAffine(const Mat &img, float x, float y, float s, flo
          // smooth accordingly
          gaussianBlurInplace(smoothed, 1.5f*imageToPatchScale);
          // subsample with corresponding scale
-         bool touchesBoundary = interpolate(smoothed, (float)(patchImageSize>>1), (float)(patchImageSize>>1), imageToPatchScale, 0, 0, imageToPatchScale, patch);
+         bool touchesBoundary = interpolate(smoothed, (float)(patchImageSize>>1), (float)(patchImageSize>>1), imageToPatchScale, 0, 0, imageToPatchScale, this->patch);
          assert(!touchesBoundary);
       } else
          return true;      
@@ -137,7 +147,7 @@ bool AffineShape::normalizeAffine(const Mat &img, float x, float y, float s, flo
       a11 *= imageToPatchScale; a12 *= imageToPatchScale;
       a21 *= imageToPatchScale; a22 *= imageToPatchScale;
       // ok, do the interpolation
-      bool touchesBoundary = interpolate(img, x, y, a11, a12, a21, a22, patch);
+      bool touchesBoundary = interpolate(img, x, y, a11, a12, a21, a22, this->patch);
       assert(!touchesBoundary);
    }
    return false;

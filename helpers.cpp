@@ -14,6 +14,11 @@
 using namespace cv;
 using namespace std;
 
+
+//#ifndef WIN32
+#if 0
+#define _HAS_GET_TIME
+
 #include <sys/times.h>
 #include <time.h>
 #include <sys/time.h>
@@ -36,6 +41,7 @@ double getTime()
       return (double)(tv.tv_sec) + (double)(tv.tv_usec)/1.0e6;
    }
 }
+#endif
 
 template <typename ValueType>
 void swap(ValueType *a, ValueType *b)
@@ -284,7 +290,7 @@ Mat gaussianBlur(const Mat input, float sigma)
 {
    Mat ret(input.rows, input.cols, input.type());
    int size = (int)(2.0 * 3.0 * sigma + 1.0); if (size % 2 == 0) size++;      
-   GaussianBlur(input, ret, Size(size, size), sigma, sigma, BORDER_REPLICATE);
+   GaussianBlur(input, ret, Size(size, size), sigma, sigma, BORDER_REPLICATE); //opencv cv::GaussianBlur
    return ret;
 }
 
