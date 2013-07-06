@@ -13,7 +13,8 @@
 #include <iostream>
 #include <fstream>
 
-#include "pyramid.h"
+#include <highgui.h>
+#include "pyramid.h" // has #include <cv.h> and <highgui.h>
 #include "helpers.h"
 #include "affine.h"
 #include "siftdesc.h"
@@ -58,11 +59,11 @@ struct Keypoint
 
 struct AffineHessianDetector : public HessianDetector, AffineShape, HessianKeypointCallback, AffineShapeCallback
 {
-   const Mat image;
+   const cv::Mat image;
    SIFTDescriptor sift;
    vector<Keypoint> keys;
 public:
-   AffineHessianDetector(const Mat &image, const PyramidParams &par, const AffineShapeParams &ap, const SIFTDescriptorParams &sp) : 
+   AffineHessianDetector(const cv::Mat &image, const PyramidParams &par, const AffineShapeParams &ap, const SIFTDescriptorParams &sp) : 
       HessianDetector(par), 
       AffineShape(ap), 
       image(image),
@@ -74,7 +75,7 @@ public:
    
    // Called in pyramid.cpp HessianDetector::localizeKeypoint
    // when a scale/translation invariant point is found
-   void onHessianKeypointDetected(const Mat &blur, float x, float y, float s, float pixelDistance, int type, float response)
+   void onHessianKeypointDetected(const cv::Mat &blur, float x, float y, float s, float pixelDistance, int type, float response)
       {
          g_numberOfPoints++;
          findAffineShape(blur, x, y, s, pixelDistance, type, response);
@@ -83,12 +84,12 @@ public:
    // Called in affine.cpp in AffineShape::findAffineShape
    // Step 4:
    // main
-   //   0: void HessianDetector::detectPyramidKeypoints(const Mat &image)
-   //   1: void HessianDetector::detectOctaveKeypoints(const Mat &firstLevel, float pixelDistance, Mat &nextOctaveFirstLevel)
+   //   0: void HessianDetector::detectPyramidKeypoints(const cv::Mat &image)
+   //   1: void HessianDetector::detectOctaveKeypoints(const cv::Mat &firstLevel, float pixelDistance, cv::Mat &nextOctaveFirstLevel)
    //   2: void HessianDetector::localizeKeypoint(int r, int c, float curScale, float pixelDistance)
-   //   3: bool AffineShape::findAffineShape(const Mat &blur, float x, float y, float s, float pixelDistance, int type, float response)
+   //   3: bool AffineShape::findAffineShape(const cv::Mat &blur, float x, float y, float s, float pixelDistance, int type, float response)
    void onAffineShapeFound(
-      const Mat &blur, float x, float y, float s, float pixelDistance,
+      const cv::Mat &blur, float x, float y, float s, float pixelDistance,
       float a11, float a12,
       float a21, float a22, 
       int type, float response, int iters) 
@@ -131,14 +132,14 @@ public:
             Keypoint &k = keys[i];
          
             float sc = AffineShape::par.mrSize * k.s;
-            Mat A = (Mat_<float>(2,2) << k.a11, k.a12, k.a21, k.a22);
+            cv::Mat A = (cv::Mat_<float>(2,2) << k.a11, k.a12, k.a21, k.a22);
             SVD svd(A, SVD::FULL_UV);
             
             float *d = (float *)svd.w.data;
             d[0] = 1.0f/(d[0]*d[0]*sc*sc);
             d[1] = 1.0f/(d[1]*d[1]*sc*sc);
             
-            A = svd.u * Mat::diag(svd.w) * svd.u.t();
+            A = svd.u * cv::Mat::diag(svd.w) * svd.u.t();
            
             out << k.x << " " << k.y << " " << A.at<float>(0,0) << " " << A.at<float>(0,1) << " " << A.at<float>(1,1);
             for (size_t i=0; i<128; i++)
@@ -153,8 +154,12 @@ int main(int argc, char **argv)
    if (argc>1)
    {
       // Read in image
-      Mat tmp = imread(argv[1]);
-      Mat image(tmp.rows, tmp.cols, CV_32FC1, Scalar(0));
+      // Seems to not work in CV Version 2.4.9
+      cv::Mat tmp = imread(argv[1]);
+      //IplImage *tmp_ipl = cvLoadImage(argv[1]);
+      //cv::Mat tmp(tmp_ipl)
+
+      cv::Mat image(tmp.rows, tmp.cols, CV_32FC1, Scalar(0));
       
       float *out = image.ptr<float>(0);
       unsigned char *in  = tmp.ptr<unsigned char>(0); 
