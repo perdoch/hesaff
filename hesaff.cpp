@@ -13,8 +13,11 @@
 #include <iostream>
 #include <fstream>
 
-#include <highgui.h>
-#include "pyramid.h" // has #include <cv.h> and <highgui.h>
+#include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
+
+#include "pyramid.h"
 #include "helpers.h"
 #include "affine.h"
 #include "siftdesc.h"
@@ -154,11 +157,10 @@ int main(int argc, char **argv)
    if (argc>1)
    {
       // Read in image
-      // Seems to not work in CV Version 2.4.9
-      cv::Mat tmp = imread(argv[1]);
-      //IplImage *tmp_ipl = cvLoadImage(argv[1]);
-      //cv::Mat tmp(tmp_ipl)
-
+      cv::Mat tmp = cv::imread(argv[1]);
+      // Alternative to imread? 
+      //cv::Mat *tmp_ipl = cvLoadImage(argv[1]);
+      //cv::Mat tmp = cv::cvarrToMat(tmp_ipl);
       cv::Mat image(tmp.rows, tmp.cols, CV_32FC1, Scalar(0));
       
       float *out = image.ptr<float>(0);

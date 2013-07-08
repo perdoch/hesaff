@@ -9,11 +9,11 @@
 
 #include <cmath>
 #include <iostream>
-#include <cv.h>
+
+#include <opencv2/imgproc.hpp>
 
 using namespace cv;
 using namespace std;
-
 
 //#ifndef WIN32
 #if 0
