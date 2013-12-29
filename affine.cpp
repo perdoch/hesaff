@@ -59,8 +59,7 @@ bool AffineShape::findAffineShape(const Mat &blur, float x, float y, float s, fl
       
       computeGradient(img, fx, fy); // Defined in this file
       
-      // estimate SMM
-      // http://en.wikipedia.org/wiki/Scattering-matrix_method ???
+      // estimate SMM (second moment matrix) 
       for (int i = 0; i < maskPixels; ++i)
       {
          const float v = (*maskptr);
@@ -109,19 +108,31 @@ bool AffineShape::findAffineShape(const Mat &blur, float x, float y, float s, fl
 }
 
 //Called by hessaff.cpp
-bool AffineShape::normalizeAffine(const Mat &img, float x, float y, float s, float a11, float a12, float a21, float a22)
+bool AffineShape::normalizeAffine(const Mat &img,
+                                  float x, float y,
+                                  float s,
+                                  float a11, float a12,
+                                  float a21, float a22)
 {
+   // img is passed from onAffineShapeFound as this->image
+   
    // determinant == 1 assumed (i.e. isotropic scaling should be separated in mrScale
    assert( fabs(a11*a22-a12*a21 - 1.0f) < 0.01);
-   float mrScale = ceil(s * par.mrSize); // half patch size in pixels of image
-
-   int   patchImageSize = 2*int(mrScale)+1; // odd size
-   float imageToPatchScale = float(patchImageSize) / float(par.patchSize);  // patch size in the image / patch size -> amount of down/up sampling
-
+   // half patch size in pixels of image
+   float mrScale = ceil(s * par.mrSize); 
+   // odd size
+   int   patchImageSize = 2*int(mrScale)+1; 
+   // patch size in image / patch size -> amount of down/up sampling
+   float imageToPatchScale = float(patchImageSize) / float(par.patchSize);  
    // is patch touching boundary? if yes, ignore this feature
-   if (interpolateCheckBorders(img, x, y, a11*imageToPatchScale, a12*imageToPatchScale, a21*imageToPatchScale, a22*imageToPatchScale, this->patch)) //helper, this->patch is outvar
-      return true;
-   
+   // helper, this->patch is outvar
+   if (interpolateCheckBorders(img, x, y, a11*imageToPatchScale,
+                   a12*imageToPatchScale, a21*imageToPatchScale,
+                   a22*imageToPatchScale, this->patch))
+   {
+       return true;
+   } 
+
    if (imageToPatchScale > 0.4)
    { 
       // the pixels in the image are 0.4 apart + the affine deformation      
@@ -132,17 +143,26 @@ bool AffineShape::normalizeAffine(const Mat &img, float x, float y, float s, flo
          workspace.resize(wss);
       
       Mat smoothed(patchImageSize, patchImageSize, CV_32FC1, (void *)&workspace.front());
+      // img is this->image. smoothed is an outvar
       // interpolate with det == 1
       if (!interpolate(img, x, y, a11, a12, a21, a22, smoothed))
       {
          // smooth accordingly
          gaussianBlurInplace(smoothed, 1.5f*imageToPatchScale);
          // subsample with corresponding scale
-         bool touchesBoundary = interpolate(smoothed, (float)(patchImageSize>>1), (float)(patchImageSize>>1), imageToPatchScale, 0, 0, imageToPatchScale, this->patch);
+         bool touchesBoundary = interpolate(smoothed, 
+                                            (float)(patchImageSize>>1),
+                                            (float)(patchImageSize>>1),
+                                            imageToPatchScale, 0, 0,
+                                            imageToPatchScale, this->patch);
          assert(!touchesBoundary);
-      } else
+      } 
+      else
+      {
          return true;      
-   } else {
+      }
+   } 
+   else {
       // if imageToPatchScale is small (i.e. lot of oversampling), affine normalize without smoothing
       a11 *= imageToPatchScale; a12 *= imageToPatchScale;
       a21 *= imageToPatchScale; a22 *= imageToPatchScale;
