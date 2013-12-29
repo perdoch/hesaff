@@ -1,4 +1,4 @@
-cd ~\code\hesaff
+cd ~/code/hesaff
 mkdir build
 cd build
 
