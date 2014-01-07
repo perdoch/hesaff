@@ -5,5 +5,6 @@ cd build
 cmake -G "Unix Makefiles" ..
 
 make
-export PYTHONPATH=$PYTHONPATH:~/code/
+# localize.py should take care of putting hotspotter in the path
+#export PYTHONPATH=$PYTHONPATH:~/code/  
 python ~/code/hotspotter/_tpl/localize.py
