@@ -3,7 +3,7 @@ matplotlib.use('Qt4Agg', warn=True, force=True)
 import ctypes as C
 #from ctypes.util import find_library
 import numpy as np
-from os.path import join, exists, abspath, dirname, normpath
+from os.path import join, exists, abspath, dirname, normpath, expanduser, split
 import os
 import sys
 
@@ -101,10 +101,7 @@ hesaff_lib.exportArrays.argtypes = [obj_t, int_t, kpts_t, desc_t]
 hesaff_lib.extractDesc.restype = None
 hesaff_lib.extractDesc.argtypes = [obj_t, int_t, kpts_t, desc_t]
 
-
-img_fpath = 'build/zebra.jpg'
-img_fpath = '../lena.png'
-
+# If profiling with kernprof.py
 try:
     profile  # NoQA
 except NameError:
@@ -143,10 +140,24 @@ def expand_scale(kpts, scale):
 
 
 if __name__ == '__main__':
+    def add_hotspotter_to_path():
+        # Look for hotspotter in ~/code
+        hotspotter_dir = join(expanduser('~'), 'code', 'hotspotter')
+        if not exists(hotspotter_dir):
+            print('[pyhesaff] hotspotter_dir=%r DOES NOT EXIST!' % (hotspotter_dir,))
+        # Append hotspotter location (not dir) to PYTHON_PATH (i.e. sys.path)
+        hotspotter_location = split(hotspotter_dir)[0]
+        sys.path.append(hotspotter_location)
+    add_hotspotter_to_path()
+
     import multiprocessing
     multiprocessing.freeze_support()
     from hotspotter import fileio as io
     from hotspotter import draw_func2 as df2
+
+    img_fpath = 'build/zebra.jpg'
+    img_fpath = '../lena.png'
+
     img_fpath = abspath('lena.png')
     img_fpath = abspath('zebra.jpg')
     image = io.imread(img_fpath)
