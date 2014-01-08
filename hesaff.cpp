@@ -308,7 +308,15 @@ typedef void*(*allocer_t)(int, int*);
 
 //http://nbviewer.ipython.org/github/pv/SciPy-CookBook/blob/master/ipython/Ctypes.ipynb
 
-extern HESAFF_EXPORT AffineHessianDetector* make_hesaff(char* img_fpath)
+extern HESAFF_EXPORT int detect(AffineHessianDetector* detector)
+{
+    print("detector->detect");
+    int nKpts = detector->detect();
+    print("nKpts = " << nKpts);
+    return nKpts;
+}
+
+extern HESAFF_EXPORT AffineHessianDetector* new_hesaff(char* img_fpath)
 {
     print("making detector for " << img_fpath);
     print("make hesaff. img_fpath = " << img_fpath);
@@ -340,14 +348,6 @@ extern HESAFF_EXPORT AffineHessianDetector* make_hesaff(char* img_fpath)
     return detector;
 }
 
-extern HESAFF_EXPORT int detect(AffineHessianDetector* detector)
-{
-    print("detector->detect");
-    int nKpts = detector->detect();
-    print("nKpts = " << nKpts);
-    return nKpts;
-}
-
 extern HESAFF_EXPORT void extractDesc(AffineHessianDetector* detector, int nKpts, float* kpts, uint8* desc)
 {
     print("detector->extractDesc");
@@ -357,13 +357,13 @@ extern HESAFF_EXPORT void extractDesc(AffineHessianDetector* detector, int nKpts
 
 extern HESAFF_EXPORT void exportArrays(AffineHessianDetector* detector, int nKpts, float *kpts, uint8 *desc)
 {
-    print("detector->exportArrays(" << nKpts << ")" );
-    print("detector->exportArrays kpts[0]" << kpts[0] << ")" );
-    print("detector->exportArrays desc[0]" << desc[0] << ")" );
+    print("detector->exportArrays(" << nKpts << ")");
+    print("detector->exportArrays kpts[0]" << kpts[0] << ")");
+    print("detector->exportArrays desc[0]" << desc[0] << ")");
     detector->exportArrays(nKpts, kpts, desc);
-    print("detector->exportArrays kpts[0]" << kpts[0] << ")" );
-    print("detector->exportArrays desc[0]" << desc[0] << ")" );
-    print("FINISHED detector->exportArrays" );
+    print("detector->exportArrays kpts[0]" << kpts[0] << ")");
+    print("detector->exportArrays desc[0]" << desc[0] << ")");
+    print("FINISHED detector->exportArrays");
 }
 
 extern HESAFF_EXPORT void writeFeatures(AffineHessianDetector* detector, char* img_fpath)
@@ -382,7 +382,7 @@ int main(int argc, char **argv)
         {
         char* img_fpath = argv[1];
         int nKpts;
-        AffineHessianDetector* detector = make_hesaff(img_fpath);
+        AffineHessianDetector* detector = new_hesaff(img_fpath);
         nKpts = detect(detector);
         writeFeatures(detector, img_fpath);
         }
