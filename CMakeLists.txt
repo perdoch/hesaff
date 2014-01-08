@@ -29,8 +29,8 @@ include_directories(${OpenCV_INCLUDE_DIR})
 # Apparently this seems to be used
 include_directories(${OpenCV_INCLUDE_DIRS})
 
-#message(STATUS "Defining ell_desc executable")
-#add_executable(hesaffexe hesaff.cpp pyramid.cpp helpers.cpp affine.cpp siftdesc.cpp)
+message(STATUS "Defining ell_desc executable")
+add_executable(hesaffexe hesaff.cpp pyramid.cpp helpers.cpp affine.cpp siftdesc.cpp)
 
 message(STATUS "Defining hesaff library")
 #add_library(hesaff ${HESAFF_LIBRARY_TYPE} hesaff.cpp pyramid.cpp helpers.cpp affine.cpp siftdesc.cpp)
@@ -39,5 +39,5 @@ add_library(hesaff SHARED hesaff.cpp pyramid.cpp helpers.cpp affine.cpp siftdesc
 
 message(STATUS "Specifing libraries to link to")
 target_link_libraries(hesaff ${OpenCV_LIBS})
-#target_link_libraries(hesaffexe ${OpenCV_LIBS})
+target_link_libraries(hesaffexe ${OpenCV_LIBS})
 

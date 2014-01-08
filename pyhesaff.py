@@ -5,6 +5,7 @@ if '__file__' not in vars():
 
 # Standard
 #from ctypes.util import find_library
+import subprocess
 from os.path import join, exists, realpath, dirname, normpath, expanduser, split
 import ctypes as C
 import os
@@ -159,6 +160,16 @@ def detect_hesaff_kpts(img_fpath, dict_args={}):
     return kpts, desc
 
 
+def extract_hesaff_kpts(img_fpath, kpts, **kwargs):
+    hesaff_ptr = hesaff_lib.new_hesaff(realpath(img_fpath))
+    nKpts = len(kpts)
+    # allocate memory for new descriptors
+    desc = np.empty((nKpts, 128), desc_dtype)
+    # extract descriptors at given locations
+    hesaff_lib.extractDesc(hesaff_ptr, nKpts, kpts, desc)
+    return desc
+
+
 @profile
 def test_hesaff_kpts(img_fpath, dict_args={}):
     # Make detector and read image
@@ -181,6 +192,139 @@ def test_hesaff_kpts(img_fpath, dict_args={}):
     #hesaff_lib.extractDesc(hesaff_ptr, nKpts, kpts, desc3)
     #print('[hesafflib] returned')
     return kpts, desc
+
+
+###############
+# Old reading
+###############
+EXE_EXT = {'win32': '.exe', 'darwin': '.mac', 'linux2': ''}[sys.platform]
+if not '__file__' in vars():
+    __file__ = os.path.realpath('pyhesaff.py')
+EXE_PATH = realpath(dirname(__file__))
+EXE_FPATH = join(EXE_PATH, 'hesaffexe' + EXE_EXT)
+if not os.path.exists(EXE_FPATH):
+    EXE_FPATH = join(EXE_PATH, 'build', 'hesaffexe' + EXE_EXT)
+if not os.path.exists(EXE_PATH):
+    EXE_FPATH = join(EXE_PATH, '_tpl', 'extern_feat', 'hesaffexe' + EXE_EXT)
+
+
+def execute_extern(cmd):
+    'Executes a system call'
+    proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (out, err) = proc.communicate()
+    if proc.returncode != 0:
+        raise Exception('\n'.join(['* External detector returned 0',
+                                   '* Failed calling: ' + cmd, '* Process output: ',
+                                   '------------------', out, '------------------']))
+
+
+def detect_hesaff_kpts_exeversion(rchip_fpath, dict_args):
+    'Runs external perdoch detector'
+    outname = rchip_fpath + '.hesaff.sift'
+    args = '"' + rchip_fpath + '"'
+    cmd  = EXE_FPATH + ' ' + args
+    execute_extern(cmd)
+    kpts, desc = read_text_feat_file(outname)
+    if len(kpts) == 0:
+        return np.empty((0, 5), dtype=kpts_dtype), np.empty((0, 5), dtype=desc_dtype)
+    kpts = fix_kpts_hack(kpts)
+    kpts, desc = filter_kpts_scale(kpts, desc, **dict_args)
+    return kpts, desc
+
+
+def read_text_feat_file(outname, be_clean=True):
+    'Reads output from external keypoint detectors like hesaff'
+    file = open(outname, 'r')
+    # Read header
+    ndims = int(file.readline())  # assert ndims == 128
+    nkpts = int(file.readline())  #
+    lines = file.readlines()
+    file.close()
+    if be_clean:
+        os.remove(outname)
+    # Preallocate output
+    kpts = np.zeros((nkpts, 5), dtype=kpts_dtype)
+    desc = np.zeros((nkpts, ndims), dtype=desc_dtype)
+    for kx, line in enumerate(lines):
+        data = line.split(' ')
+        kpts[kx, :] = np.array([kpts_dtype(_) for _ in data[0:5]], dtype=kpts_dtype)
+        desc[kx, :] = np.array([desc_dtype(_) for _ in data[5:]],  dtype=desc_dtype)
+    return (kpts, desc)
+
+
+def filter_kpts_scale(kpts, desc, scale_max=None, scale_min=None, **kwargs):
+    #max_scale=1E-3, min_scale=1E-7
+    #from hotspotter import helpers
+    if len(kpts) == 0 or \
+       scale_max is None or scale_min is None or\
+       scale_max < 0 or scale_min < 0 or\
+       scale_max < scale_min:
+        return kpts, desc
+    acd = kpts.T[2:5]
+    det_ = acd[0] * acd[2]
+    scale = np.sqrt(det_)
+    #print('scale.stats()=%r' % helpers.printable_mystats(scale))
+    #is_valid = np.bitwise_and(scale_min < scale, scale < scale_max).flatten()
+    is_valid = np.logical_and(scale_min < scale, scale < scale_max).flatten()
+    #scale = scale[is_valid]
+    kpts = kpts[is_valid]
+    desc = desc[is_valid]
+    #print('scale.stats() = %s' % str(helpers.printable_mystats(scale)))
+    return kpts, desc
+
+
+def expand_invET(invET):
+    # Put the inverse elleq in a list of matrix structure
+    e11 = invET[0]
+    e12 = invET[1]
+    e21 = invET[1]
+    e22 = invET[2]
+    invE_list = np.array(((e11, e12), (e21, e22))).T
+    return invE_list
+
+
+def fix_kpts_hack(kpts, method=1):
+    ''' Transforms:
+        [E_a, E_b]        [A_a,   0]
+        [E_b, E_d]  --->  [A_c, A_d]
+    '''
+    'Hack to put things into acd foramat'
+    xyT   = kpts.T[0:2]
+    invET = kpts.T[2:5]
+    # Expand into full matrix
+    invE_list = expand_invET(invET)
+    # Decompose using singular value decomposition
+    invXWYt_list = [np.linalg.svd(invE) for invE in invE_list]
+    # Rebuild the ellipse -> circle matrix
+    A_list = [invX.dot(np.diag(1 / np.sqrt(invW))) for (invX, invW, invYt) in invXWYt_list]
+    # Flatten the shapes for fast rectification
+    abcd  = np.vstack([A.flatten() for A in A_list])
+    # Rectify up
+    acd = rectify_up_abcd(abcd)
+    kpts = np.vstack((xyT, acd.T)).T
+    return kpts
+
+
+def rectify_up_abcd(abcd):
+    ''' Based on:
+    void rectifyAffineTransformationUpIsUp(float &a11, float &a12, float &a21, float &a22)
+    {
+    double a = a11, b = a12, c = a21, d = a22;
+    double det = sqrt(abs(a*d-b*c));
+    double b2a2 = sqrt(b*b + a*a);
+    a11 = b2a2/det;             a12 = 0;
+    a21 = (d*b+c*a)/(b2a2*det); a22 = det/b2a2;
+    } '''
+    (a, b, c, d) = abcd.T
+    absdet_ = np.abs(a * d - b * c)
+    #sqtdet_ = np.sqrt(absdet_)
+    b2a2 = np.sqrt(b * b + a * a)
+    # Build rectified ellipse matrix
+    a11 = b2a2
+    a21 = (d * b + c * a) / (b2a2)
+    a22 = absdet_ / b2a2
+    acd = np.vstack([a11, a21, a22]).T
+    return acd
 
 
 def expand_scale(kpts, scale):
@@ -207,6 +351,7 @@ if __name__ == '__main__':
     ensure_hotspotter()
     from hotspotter import fileio as io
     from hotspotter import draw_func2 as df2
+    from hotspotter import vizualizations as viz
     from hotspotter import helpers
 
     # Read Image
@@ -218,22 +363,37 @@ if __name__ == '__main__':
         stride = len(indexes) // n
         return list_[indexes[0:-1:stride]]
 
-    def test_hesaff(n=None, fnum=1):
+    def test_hesaff(n=None, fnum=1, use_exe=False, reextract=False):
         try:
             # Select kpts
-            kpts, desc = detect_hesaff_kpts(img_fpath, {})
+            if use_exe:
+                title = 'exe'
+                func = detect_hesaff_kpts_exeversion
+            else:
+                func = detect_hesaff_kpts
+                title = 'lib'
+            with helpers.Timer(msg=title):
+                kpts, desc = func(img_fpath, {})
+
+            if reextract:
+                with helpers.Timer(msg='reextract'):
+                    desc = extract_hesaff_kpts(img_fpath, kpts)
             kpts_ = kpts if n is None else spaced_elements(kpts, n)
+            desc_ = desc if n is None else spaced_elements(desc, n)
             # Print info
             np.set_printoptions(threshold=5000, linewidth=5000, precision=3)
             print('----')
             print('detected %d keypoints' % len(kpts))
             print('drawing %d/%d kpts' % (len(kpts_), len(kpts)))
             print(kpts_)
+            print(desc_[:, 0:16])
             print('----')
             # Draw kpts
-            df2.imshow(image, fnum=fnum)
-            df2.draw_kpts2(kpts_, ell_alpha=.9, ell_linewidth=4,
-                           ell_color='distinct', arrow=True, rect=True)
+            viz.interact_keypoints(image, kpts_, desc_, fnum, nodraw=True)
+            df2.set_figtitle(title)
+            #df2.imshow(image, fnum=fnum)
+            #df2.draw_kpts2(kpts_, ell_alpha=.9, ell_linewidth=4,
+                           #ell_color='distinct', arrow=True, rect=True)
         except Exception as ex:
             import traceback
             traceback.format_exc()
@@ -243,4 +403,10 @@ if __name__ == '__main__':
     n = 10
     fnum = 1
     test_locals = test_hesaff(n, fnum)
+    # They seem to work
+    #test_locals = test_hesaff(n, fnum + 1, use_exe=True)
+    #test_locals = test_hesaff(n, fnum + 2, reextract=True)
+
     exec(helpers.execstr_dict(test_locals, 'test_locals'))
+
+    exec(df2.present())

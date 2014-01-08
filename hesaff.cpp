@@ -71,6 +71,62 @@ struct HessianAffineParams
 };
 
 
+void rotate_downwards(float &a11, float &a12, float &a21, float &a22)
+{
+    //same as rectify_up_is_up but doest remove scale
+    double a = a11, b = a12, c = a21, d = a22;
+    double absdet_ = abs(a * d - b * c);
+    double b2a2 = sqrt(b * b + a * a);
+    //double sqtdet_ = sqrt(absdet_);
+    //-
+    a11 = b2a2;
+    a12 = 0;
+    a21 = (d * b + c * a) / (b2a2);
+    a22 = absdet_ / b2a2;
+}
+
+void invE_to_invA(cv::Mat& invE, float &a11, float &a12, float &a21, float &a22)
+{
+    SVD svd_invE(invE, SVD::FULL_UV);
+    float *diagE = (float *)svd_invE.w.data;
+    diagE[0] = 1.0f / sqrt(diagE[0]);
+    diagE[1] = 1.0f / sqrt(diagE[1]);
+    // build new invA
+    cv::Mat invA_ = svd_invE.u * cv::Mat::diag(svd_invE.w);
+    a11 = invA_.at<float>(0,0);
+    a12 = invA_.at<float>(0,1);
+    a21 = invA_.at<float>(1,0);
+    a22 = invA_.at<float>(1,1);
+    // Rectify it (maintain scale)
+    rotate_downwards(a11, a12, a21, a22);
+}
+
+
+cv::Mat invA_to_invE(float &a11, float &a12, float &a21, float &a22, float& s, float& desc_factor)
+{
+    float sc = desc_factor * s;
+    cv::Mat invA = (cv::Mat_<float>(2,2) << a11, a12, a21, a22);
+
+    //-----------------------
+    // Convert invA to invE format
+    SVD svd_invA(invA, SVD::FULL_UV);
+    float *diagA = (float *)svd_invA.w.data;
+    diagA[0] = 1.0f / (diagA[0]*diagA[0]*sc*sc);
+    diagA[1] = 1.0f / (diagA[1]*diagA[1]*sc*sc);
+    cv::Mat invE = svd_invA.u * cv::Mat::diag(svd_invA.w) * svd_invA.u.t();
+    return invE;
+}
+
+
+void fix_A(float &a11, float &a12, float &a21, float &a22, float &s)
+{
+    // I dont know why we have to convert and convert back
+    float desc_factor = 3.0f * sqrt(3.0f); // AffineShape::par.mrSize
+    cv::Mat invE = invA_to_invE(a11, a12, a21, a22, s, desc_factor);
+    invE_to_invA(invE, a11, a12, a21, a22);
+}
+
+
 struct AffineHessianDetector :
     /*extends*/ public HessianDetector, AffineShape, HessianKeypointCallback, AffineShapeCallback
 {
@@ -112,27 +168,21 @@ public:
             float sc = AffineShape::par.mrSize * k.s;
             size_t rowk = fx * 5;
             size_t rowd = fx * 128;
-            //cv::Mat A = (cv::Mat_<float>(2,2) << k.a11, k.a12, k.a21, k.a22);
-            // given kpts in A format convert to inv(A) and integrate scale
+            // given kpts in invA format
             det = k.a11 * k.a22 - k.a12 * k.a21;
-            if (fx == 0)
-                {
-                print(k.a11 << ", " << k.a12 << ", " << k.a21  << ", " << k.a22);
-                }
-
             x = k.x;
             y = k.y;
-            a = sc *  k.a22 / (det);
-            b = sc * -k.a12 / (det);
-            c = sc * -k.a21 / (det);
-            d = sc *  k.a11 / (det);
+            // Incorporate the scale
+            a = sc * k.a11 / (det);
+            b = sc * k.a12 / (det);
+            c = sc * k.a21 / (det);
+            d = sc * k.a22 / (det);
 
             kpts[rowk + 0] = x;
             kpts[rowk + 1] = y;
             kpts[rowk + 2] = a;
             kpts[rowk + 3] = c;
             kpts[rowk + 4] = d;
-
 
             // Assign Descriptor Output
             for (size_t ix = 0; ix < 128; ix++)
@@ -163,11 +213,11 @@ public:
             // Extract scale.
             sc = sqrt(idet);
             s  = (sc / AffineShape::par.mrSize); // scale
-            // Deintegrate scale, and transform to A format.
-            a11 = ( id / idet) * sc;
-            a12 = 0;  //(-ib / idet) / sc;
-            a21 = (-ic / idet) * sc;
-            a22 = ( ia / idet) * sc;
+            // Deintegrate scale. Keep invA format
+            a11 = ( ia / idet) * sc;
+            a12 = 0;  //(ib / idet) / sc;
+            a21 = ( ic / idet) * sc;
+            a22 = ( id / idet) * sc;
             //rectifyAffineTransformationUpIsUp(a11, a12, a21, a22); //Helper
             if (fx == 0)
                 {
