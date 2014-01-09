@@ -34,7 +34,7 @@
 #ifdef MYDEBUG
 #undef MYDEBUG
 #endif
-#define MYDEBUG
+//#define MYDEBUG
 
 #ifdef MYDEBUG
 #define print(msg) std::cout << msg << std::endl;
