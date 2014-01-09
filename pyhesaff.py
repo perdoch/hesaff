@@ -1,7 +1,7 @@
 from __future__ import print_function, division
-if '__file__' not in vars():
-    import os
-    os.chdir('C:\Users\joncrall\code\hotspotter\_tpl\extern_feat')
+#if '__file__' not in vars():
+    #import os
+    #os.chdir('C:\Users\joncrall\code\hotspotter\_tpl\extern_feat')
 
 # Standard
 #from ctypes.util import find_library
@@ -10,6 +10,7 @@ from os.path import join, exists, realpath, dirname, normpath, expanduser, split
 import ctypes as C
 import os
 import sys
+import collections
 # Scientific
 import numpy as np
 
@@ -23,15 +24,177 @@ desc_dtype = np.uint8
 # ctypes
 obj_t = C.c_void_p
 kpts_t = np.ctypeslib.ndpointer(dtype=kpts_dtype, ndim=2, flags='aligned, c_contiguous, writeable')
+ro_kpts_t = np.ctypeslib.ndpointer(dtype=kpts_dtype, ndim=2, flags='aligned, c_contiguous')
 desc_t = np.ctypeslib.ndpointer(dtype=desc_dtype, ndim=2, flags='aligned, c_contiguous, writeable')
 str_t = C.c_char_p
 int_t = C.c_int
+float_t = C.c_float
+
 
 # If profiling with kernprof.py
 try:
     profile  # NoQA
 except NameError:
     profile = lambda func: func
+
+
+###############
+# Old interface
+###############
+EXE_EXT = {'win32': '.exe', 'darwin': '.mac', 'linux2': ''}[sys.platform]
+if not '__file__' in vars():
+    __file__ = os.path.realpath('pyhesaff.py')
+EXE_PATH = realpath(dirname(__file__))
+EXE_FPATH = join(EXE_PATH, 'hesaffexe' + EXE_EXT)
+if not os.path.exists(EXE_FPATH):
+    EXE_FPATH = join(EXE_PATH, 'build', 'hesaffexe' + EXE_EXT)
+if not os.path.exists(EXE_PATH):
+    EXE_FPATH = join(EXE_PATH, '_tpl', 'extern_feat', 'hesaffexe' + EXE_EXT)
+
+
+def __cmd(args, verbose=True):
+    print('[setup] Running: %r' % args)
+    sys.stdout.flush()
+    #import shlex
+    #if isinstance(args, str):
+        #if os.name == 'posix':
+            #args = [args]
+        #else:
+            #args = shlex.split(args)
+    PIPE = subprocess.PIPE
+    # DANGEROUS: shell=True. Grats hackers.
+    proc = subprocess.Popen(args, stdout=PIPE, stderr=PIPE, shell=True)
+    if verbose:
+        ''' KNOWN PYTHON 2.x BUG
+        #http://stackoverflow.com/questions/803265/
+        #getting-realtime-output-using-subprocess
+        for line in proc.stdout.readlines(): '''
+        logged_list = []
+        append = logged_list.append
+        write = sys.stdout.write
+        flush = sys.stdout.flush
+        while True:
+            line = proc.stdout.readline()
+            if not line:
+                break
+            write(line)
+            flush()
+            append(line)
+        out = '\n'.join(logged_list)
+        (out_, err) = proc.communicate()
+    else:
+        # Surpress output
+        (out, err) = proc.communicate()
+    # Make sure process if finished
+    ret = proc.wait()
+    if ret != 0:
+        raise Exception('\n'.join(['* External detector returned 0',
+                                   '* Failed calling: ' + str(args), '* Process output: ',
+                                   '------------------', out, '------------------']))
+    return out, err, ret
+
+
+def detect_hesaff_kpts_exeversion(rchip_fpath, **kwargs):
+    'Runs external perdoch detector'
+    outname = rchip_fpath + '.hesaff.sift'
+    args = '"' + rchip_fpath + '"'
+    cmd  = EXE_FPATH + ' ' + args
+    __cmd(cmd)
+    kpts, desc = read_text_feat_file(outname)
+    if len(kpts) == 0:
+        return np.empty((0, 5), dtype=kpts_dtype), np.empty((0, 5), dtype=desc_dtype)
+    kpts = fix_kpts_hack(kpts)
+    kpts, desc = filter_kpts_scale(kpts, desc, **kwargs)
+    return kpts, desc
+
+
+def read_text_feat_file(outname, be_clean=True):
+    'Reads output from external keypoint detectors like hesaff'
+    file = open(outname, 'r')
+    # Read header
+    ndims = int(file.readline())  # assert ndims == 128
+    nkpts = int(file.readline())  #
+    lines = file.readlines()
+    file.close()
+    if be_clean:
+        os.remove(outname)
+    # Preallocate output
+    kpts = np.zeros((nkpts, 5), dtype=kpts_dtype)
+    desc = np.zeros((nkpts, ndims), dtype=desc_dtype)
+    for kx, line in enumerate(lines):
+        data = line.split(' ')
+        kpts[kx, :] = np.array([kpts_dtype(_) for _ in data[0:5]], dtype=kpts_dtype)
+        desc[kx, :] = np.array([desc_dtype(_) for _ in data[5:]],  dtype=desc_dtype)
+    return (kpts, desc)
+
+
+def filter_kpts_scale(kpts, desc, scale_max=None, scale_min=None, **kwargs):
+    #max_scale=1E-3, min_scale=1E-7
+    #from hotspotter import helpers
+    if len(kpts) == 0 or \
+       scale_max is None or scale_min is None or\
+       scale_max < 0 or scale_min < 0 or\
+       scale_max < scale_min:
+        return kpts, desc
+    acd = kpts.T[2:5]
+    det_ = acd[0] * acd[2]
+    scale = np.sqrt(det_)
+    #print('scale.stats()=%r' % helpers.printable_mystats(scale))
+    #is_valid = np.bitwise_and(scale_min < scale, scale < scale_max).flatten()
+    is_valid = np.logical_and(scale_min < scale, scale < scale_max).flatten()
+    #scale = scale[is_valid]
+    kpts = kpts[is_valid]
+    desc = desc[is_valid]
+    #print('scale.stats() = %s' % str(helpers.printable_mystats(scale)))
+    return kpts, desc
+
+
+def fix_kpts_hack(kpts, method=1):
+    ''' Transforms:
+        [E_a, E_b]        [A_a,   0]
+        [E_b, E_d]  --->  [A_c, A_d]
+    '''
+    'Hack to put things into acd foramat'
+    xyT   = kpts.T[0:2]
+    invET = kpts.T[2:5]
+    # Expand into full matrix
+    e11 = invET[0]
+    e12 = invET[1]
+    e21 = invET[1]
+    e22 = invET[2]
+    invE_list = np.array(((e11, e12), (e21, e22))).T
+    # Decompose using singular value decomposition
+    invXWYt_list = [np.linalg.svd(invE) for invE in invE_list]
+    # Rebuild the ellipse -> circle matrix
+    A_list = [invX.dot(np.diag(1 / np.sqrt(invW))) for (invX, invW, invYt) in invXWYt_list]
+    # Flatten the shapes for fast rectification
+    abcd  = np.vstack([A.flatten() for A in A_list])
+    # Rectify up
+    acd = rectify_up_abcd(abcd)
+    kpts = np.vstack((xyT, acd.T)).T
+    return kpts
+
+
+def rectify_up_abcd(abcd):
+    ''' Based on:
+    void rectifyAffineTransformationUpIsUp(float &a11, float &a12, float &a21, float &a22)
+    {
+    double a = a11, b = a12, c = a21, d = a22;
+    double det = sqrt(abs(a*d-b*c));
+    double b2a2 = sqrt(b*b + a*a);
+    a11 = b2a2/det;             a12 = 0;
+    a21 = (d*b+c*a)/(b2a2*det); a22 = det/b2a2;
+    } '''
+    (a, b, c, d) = abcd.T
+    absdet_ = np.abs(a * d - b * c)
+    #sqtdet_ = np.sqrt(absdet_)
+    b2a2 = np.sqrt(b * b + a * a)
+    # Build rectified ellipse matrix
+    a11 = b2a2
+    a21 = (d * b + c * a) / (b2a2)
+    a22 = absdet_ / b2a2
+    acd = np.vstack([a11, a21, a22]).T
+    return acd
 
 
 ##################
@@ -129,6 +292,35 @@ def load_clib(libname, root_dir):
 ##################
 
 
+# THE ORDER OF THIS LIST IS IMPORTANT!
+hesaff_typed_params = [
+    # Pyramid Params
+    (int_t, 'numberOfScales', 3),             # number of scale per octave
+    (float_t, 'threshold', 16.0 / 3.0),           # noise dependent threshold on the response (sensitivity)
+    (float_t, 'edgeEigenValueRatio', 10.0),   # ratio of the eigenvalues
+    (int_t, 'border', 5),                     # number of pixels ignored at the border of image
+    # Affine Shape Params
+    (int_t, 'maxIterations', 16),             # number of affine shape interations
+    (float_t, 'convergenceThreshold', 0.05),  # maximum deviation from isotropic shape at convergence
+    (int_t, 'smmWindowSize', 19),             # width and height of the SMM mask
+    (float_t, 'mrSize', 3.0 * np.sqrt(3.0)),    # size of the measurement region (as multiple of the feature scale)
+    # SIFT params
+    (int_t, 'spatialBins', 4),
+    (int_t, 'orientationBins', 8),
+    (float_t, 'maxBinValue', 0.2),
+    # Shared params
+    (float_t, 'initialSigma', 1.6),           # amount of smoothing applied to the initial level of first octave
+    (int_t, 'patchSize', 41),                 # width and height of the patch
+    # My params
+    (float_t, 'min_scale', -1.0),
+    (float_t, 'max_scale', -1.0),
+]
+
+OrderedDict = collections.OrderedDict
+hesaff_param_dict = OrderedDict([(key, val) for (type_, key, val) in hesaff_typed_params])
+hesaff_param_types = [type_ for (type_, key, val) in hesaff_typed_params]
+
+
 def load_hesaff_clib():
     '''
     Specificially loads the hesaff lib and defines its functions
@@ -137,19 +329,31 @@ def load_hesaff_clib():
     libname = 'hesaff'
     hesaff_lib, def_cfunc = load_clib(libname, root_dir)
 
-    def_cfunc(  'new_hesaff', obj_t, [str_t])
     def_cfunc(      'detect', int_t, [obj_t])
     def_cfunc('exportArrays',  None, [obj_t, int_t, kpts_t, desc_t])
     def_cfunc('extractDesc',   None, [obj_t, int_t, kpts_t, desc_t])
+    def_cfunc(  'new_hesaff', obj_t, [str_t])
+    def_cfunc(  'new_hesaff_from_params', obj_t, [str_t] + hesaff_param_types)
     return hesaff_lib
 
 hesaff_lib = load_hesaff_clib()
 
 
-@profile
-def detect_hesaff_kpts(img_fpath, dict_args={}):
+def new_hesaff(img_fpath, **kwargs):
     # Make detector and read image
-    hesaff_ptr = hesaff_lib.new_hesaff(realpath(img_fpath))
+    hesaff_params = hesaff_param_dict.copy()
+    hesaff_params.update(kwargs)
+    print('[pyhessaff] Override params: %r' % kwargs)
+    #print(hesaff_params)
+    hesaff_args = hesaff_params.values()
+    hesaff_ptr = hesaff_lib.new_hesaff_from_params(realpath(img_fpath), *hesaff_args)
+    #hesaff_ptr = hesaff_lib.new_hesaff(realpath(img_fpath))
+    return hesaff_ptr
+
+
+@profile
+def detect_hesaff_kpts(img_fpath, **kwargs):
+    hesaff_ptr = new_hesaff(img_fpath, **kwargs)
     # Return the number of keypoints detected
     nKpts = hesaff_lib.detect(hesaff_ptr)
     # Allocate arrays
@@ -160,20 +364,27 @@ def detect_hesaff_kpts(img_fpath, dict_args={}):
     return kpts, desc
 
 
-def extract_hesaff_kpts(img_fpath, kpts, **kwargs):
-    hesaff_ptr = hesaff_lib.new_hesaff(realpath(img_fpath))
+def extract_desc(img_fpath, kpts, **kwargs):
+    hesaff_ptr = new_hesaff(img_fpath, **kwargs)
     nKpts = len(kpts)
     # allocate memory for new descriptors
     desc = np.empty((nKpts, 128), desc_dtype)
+    #print('[pyhesaff] extracting %d desc' % nKpts)
+    #print('[pyhesaff] kpts.shape =%r' % (kpts.shape,))
+    #print('[pyhesaff] kpts.dtype =%r' % (kpts.dtype,))
+    #print('[pyhesaff] desc.shape =%r' % (desc.shape,))
+    #print('[pyhesaff] desc.dtype =%r' % (desc.dtype,))
+    #desc = np.require(desc, dtype=desc_dtype, requirements=['C_CONTIGUOUS', 'WRITABLE', 'ALIGNED'])
+    kpts = np.ascontiguousarray(kpts)  # kpts might not be contiguous
     # extract descriptors at given locations
     hesaff_lib.extractDesc(hesaff_ptr, nKpts, kpts, desc)
     return desc
 
 
 @profile
-def test_hesaff_kpts(img_fpath, dict_args={}):
+def test_hesaff_kpts(img_fpath, **kwargs):
     # Make detector and read image
-    hesaff_ptr = hesaff_lib.new_hesaff(realpath(img_fpath))
+    hesaff_ptr = new_hesaff(img_fpath, **kwargs)
     # Return the number of keypoints detected
     nKpts = hesaff_lib.detect(hesaff_ptr)
     #print('[pyhesaff] detected: %r keypoints' % nKpts)
@@ -194,139 +405,6 @@ def test_hesaff_kpts(img_fpath, dict_args={}):
     return kpts, desc
 
 
-###############
-# Old reading
-###############
-EXE_EXT = {'win32': '.exe', 'darwin': '.mac', 'linux2': ''}[sys.platform]
-if not '__file__' in vars():
-    __file__ = os.path.realpath('pyhesaff.py')
-EXE_PATH = realpath(dirname(__file__))
-EXE_FPATH = join(EXE_PATH, 'hesaffexe' + EXE_EXT)
-if not os.path.exists(EXE_FPATH):
-    EXE_FPATH = join(EXE_PATH, 'build', 'hesaffexe' + EXE_EXT)
-if not os.path.exists(EXE_PATH):
-    EXE_FPATH = join(EXE_PATH, '_tpl', 'extern_feat', 'hesaffexe' + EXE_EXT)
-
-
-def execute_extern(cmd):
-    'Executes a system call'
-    proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    (out, err) = proc.communicate()
-    if proc.returncode != 0:
-        raise Exception('\n'.join(['* External detector returned 0',
-                                   '* Failed calling: ' + cmd, '* Process output: ',
-                                   '------------------', out, '------------------']))
-
-
-def detect_hesaff_kpts_exeversion(rchip_fpath, dict_args):
-    'Runs external perdoch detector'
-    outname = rchip_fpath + '.hesaff.sift'
-    args = '"' + rchip_fpath + '"'
-    cmd  = EXE_FPATH + ' ' + args
-    execute_extern(cmd)
-    kpts, desc = read_text_feat_file(outname)
-    if len(kpts) == 0:
-        return np.empty((0, 5), dtype=kpts_dtype), np.empty((0, 5), dtype=desc_dtype)
-    kpts = fix_kpts_hack(kpts)
-    kpts, desc = filter_kpts_scale(kpts, desc, **dict_args)
-    return kpts, desc
-
-
-def read_text_feat_file(outname, be_clean=True):
-    'Reads output from external keypoint detectors like hesaff'
-    file = open(outname, 'r')
-    # Read header
-    ndims = int(file.readline())  # assert ndims == 128
-    nkpts = int(file.readline())  #
-    lines = file.readlines()
-    file.close()
-    if be_clean:
-        os.remove(outname)
-    # Preallocate output
-    kpts = np.zeros((nkpts, 5), dtype=kpts_dtype)
-    desc = np.zeros((nkpts, ndims), dtype=desc_dtype)
-    for kx, line in enumerate(lines):
-        data = line.split(' ')
-        kpts[kx, :] = np.array([kpts_dtype(_) for _ in data[0:5]], dtype=kpts_dtype)
-        desc[kx, :] = np.array([desc_dtype(_) for _ in data[5:]],  dtype=desc_dtype)
-    return (kpts, desc)
-
-
-def filter_kpts_scale(kpts, desc, scale_max=None, scale_min=None, **kwargs):
-    #max_scale=1E-3, min_scale=1E-7
-    #from hotspotter import helpers
-    if len(kpts) == 0 or \
-       scale_max is None or scale_min is None or\
-       scale_max < 0 or scale_min < 0 or\
-       scale_max < scale_min:
-        return kpts, desc
-    acd = kpts.T[2:5]
-    det_ = acd[0] * acd[2]
-    scale = np.sqrt(det_)
-    #print('scale.stats()=%r' % helpers.printable_mystats(scale))
-    #is_valid = np.bitwise_and(scale_min < scale, scale < scale_max).flatten()
-    is_valid = np.logical_and(scale_min < scale, scale < scale_max).flatten()
-    #scale = scale[is_valid]
-    kpts = kpts[is_valid]
-    desc = desc[is_valid]
-    #print('scale.stats() = %s' % str(helpers.printable_mystats(scale)))
-    return kpts, desc
-
-
-def expand_invET(invET):
-    # Put the inverse elleq in a list of matrix structure
-    e11 = invET[0]
-    e12 = invET[1]
-    e21 = invET[1]
-    e22 = invET[2]
-    invE_list = np.array(((e11, e12), (e21, e22))).T
-    return invE_list
-
-
-def fix_kpts_hack(kpts, method=1):
-    ''' Transforms:
-        [E_a, E_b]        [A_a,   0]
-        [E_b, E_d]  --->  [A_c, A_d]
-    '''
-    'Hack to put things into acd foramat'
-    xyT   = kpts.T[0:2]
-    invET = kpts.T[2:5]
-    # Expand into full matrix
-    invE_list = expand_invET(invET)
-    # Decompose using singular value decomposition
-    invXWYt_list = [np.linalg.svd(invE) for invE in invE_list]
-    # Rebuild the ellipse -> circle matrix
-    A_list = [invX.dot(np.diag(1 / np.sqrt(invW))) for (invX, invW, invYt) in invXWYt_list]
-    # Flatten the shapes for fast rectification
-    abcd  = np.vstack([A.flatten() for A in A_list])
-    # Rectify up
-    acd = rectify_up_abcd(abcd)
-    kpts = np.vstack((xyT, acd.T)).T
-    return kpts
-
-
-def rectify_up_abcd(abcd):
-    ''' Based on:
-    void rectifyAffineTransformationUpIsUp(float &a11, float &a12, float &a21, float &a22)
-    {
-    double a = a11, b = a12, c = a21, d = a22;
-    double det = sqrt(abs(a*d-b*c));
-    double b2a2 = sqrt(b*b + a*a);
-    a11 = b2a2/det;             a12 = 0;
-    a21 = (d*b+c*a)/(b2a2*det); a22 = det/b2a2;
-    } '''
-    (a, b, c, d) = abcd.T
-    absdet_ = np.abs(a * d - b * c)
-    #sqtdet_ = np.sqrt(absdet_)
-    b2a2 = np.sqrt(b * b + a * a)
-    # Build rectified ellipse matrix
-    a11 = b2a2
-    a21 = (d * b + c * a) / (b2a2)
-    a22 = absdet_ / b2a2
-    acd = np.vstack([a11, a21, a22]).T
-    return acd
-
-
 def expand_scale(kpts, scale):
     kpts.T[2] *= scale
     kpts.T[3] *= scale
@@ -343,7 +421,9 @@ def ensure_hotspotter():
         print('[jon] hotspotter_dir=%r DOES NOT EXIST!' % (hotspotter_dir,))
     # Append hotspotter location (not dir) to PYTHON_PATH (i.e. sys.path)
     hotspotter_location = split(hotspotter_dir)[0]
-    sys.path.append(hotspotter_location)
+    if not hotspotter_location in sys.path:
+        sys.path.append(hotspotter_location)
+
 
 if __name__ == '__main__':
     import multiprocessing
@@ -359,35 +439,33 @@ if __name__ == '__main__':
     image = io.imread(img_fpath)
 
     def spaced_elements(list_, n):
+        if n is None:
+            return 'list'
         indexes = np.arange(len(list_))
         stride = len(indexes) // n
         return list_[indexes[0:-1:stride]]
 
     def test_hesaff(n=None, fnum=1, use_exe=False, reextract=False):
+        print('[test]---------------------')
         try:
             # Select kpts
-            if use_exe:
-                title = 'exe'
-                func = detect_hesaff_kpts_exeversion
-            else:
-                func = detect_hesaff_kpts
-                title = 'lib'
+            title = 'exe' if use_exe else 'lib'
+            detect_func = detect_hesaff_kpts_exeversion if use_exe else detect_hesaff_kpts
             with helpers.Timer(msg=title):
-                kpts, desc = func(img_fpath, {})
-
+                kpts, desc = detect_func(img_fpath)
             if reextract:
+                title = 'reextract'
                 with helpers.Timer(msg='reextract'):
-                    desc = extract_hesaff_kpts(img_fpath, kpts)
+                    desc = extract_desc(img_fpath, kpts)
             kpts_ = kpts if n is None else spaced_elements(kpts, n)
             desc_ = desc if n is None else spaced_elements(desc, n)
             # Print info
             np.set_printoptions(threshold=5000, linewidth=5000, precision=3)
-            print('----')
             print('detected %d keypoints' % len(kpts))
             print('drawing %d/%d kpts' % (len(kpts_), len(kpts)))
-            print(kpts_)
-            print(desc_[:, 0:16])
-            print('----')
+            title += ' ' + str(len(kpts))
+            #print(kpts_)
+            #print(desc_[:, 0:16])
             # Draw kpts
             viz.interact_keypoints(image, kpts_, desc_, fnum, nodraw=True)
             df2.set_figtitle(title)
@@ -397,16 +475,18 @@ if __name__ == '__main__':
         except Exception as ex:
             import traceback
             traceback.format_exc()
-            print(ex)
+            print('EXCEPTION! ' + repr(ex))
+            raise
+        print('[test]---------------------')
         return locals()
 
-    n = 10
+    n = None
     fnum = 1
     test_locals = test_hesaff(n, fnum)
     # They seem to work
-    #test_locals = test_hesaff(n, fnum + 1, use_exe=True)
-    #test_locals = test_hesaff(n, fnum + 2, reextract=True)
+    test_locals = test_hesaff(n, fnum + 2, use_exe=True)
+    #test_locals = test_hesaff(n, fnum + 1, use_exe=True, reextract=True)
 
-    exec(helpers.execstr_dict(test_locals, 'test_locals'))
+    #exec(helpers.execstr_dict(test_locals, 'test_locals'))
 
     exec(df2.present())

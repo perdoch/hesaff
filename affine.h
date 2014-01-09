@@ -4,7 +4,7 @@
  *
  * This file is part of the HessianAffine detector and is made available under
  * the terms of the BSD license (see the COPYING file).
- * 
+ *
  */
 
 #ifndef __AFFINE_H__
@@ -24,7 +24,7 @@ struct AffineShapeParams
    // convergence threshold, i.e. maximum deviation from isotropic shape at convergence
    float convergenceThreshold;
 
-   // widht and height of the SMM mask 
+   // width and height of the SMM mask
    int smmWindowSize;
 
    // width and height of the patch
@@ -54,34 +54,34 @@ struct AffineShapeCallback
       float x, float y,     // subpixel, image coordinates
       float s,              // scale
       float pixelDistance,  // distance between pixels in provided blured image
-      float a11, float a12, // affine shape matrix 
-      float a21, float a22, 
+      float a11, float a12, // affine shape matrix
+      float a21, float a22,
       int type, float response, int iters) = 0;
 };
 
 struct AffineShape
 {
-public:   
-   AffineShape(const AffineShapeParams &par) : 
+public:
+   AffineShape(const AffineShapeParams &par) :
       patch(par.patchSize, par.patchSize, CV_32FC1),
-      mask(par.smmWindowSize, par.smmWindowSize, CV_32FC1), 
-      img(par.smmWindowSize, par.smmWindowSize, CV_32FC1), 
-      fx(par.smmWindowSize, par.smmWindowSize, CV_32FC1), 
+      mask(par.smmWindowSize, par.smmWindowSize, CV_32FC1),
+      img(par.smmWindowSize, par.smmWindowSize, CV_32FC1),
+      fx(par.smmWindowSize, par.smmWindowSize, CV_32FC1),
       fy(par.smmWindowSize, par.smmWindowSize, CV_32FC1)
-      {                     
+      {
          this->par = par;
          computeGaussMask(mask);
          affineShapeCallback = 0;
          fx = cv::Scalar(0);
          fy = cv::Scalar(0);
       }
-   
+
    ~AffineShape()
       {
       }
-   
-   // computes affine shape 
-   bool findAffineShape(const cv::Mat &blur, float x, float y, float s, float pixelDistance, int type, float response);   
+
+   // computes affine shape
+   bool findAffineShape(const cv::Mat &blur, float x, float y, float s, float pixelDistance, int type, float response);
 
    // fills patch with affine normalized neighbourhood around point in the img, enlarged mrSize times
    bool normalizeAffine(const cv::Mat &img, float x, float y, float s, float a11, float a12, float a21, float a22);

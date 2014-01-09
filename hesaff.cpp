@@ -34,6 +34,7 @@
 #ifdef MYDEBUG
 #undef MYDEBUG
 #endif
+#define MYDEBUG
 
 #ifdef MYDEBUG
 #define print(msg) std::cout << msg << std::endl;
@@ -53,23 +54,6 @@ struct Keypoint
    uint8 desc[128];
 };
 
-struct HessianAffineParams
-{
-   float threshold;
-   int   max_iter;
-   float desc_factor;
-   int   patch_size;
-   bool  verbose;
-   HessianAffineParams()
-      {
-         threshold = 16.0f/3.0f;
-         max_iter = 16;
-         desc_factor = 3.0f*sqrt(3.0f);
-         patch_size = 41;
-         verbose = false;
-      }
-};
-
 
 void rotate_downwards(float &a11, float &a12, float &a21, float &a22)
 {
@@ -84,6 +68,7 @@ void rotate_downwards(float &a11, float &a12, float &a21, float &a22)
     a21 = (d * b + c * a) / (b2a2);
     a22 = absdet_ / b2a2;
 }
+
 
 void invE_to_invA(cv::Mat& invE, float &a11, float &a12, float &a21, float &a22)
 {
@@ -111,20 +96,12 @@ cv::Mat invA_to_invE(float &a11, float &a12, float &a21, float &a22, float& s, f
     // Convert invA to invE format
     SVD svd_invA(invA, SVD::FULL_UV);
     float *diagA = (float *)svd_invA.w.data;
-    diagA[0] = 1.0f / (diagA[0]*diagA[0]*sc*sc);
-    diagA[1] = 1.0f / (diagA[1]*diagA[1]*sc*sc);
+    diagA[0] = 1.0f / (diagA[0] * diagA[0] * sc * sc);
+    diagA[1] = 1.0f / (diagA[1] * diagA[1] * sc * sc);
     cv::Mat invE = svd_invA.u * cv::Mat::diag(svd_invA.w) * svd_invA.u.t();
     return invE;
 }
 
-
-void fix_A(float &a11, float &a12, float &a21, float &a22, float &s)
-{
-    // I dont know why we have to convert and convert back
-    float desc_factor = 3.0f * sqrt(3.0f); // AffineShape::par.mrSize
-    cv::Mat invE = invA_to_invE(a11, a12, a21, a22, s, desc_factor);
-    invE_to_invA(invE, a11, a12, a21, a22);
-}
 
 
 struct AffineHessianDetector :
@@ -195,34 +172,38 @@ public:
     void extractDesc(int nKpts, float* kpts, uint8* desc)
         {
         float x, y, ia, ib, ic, id;
-        float sc, idet;
+        float sc;
         float a11, a12, a21, a22, s;
         for(int fx=0; fx < (nKpts); fx++)
             {
+            // 2D Array offsets
             size_t rowk = fx * 5;
             size_t rowd = fx * 128;
             //Read a keypoint from the file
-            x   = kpts[rowk + 0];
-            y   = kpts[rowk + 1];
+            x = kpts[rowk + 0];
+            y = kpts[rowk + 1];
             // We are currently using inv(A) format in HotSpotter
             ia = kpts[rowk + 2];
             ib = 0;
             ic = kpts[rowk + 3];
             id = kpts[rowk + 4];
-            idet = abs((ia * id) - (ib * ic));
             // Extract scale.
-            sc = sqrt(idet);
-            s  = (sc / AffineShape::par.mrSize); // scale
+            sc = sqrt(abs((ia * id) - (ib * ic)));
             // Deintegrate scale. Keep invA format
-            a11 = ( ia / idet) * sc;
-            a12 = 0;  //(ib / idet) / sc;
-            a21 = ( ic / idet) * sc;
-            a22 = ( id / idet) * sc;
-            //rectifyAffineTransformationUpIsUp(a11, a12, a21, a22); //Helper
+            s  = (sc / AffineShape::par.mrSize); // scale
+            a11 = ia / sc;
+            a12 = 0;
+            a21 = ic / sc;
+            a22 = id / sc;
+            #ifdef MYDEBUG
             if (fx == 0)
                 {
-                print(x << ", " << y << ", " << a11 << ", " << a12 << ", " << a21  << ", " << a22  << ", " << s)
+                //print("[extractDesc.c]    sc = "  << sc);
+                //print("[extractDesc.c] iabcd = [" << ia << ", " << ib << ", " << ic << ", " << id << "] ");
+                //print("[extractDesc.c]    xy = (" <<  x << ", " <<  y << ") ");
+                //print("[extractDesc.c]  abcd = [" << a11 << ", " << a12 << ", " << a21 << ", " << a22 << "] " << "s = " << s);
                 }
+            #endif
             // now sample the patch (populates this->patch)
             if (!this->normalizeAffine(this->image, x, y, s, a11, a12, a21, a22)) //affine.cpp
                 {
@@ -262,10 +243,10 @@ public:
 
     void exportKeypoints(std::ostream &out)
     {
-    /*Writes text keypoints in the invE format
-     * [iE_a, iE_b]
-     * [iE_b, iE_d]
-     */
+        /*Writes text keypoints in the invE format
+        * [iE_a, iE_b]
+        * [iE_b, iE_d]
+        */
         out << 128 << std::endl;
         int nKpts = keys.size();
         print("Writing " << nKpts << " keypoints");
@@ -274,8 +255,8 @@ public:
         {
             Keypoint &k = keys[i];
             float sc = AffineShape::par.mrSize * k.s;
-            // grab (A) format keypoints (ell->unit)
-            cv::Mat A = (cv::Mat_<float>(2,2) << k.a11, k.a12, k.a21, k.a22);
+            // Grav invA keypoints
+            cv::Mat invA = (cv::Mat_<float>(2,2) << k.a11, k.a12, k.a21, k.a22);
             // Integrate the scale via signular value decomposition
             // Remember
             // A     = U *  S  * V.T
@@ -288,19 +269,21 @@ public:
             // W == S^2
             // X == V
 
-            // Decompose A
-            SVD svd(A, SVD::FULL_UV);
-            float *d = (float *)svd.w.data;
+            // Decompose invA
+            SVD svd_invA(invA, SVD::FULL_UV);
+            float *diag_invA = (float *)svd_invA.w.data;
             // Integrate scale into 1/S and take squared inverst to make 1/W
-            d[0] = 1.0f / (d[0]*d[0]*sc*sc);
-            d[1] = 1.0f / (d[1]*d[1]*sc*sc);
+            diag_invA[0] = 1.0f / (diag_invA[0]*diag_invA[0]*sc*sc);
+            diag_invA[1] = 1.0f / (diag_invA[1]*diag_invA[1]*sc*sc);
             // Build the matrix invE
             // (I dont understand why U here, but it preserves the rotation I guess)
             // invE = (V * 1/S * U.T) * (U * 1/S * V.T)
-            cv::Mat invE = svd.u * cv::Mat::diag(svd.w) * svd.u.t();
-            // Write out inv(E)
+            cv::Mat invE = svd_invA.u * cv::Mat::diag(svd_invA.w) * svd_invA.u.t();
+            // Write inv(E) to out stream
             out << k.x << " " << k.y << " "
-                << invE.at<float>(0,0) << " " << invE.at<float>(0,1) << " " << invE.at<float>(1,1);
+                << invE.at<float>(0,0) << " "
+                << invE.at<float>(0,1) << " "
+                << invE.at<float>(1,1);
             for (size_t i=0; i<128; i++)
                 out << " " << int(k.desc[i]);
             out << std::endl;
@@ -366,7 +349,29 @@ extern HESAFF_EXPORT int detect(AffineHessianDetector* detector)
     return nKpts;
 }
 
-extern HESAFF_EXPORT AffineHessianDetector* new_hesaff(char* img_fpath)
+
+extern HESAFF_EXPORT AffineHessianDetector* new_hesaff_from_params(char* img_fpath,
+        // Pyramid Params
+        int   numberOfScales,
+        float threshold,
+        float edgeEigenValueRatio,
+        int   border,
+        // Affine Params Shape
+        int   maxIterations,
+        float convergenceThreshold,
+        int   smmWindowSize,
+        float mrSize,
+        // SIFT params
+        int spatialBins,
+        int orientationBins,
+        float maxBinValue,
+        // Shared Pyramid + Affine
+        float initialSigma,
+        // Shared SIFT + Affine
+        int patchSize,
+        // My Params
+        float min_scale,
+        float max_scale)
 {
     print("making detector for " << img_fpath);
     print("make hesaff. img_fpath = " << img_fpath);
@@ -381,20 +386,89 @@ extern HESAFF_EXPORT AffineHessianDetector* new_hesaff(char* img_fpath)
         imgout++;
         imgin+=3;
     }
+
     // Define params
-    HessianAffineParams par;
     SIFTDescriptorParams siftParams;
     PyramidParams pyrParams;
     AffineShapeParams affShapeParams;
-    // copy params
-    pyrParams.threshold          = par.threshold;
-    affShapeParams.maxIterations = par.max_iter;
-    affShapeParams.patchSize     = par.patch_size;
-    affShapeParams.mrSize        = par.desc_factor;
-    siftParams.patchSize         = par.patch_size;
-    // Execute detection
-    int nKpts;
+
+    // Copy Pyramid params
+    pyrParams.numberOfScales            = numberOfScales;
+    pyrParams.threshold                 = threshold;
+    pyrParams.edgeEigenValueRatio       = edgeEigenValueRatio;
+    pyrParams.border                    = border;
+    pyrParams.initialSigma              = initialSigma;
+
+    // Copy Affine Shape params
+    affShapeParams.maxIterations        = maxIterations;
+    affShapeParams.convergenceThreshold = convergenceThreshold;
+    affShapeParams.smmWindowSize        = smmWindowSize;
+    affShapeParams.mrSize               = mrSize;
+    affShapeParams.initialSigma         = initialSigma;
+    affShapeParams.patchSize            = patchSize;
+
+    // Copy SIFT params
+    siftParams.spatialBins              = spatialBins;
+    siftParams.orientationBins          = orientationBins;
+    siftParams.maxBinValue              = maxBinValue;
+    siftParams.patchSize                = patchSize;
+
+
+#ifdef MYDEBUG
+    print("pyrParams.numberOfScales      = " << pyrParams.numberOfScales);
+    print("pyrParams.threshold           = " << pyrParams.threshold);
+    print("pyrParams.edgeEigenValueRatio = " << pyrParams.edgeEigenValueRatio);
+    print("pyrParams.border              = " << pyrParams.border);
+    print("pyrParams.initialSigma        = " << pyrParams.initialSigma);
+    print("affShapeParams.maxIterations        = " << affShapeParams.maxIterations);
+    print("affShapeParams.convergenceThreshold = " << affShapeParams.convergenceThreshold);
+    print("affShapeParams.smmWindowSize        = " << affShapeParams.smmWindowSize);
+    print("affShapeParams.mrSize               = " << affShapeParams.mrSize);
+    print("affShapeParams.initialSigma         = " << affShapeParams.initialSigma);
+    print("affShapeParams.patchSize            = " << affShapeParams.patchSize);
+    print("siftParams.spatialBins     = " << siftParams.spatialBins);
+    print("siftParams.orientationBins = " << siftParams.orientationBins);
+    print("siftParams.maxBinValue     = " << siftParams.maxBinValue);
+    print("siftParams.patchSize       = " << siftParams.patchSize);
+    print("myParams.min_scale       = " << min_scale);
+    print("myParams.max_scale       = " << max_scale);
+
+#endif
+
+    // Create detector
     AffineHessianDetector* detector = new AffineHessianDetector(image, pyrParams, affShapeParams, siftParams);
+    return detector;
+}
+
+extern HESAFF_EXPORT AffineHessianDetector* new_hesaff(char* img_fpath)
+{
+    // Pyramid Params
+    int   numberOfScales = 3;
+    float threshold = 16.0f / 3.0f;
+    float edgeEigenValueRatio = 10.0f;
+    int   border = 5;
+    // Affine Params Shape
+    int   maxIterations = 16;
+    float convergenceThreshold = 1.6f;
+    int   smmWindowSize = 19;
+    float mrSize = 3.0f * sqrt(3.0f);
+    // SIFT params
+    int spatialBins = 4;
+    int orientationBins = 8;
+    float maxBinValue = 0.2f;
+    // Shared Pyramid + Affine
+    float initialSigma = 1.6f;
+    // Shared SIFT + Affine
+    int patchSize = 41;
+    // My params
+    float min_scale = -1;
+    float max_scale = -1;
+
+    AffineHessianDetector* detector = new_hesaff_from_params(img_fpath,
+            numberOfScales, threshold, edgeEigenValueRatio, border,
+            maxIterations, convergenceThreshold, smmWindowSize, mrSize,
+            spatialBins, orientationBins, maxBinValue, initialSigma, patchSize,
+            min_scale, max_scale);
     return detector;
 }
 
@@ -402,17 +476,17 @@ extern HESAFF_EXPORT void extractDesc(AffineHessianDetector* detector, int nKpts
 {
     print("detector->extractDesc");
     detector->extractDesc(nKpts, kpts, desc);
-    print("nKpts = " << nKpts);
+    print("extracted nKpts = " << nKpts);
 }
 
 extern HESAFF_EXPORT void exportArrays(AffineHessianDetector* detector, int nKpts, float *kpts, uint8 *desc)
 {
     print("detector->exportArrays(" << nKpts << ")");
-    print("detector->exportArrays kpts[0]" << kpts[0] << ")");
-    print("detector->exportArrays desc[0]" << desc[0] << ")");
+    //print("detector->exportArrays kpts[0]" << kpts[0] << ")");
+    //print("detector->exportArrays desc[0]" << (int) desc[0] << ")");
     detector->exportArrays(nKpts, kpts, desc);
-    print("detector->exportArrays kpts[0]" << kpts[0] << ")");
-    print("detector->exportArrays desc[0]" << desc[0] << ")");
+    //print("detector->exportArrays kpts[0]" << kpts[0] << ")");
+    //print("detector->exportArrays desc[0]" << (int) desc[0] << ")");
     print("FINISHED detector->exportArrays");
 }
 
@@ -430,6 +504,7 @@ int main(int argc, char **argv)
 {
     if (argc>1)
         {
+        print("[hesaff.c] main()")
         char* img_fpath = argv[1];
         int nKpts;
         AffineHessianDetector* detector = new_hesaff(img_fpath);
