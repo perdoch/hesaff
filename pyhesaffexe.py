@@ -6,6 +6,7 @@ from os.path import join, realpath, dirname
 import os
 import sys
 # Scientific
+import cv2
 import numpy as np
 
 ###############
@@ -117,6 +118,14 @@ def filter_kpts_scale(kpts, desc, scale_max=None, scale_min=None, **kwargs):
     return kpts, desc
 
 
+def svd(M):
+    #U, S, V = np.linalg.svd(M)
+    flags = cv2.SVD_FULL_UV
+    S, U, V = cv2.SVDecomp(M, flags=flags)
+    S = S.flatten()
+    return U, S, V
+
+
 def fix_kpts_hack(kpts, method=1):
     ''' Transforms:
         [E_a, E_b]        [A_a,   0]
@@ -132,7 +141,7 @@ def fix_kpts_hack(kpts, method=1):
     e22 = invET[2]
     invE_list = np.array(((e11, e12), (e21, e22))).T
     # Decompose using singular value decomposition
-    invXWYt_list = [np.linalg.svd(invE) for invE in invE_list]
+    invXWYt_list = [svd(invE) for invE in invE_list]
     # Rebuild the ellipse -> circle matrix
     A_list = [invX.dot(np.diag(1 / np.sqrt(invW))) for (invX, invW, invYt) in invXWYt_list]
     # Flatten the shapes for fast rectification

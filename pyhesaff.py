@@ -3,7 +3,6 @@ from __future__ import print_function, division
 #from ctypes.util import find_library
 from os.path import join, exists, realpath, dirname, normpath, expanduser, split
 import ctypes as C
-import os
 import sys
 import collections
 # Scientific
@@ -91,7 +90,10 @@ def find_lib_fpath(libname, root_dir, recurse_down=True, verbose=False):
                 root_dir = _new_root
         if not recurse_down:
             break
-    msg = '\n[c!] Cannot find dynamic library: %r' % libname
+
+    msg = ('\n[C!] load_clib(libname=%r root_dir=%r, recurse_down=%r, verbose=%r)' %
+           (libname, root_dir, recurse_down, verbose) +
+           '\n[c!] Cannot FIND dynamic library')
     print(msg)
     print('\n[c!] Checked: '.join(tried_fpaths))
     raise ImportError(msg)
@@ -118,8 +120,9 @@ def load_clib(libname, root_dir):
             cfunc.restype = return_type
             cfunc.argtypes = arg_type_list
     except Exception as ex:
-        print('[C] Caught exception: %r' % ex)
-        raise ImportError('[C] Cannot load dynamic library. Did you compile HESAFF?')
+        print('[C!] Caught exception: %r' % ex)
+        print('[C!] load_clib(libname=%r root_dir=%r)' % (libname, root_dir))
+        raise ImportError('[C] Cannot LOAD dynamic library. Did you compile HESAFF?')
     return clib, def_cfunc
 
 
@@ -148,8 +151,8 @@ hesaff_typed_params = [
     (float_t, 'initialSigma', 1.6),           # amount of smoothing applied to the initial level of first octave
     (int_t, 'patchSize', 41),                 # width and height of the patch
     # My params
-    (float_t, 'min_scale', -1.0),
-    (float_t, 'max_scale', -1.0),
+    (float_t, 'scale_min', -1.0),
+    (float_t, 'scale_max', -1.0),
 ]
 
 OrderedDict = collections.OrderedDict
@@ -161,7 +164,9 @@ def load_hesaff_clib():
     '''
     Specificially loads the hesaff lib and defines its functions
     '''
-    root_dir = realpath(dirname(__file__)) if '__file__' in vars() else realpath(os.getcwd())
+    # Get the root directory which should have the dynamic library in it
+    #root_dir = realpath(dirname(__file__)) if '__file__' in vars() else realpath(os.getcwd())
+    root_dir = realpath(dirname(__file__))
     libname = 'hesaff'
     hesaff_lib, def_cfunc = load_clib(libname, root_dir)
 
@@ -179,7 +184,7 @@ def new_hesaff(img_fpath, **kwargs):
     # Make detector and read image
     hesaff_params = hesaff_param_dict.copy()
     hesaff_params.update(kwargs)
-    print('[pyhessaff] Override params: %r' % kwargs)
+    #print('[pyhessaff] Override params: %r' % kwargs)
     #print(hesaff_params)
     hesaff_args = hesaff_params.values()
     hesaff_ptr = hesaff_lib.new_hesaff_from_params(realpath(img_fpath), *hesaff_args)
@@ -188,7 +193,7 @@ def new_hesaff(img_fpath, **kwargs):
 
 
 @profile
-def detect_hesaff_kpts(img_fpath, **kwargs):
+def detect_kpts(img_fpath, **kwargs):
     hesaff_ptr = new_hesaff(img_fpath, **kwargs)
     # Return the number of keypoints detected
     nKpts = hesaff_lib.detect(hesaff_ptr)
@@ -298,9 +303,9 @@ if __name__ == '__main__':
         try:
             # Select kpts
             title = split(pyhesaffexe.EXE_FPATH)[1] if use_exe else 'libhesaff'
-            detect_func = pyhesaffexe.detect_kpts if use_exe else detect_hesaff_kpts
+            detect_func = pyhesaffexe.detect_kpts if use_exe else detect_kpts
             with helpers.Timer(msg=title):
-                kpts, desc = detect_func(img_fpath, min_scale=14, max_scale=15)
+                kpts, desc = detect_func(img_fpath, scale_min=0, scale_max=1000)
             if reextract:
                 title = 'reextract'
                 with helpers.Timer(msg='reextract'):

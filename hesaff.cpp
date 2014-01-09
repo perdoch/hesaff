@@ -307,11 +307,15 @@ public:
         {
         // detectPyramidKeypoints -> detectOctaveKeypoints -> localizeKeypoint -> findAffineShape -> onAffineShapeFound
         // check if detected keypoint is within scale thresholds
-        bool scale_thresh_off = AffineShape::par.min_scale < 0 || AffineShape::par.max_scale < 0;
-        if (scale_thresh_off ||
-            (AffineShape::par.mrSize * s <= AffineShape::par.max_scale &&
-                AffineShape::par.mrSize * s >= AffineShape::par.min_scale))
+        float scale_min = AffineShape::par.scale_min;
+        float scale_max = AffineShape::par.scale_max;
+        float scale = AffineShape::par.mrSize * s;
+        // negative thresholds turn the threshold test off
+        if ((scale_min < 0 || scale >= scale_min) && (scale_max < 0 || scale <= scale_max))
             {
+            //print("passed: " << scale)
+            //print("scale_min: " << scale_min)
+            //print("scale_max: " << scale_max)
             // convert shape into a up is up frame
             rectifyAffineTransformationUpIsUp(a11, a12, a21, a22); //Helper
             // now sample the patch (populates this->patch)
@@ -376,8 +380,8 @@ extern HESAFF_EXPORT AffineHessianDetector* new_hesaff_from_params(char* img_fpa
         // Shared SIFT + Affine
         int patchSize,
         // My Params
-        float min_scale,
-        float max_scale)
+        float scale_min,
+        float scale_max)
 {
     print("making detector for " << img_fpath);
     print("make hesaff. img_fpath = " << img_fpath);
@@ -420,28 +424,27 @@ extern HESAFF_EXPORT AffineHessianDetector* new_hesaff_from_params(char* img_fpa
     siftParams.patchSize                = patchSize;
 
     // Copy my params
-    affShapeParams.min_scale            = min_scale;
-    affShapeParams.max_scale            = max_scale;
+    affShapeParams.scale_min            = scale_min;
+    affShapeParams.scale_max            = scale_max;
 
 #ifdef MYDEBUG
-    print("pyrParams.numberOfScales      = " << pyrParams.numberOfScales);
-    print("pyrParams.threshold           = " << pyrParams.threshold);
-    print("pyrParams.edgeEigenValueRatio = " << pyrParams.edgeEigenValueRatio);
-    print("pyrParams.border              = " << pyrParams.border);
-    print("pyrParams.initialSigma        = " << pyrParams.initialSigma);
-    print("affShapeParams.maxIterations        = " << affShapeParams.maxIterations);
-    print("affShapeParams.convergenceThreshold = " << affShapeParams.convergenceThreshold);
-    print("affShapeParams.smmWindowSize        = " << affShapeParams.smmWindowSize);
-    print("affShapeParams.mrSize               = " << affShapeParams.mrSize);
-    print("affShapeParams.initialSigma         = " << affShapeParams.initialSigma);
-    print("affShapeParams.patchSize            = " << affShapeParams.patchSize);
-    print("siftParams.spatialBins     = " << siftParams.spatialBins);
-    print("siftParams.orientationBins = " << siftParams.orientationBins);
-    print("siftParams.maxBinValue     = " << siftParams.maxBinValue);
-    print("siftParams.patchSize       = " << siftParams.patchSize);
-    print("affShapeParams.min_scale            = " << min_scale);
-    print("affShapeParams.max_scale            = " << max_scale);
-
+    //print("pyrParams.numberOfScales      = " << pyrParams.numberOfScales);
+    //print("pyrParams.threshold           = " << pyrParams.threshold);
+    //print("pyrParams.edgeEigenValueRatio = " << pyrParams.edgeEigenValueRatio);
+    //print("pyrParams.border              = " << pyrParams.border);
+    //print("pyrParams.initialSigma        = " << pyrParams.initialSigma);
+    //print("affShapeParams.maxIterations        = " << affShapeParams.maxIterations);
+    //print("affShapeParams.convergenceThreshold = " << affShapeParams.convergenceThreshold);
+    //print("affShapeParams.smmWindowSize        = " << affShapeParams.smmWindowSize);
+    //print("affShapeParams.mrSize               = " << affShapeParams.mrSize);
+    //print("affShapeParams.initialSigma         = " << affShapeParams.initialSigma);
+    //print("affShapeParams.patchSize            = " << affShapeParams.patchSize);
+    //print("siftParams.spatialBins     = " << siftParams.spatialBins);
+    //print("siftParams.orientationBins = " << siftParams.orientationBins);
+    //print("siftParams.maxBinValue     = " << siftParams.maxBinValue);
+    //print("siftParams.patchSize       = " << siftParams.patchSize);
+    print("affShapeParams.scale_min            = " << scale_min);
+    print("affShapeParams.scale_max            = " << scale_max);
 #endif
 
     // Create detector
@@ -470,14 +473,14 @@ extern HESAFF_EXPORT AffineHessianDetector* new_hesaff(char* img_fpath)
     // Shared SIFT + Affine
     int patchSize = 41;
     // My params
-    float min_scale = -1;
-    float max_scale = -1;
+    float scale_min = -1;
+    float scale_max = -1;
 
     AffineHessianDetector* detector = new_hesaff_from_params(img_fpath,
             numberOfScales, threshold, edgeEigenValueRatio, border,
             maxIterations, convergenceThreshold, smmWindowSize, mrSize,
             spatialBins, orientationBins, maxBinValue, initialSigma, patchSize,
-            min_scale, max_scale);
+            scale_min, scale_max);
     return detector;
 }
 

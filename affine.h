@@ -37,10 +37,10 @@ struct AffineShapeParams
    float mrSize;
 
    // minimum scale threshold
-   float min_scale;
+   float scale_min;
 
    // maximum scale threshold
-   float max_scale;
+   float scale_max;
 
    AffineShapeParams()
       {
@@ -50,8 +50,8 @@ struct AffineShapeParams
          patchSize = 41;
          smmWindowSize = 19;
          mrSize = 3.0f*sqrt(3.0f);
-         min_scale = -1;
-         max_scale = -1;
+         scale_min = -1;
+         scale_max = -1;
       }
 };
 
