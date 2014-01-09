@@ -449,7 +449,7 @@ extern HESAFF_EXPORT AffineHessianDetector* new_hesaff(char* img_fpath)
     int   border = 5;
     // Affine Params Shape
     int   maxIterations = 16;
-    float convergenceThreshold = 1.6f;
+    float convergenceThreshold = 0.05;
     int   smmWindowSize = 19;
     float mrSize = 3.0f * sqrt(3.0f);
     // SIFT params
