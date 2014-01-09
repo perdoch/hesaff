@@ -300,7 +300,7 @@ if __name__ == '__main__':
             title = split(pyhesaffexe.EXE_FPATH)[1] if use_exe else 'libhesaff'
             detect_func = pyhesaffexe.detect_kpts if use_exe else detect_hesaff_kpts
             with helpers.Timer(msg=title):
-                kpts, desc = detect_func(img_fpath)
+                kpts, desc = detect_func(img_fpath, min_scale=14, max_scale=15)
             if reextract:
                 title = 'reextract'
                 with helpers.Timer(msg='reextract'):

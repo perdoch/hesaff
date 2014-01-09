@@ -306,26 +306,32 @@ public:
             int iters)
         {
         // detectPyramidKeypoints -> detectOctaveKeypoints -> localizeKeypoint -> findAffineShape -> onAffineShapeFound
-        // convert shape into a up is up frame
-        rectifyAffineTransformationUpIsUp(a11, a12, a21, a22); //Helper
-        // now sample the patch (populates this->patch)
-        if (!normalizeAffine(this->image, x, y, s,
-                    a11, a12, a21, a22)) //affine.cpp
+        // check if detected keypoint is within scale thresholds
+        bool scale_thresh_off = AffineShape::par.min_scale < 0 || AffineShape::par.max_scale < 0;
+        if (scale_thresh_off ||
+            (AffineShape::par.mrSize * s <= AffineShape::par.max_scale &&
+                AffineShape::par.mrSize * s >= AffineShape::par.min_scale))
             {
-            // compute SIFT
-            sift.computeSiftDescriptor(this->patch);
-            // store the keypoint
-            keys.push_back(Keypoint());
-            Keypoint &k = keys.back();
-            k.x = x; k.y = y; k.s = s;
-            k.a11 = a11; k.a12 = a12;
-            k.a21 = a21; k.a22 = a22;
-            k.response = response;
-            k.type = type;
-            // store the descriptor
-            for (int i=0; i<128; i++)
+            // convert shape into a up is up frame
+            rectifyAffineTransformationUpIsUp(a11, a12, a21, a22); //Helper
+            // now sample the patch (populates this->patch)
+            if (!normalizeAffine(this->image, x, y, s, a11, a12, a21, a22)) //affine.cpp
                 {
-                k.desc[i] = (uint8) sift.vec[i];
+                // compute SIFT
+                sift.computeSiftDescriptor(this->patch);
+                // store the keypoint
+                keys.push_back(Keypoint());
+                Keypoint &k = keys.back();
+                k.x = x; k.y = y; k.s = s;
+                k.a11 = a11; k.a12 = a12;
+                k.a21 = a21; k.a22 = a22;
+                k.response = response;
+                k.type = type;
+                // store the descriptor
+                for (int i=0; i<128; i++)
+                    {
+                    k.desc[i] = (uint8) sift.vec[i];
+                    }
                 }
             }
         }
@@ -413,6 +419,9 @@ extern HESAFF_EXPORT AffineHessianDetector* new_hesaff_from_params(char* img_fpa
     siftParams.maxBinValue              = maxBinValue;
     siftParams.patchSize                = patchSize;
 
+    // Copy my params
+    affShapeParams.min_scale            = min_scale;
+    affShapeParams.max_scale            = max_scale;
 
 #ifdef MYDEBUG
     print("pyrParams.numberOfScales      = " << pyrParams.numberOfScales);
@@ -430,8 +439,8 @@ extern HESAFF_EXPORT AffineHessianDetector* new_hesaff_from_params(char* img_fpa
     print("siftParams.orientationBins = " << siftParams.orientationBins);
     print("siftParams.maxBinValue     = " << siftParams.maxBinValue);
     print("siftParams.patchSize       = " << siftParams.patchSize);
-    print("myParams.min_scale       = " << min_scale);
-    print("myParams.max_scale       = " << max_scale);
+    print("affShapeParams.min_scale            = " << min_scale);
+    print("affShapeParams.max_scale            = " << max_scale);
 
 #endif
 

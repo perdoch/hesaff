@@ -36,6 +36,12 @@ struct AffineShapeParams
    // size of the measurement region (as multiple of the feature scale)
    float mrSize;
 
+   // minimum scale threshold
+   float min_scale;
+
+   // maximum scale threshold
+   float max_scale;
+
    AffineShapeParams()
       {
          maxIterations = 16;
@@ -44,6 +50,8 @@ struct AffineShapeParams
          patchSize = 41;
          smmWindowSize = 19;
          mrSize = 3.0f*sqrt(3.0f);
+         min_scale = -1;
+         max_scale = -1;
       }
 };
 
