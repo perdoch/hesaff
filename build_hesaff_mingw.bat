@@ -14,12 +14,16 @@ cd %HOME%\code\hesaff
 mkdir build
 cd build
 
-set OPENCV_BIN=%INSTALL32%\OpenCV\bin
+:: version 3
+:: set OPENCV_BIN=%INSTALL32%\OpenCV\bin
 
-:: Add OpenCV to PATH ?
+:: version 2.4.8
+:: set OPENCV_BIN=%INSTALL32%\OpenCV\x86\mingw\bin
 :: set PATH=%OPENCV_BIN%;%PATH%
 :: set PATH=%HOME%\code\opencv\include\opencv2;%PATH%
 :: set PATH=%HOME%\code\opencv\include\opencv;%PATH%
+
+:: Add OpenCV to PATH ?
 
 :: OpenCV settings on windows
 cmake ^

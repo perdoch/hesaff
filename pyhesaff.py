@@ -168,7 +168,7 @@ def expand_scales(kpts, nScales=10):
 
 def test_adaptive_scale(img_fpath):
     import cv2
-    import extract_patch
+    from hotspotter import extract_patch
     n = 5
     img_fpath = realpath('zebra.png')
     kpts, desc = detect_kpts(img_fpath, scale_min=20, scale_max=100)

@@ -15,6 +15,8 @@
 //#include <opencv2/imgproc.hpp>
 //#endif
 //C:\Program Files (x86)\OpenCV\include
+//#include <opencv2/imgproc.hpp>
+//#include <opencv2/imgproc/imgproc.hpp>
 
 using namespace cv;
 using namespace std;
