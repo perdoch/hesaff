@@ -477,14 +477,16 @@ def in_depth_ellipse(kp):
     dists = circular_distance(uneven_points)
     total_dist = dists.sum()
     # Get an even step size
-    step_size = total_dist / num_pts
+    multiplier = 2
+    step_size = total_dist / (num_pts * multiplier)
     # Walk along edge
     num_steps_list = []
-    dist_walked_list = []
+    offset_list = []
     dist_walked = 0
-    total_dist = 0
+    total_dist = step_size
     for count in xrange(len(dists)):
         segment_len = dists[count]
+        offset_list.append(total_dist - dist_walked)
         total_dist += segment_len
         # How many steps can you take?
         num_steps = int((total_dist - dist_walked) // step_size)
@@ -492,9 +494,8 @@ def in_depth_ellipse(kp):
         # Log how much further youve gotten
         dist_walked += (num_steps * step_size)
         # Log how far you got by this timestep
-        dist_walked_list.append(dist_walked)
-    print('step_size = %r' % step_size)
-    print(np.vstack((num_steps_list, dists, dist_walked_list)).T)
+    #print('step_size = %r' % step_size)
+    #print(np.vstack((num_steps_list, dists, offset_list)).T)
 
     # store the percent location at each line segment where
     # the cut will be made
@@ -504,21 +505,15 @@ def in_depth_ellipse(kp):
     residual = 0
     prev_res = 0
     from itertools import izip
-    iter_ =  izip(num_steps_list, dists, dist_walked_list)
-    num, dist, dist_walked  = iter_.next()
-    for num, dist, dist_walked in zip(num_steps_list, dists, dist_walked_list):
-        break
-        total_dist += dist
-        residual = total_dist - dist_walked
+    #num, dist, dist_walked  = iter_.next()
+    for num, dist, offset in zip(num_steps_list, dists, offset_list):
         if num == 0:
             cut_list.append([])
             continue
-        total_steps += num
-        offset1 = (prev_res / dist)
-        offset2 = 1 - (residual / dist)
-        cut_locs = (np.linspace(offset2, offset1, num, endpoint=False))
+        offset1 = (step_size - offset) / dist
+        offset2 = ((num * step_size) - offset) / dist
+        cut_locs = (np.linspace(offset1, offset2, num, endpoint=True))
         cut_list.append(cut_locs)
-        prev_res = residual
         print(cut_locs)
 
     # Cut the segments into new better segments
