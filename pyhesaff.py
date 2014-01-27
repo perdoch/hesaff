@@ -1,34 +1,17 @@
 from __future__ import print_function, division
 # Standard
+#from itertools import izip
 #from ctypes.util import find_library
-from os.path import join, exists, realpath, dirname, expanduser, split
+from os.path import realpath, dirname
 import ctypes_interface
 import ctypes as C
-import sys
 import collections
-from itertools import izip
 # Scientific
 import numpy as np
-
-
-# If profiling with kernprof.py
-try:
-    profile  # NOQA
-except NameError:
-    profile = lambda func: func
-
-
-def ensure_hotspotter():
-    import matplotlib
-    matplotlib.use('Qt4Agg', warn=True, force=True)
-    # Look for hotspotter in ~/code
-    hotspotter_dir = join(expanduser('~'), 'code', 'hotspotter')
-    if not exists(hotspotter_dir):
-        print('[jon] hotspotter_dir=%r DOES NOT EXIST!' % (hotspotter_dir,))
-    # Append hotspotter location (not dir) to PYTHON_PATH (i.e. sys.path)
-    hotspotter_location = split(hotspotter_dir)[0]
-    if not hotspotter_location in sys.path:
-        sys.path.append(hotspotter_location)
+# Hotspotter
+from hotspotter import __common__
+print, print_, print_on, print_off, rrr, profile, printDBG =\
+    __common__.init(__name__, module_prefix='[hes]', DEBUG=False, initmpl=False)
 
 
 #============================
@@ -39,13 +22,13 @@ def ensure_hotspotter():
 kpts_dtype = np.float32
 desc_dtype = np.uint8
 # ctypes
-obj_t = C.c_void_p
-kpts_t = np.ctypeslib.ndpointer(dtype=kpts_dtype, ndim=2, flags='aligned, c_contiguous, writeable')
-ro_kpts_t = np.ctypeslib.ndpointer(dtype=kpts_dtype, ndim=2, flags='aligned, c_contiguous')
-desc_t = np.ctypeslib.ndpointer(dtype=desc_dtype, ndim=2, flags='aligned, c_contiguous, writeable')
-str_t = C.c_char_p
-int_t = C.c_int
-float_t = C.c_float
+FLAGS_RW = 'aligned, c_contiguous, writeable'
+obj_t     = C.c_void_p
+kpts_t    = np.ctypeslib.ndpointer(dtype=kpts_dtype, ndim=2, flags=FLAGS_RW)
+desc_t    = np.ctypeslib.ndpointer(dtype=desc_dtype, ndim=2, flags=FLAGS_RW)
+str_t     = C.c_char_p
+int_t     = C.c_int
+float_t   = C.c_float
 
 # THE ORDER OF THIS LIST IS IMPORTANT!
 hesaff_typed_params = [
@@ -111,7 +94,6 @@ def new_hesaff(img_fpath, **kwargs):
     return hesaff_ptr
 
 
-@profile
 def detect_kpts(img_fpath, **kwargs):
     hesaff_ptr = new_hesaff(img_fpath, **kwargs)
     # Return the number of keypoints detected
@@ -133,34 +115,6 @@ def extract_desc(img_fpath, kpts, **kwargs):
     # extract descriptors at given locations
     hesaff_lib.extractDesc(hesaff_ptr, nKpts, kpts, desc)
     return desc
-
-
-@profile
-def test_hesaff_kpts(img_fpath, **kwargs):
-    # Make detector and read image
-    hesaff_ptr = new_hesaff(img_fpath, **kwargs)
-    # Return the number of keypoints detected
-    nKpts = hesaff_lib.detect(hesaff_ptr)
-    #print('[pyhesaff] detected: %r keypoints' % nKpts)
-    # Allocate arrays
-    kpts = np.empty((nKpts, 5), kpts_dtype)
-    desc = np.empty((nKpts, 128), desc_dtype)
-    # Populate arrays
-    hesaff_lib.exportArrays(hesaff_ptr, nKpts, kpts, desc)
-    # TODO: Incorporate parameters
-    # TODO: Scale Factor
-    #hesaff_lib.extractDesc(hesaff_ptr, nKpts, kpts, desc2)
-    #hesaff_lib.extractDesc(hesaff_ptr, nKpts, kpts, desc3)
-    #print('[hesafflib] returned')
-    return kpts, desc
-
-
-def spaced_elements2(list_, n):
-    if n is None:
-        return np.arange(len(list_))
-    indexes = np.arange(len(list_))
-    stride = len(indexes) // n
-    return indexes[0:-1:stride]
 
 
 def adaptive_scale(img_fpath, kpts, desc=None):
@@ -187,130 +141,3 @@ def adaptive_scale(img_fpath, kpts, desc=None):
     #plt.show()
 
     return kpts, desc
-
-
-def spaced_elements(list_, n):
-    if n is None:
-        return 'list'
-    indexes = np.arange(len(list_))
-    stride = len(indexes) // n
-    return list_[indexes[0:-1:stride]]
-
-
-def load_test_data():
-    # Read Image
-    from hotspotter import fileio as io
-    import pyhesaff
-    n = 5
-    img_fpath = realpath('zebra.png')
-    imgBGR = io.imread(img_fpath)
-    kpts, desc = detect_kpts(img_fpath, scale_min=20, scale_max=100)
-    zebra_fxs = [374, 520, 880]
-    fxs = np.array(pyhesaff.spaced_elements2(kpts, n).tolist() + zebra_fxs)
-    kpts = kpts[fxs]
-    desc = desc[fxs]
-    testdata = locals()
-    return testdata
-
-def test_adaptive_scale(img_fpath):
-    import cv2
-    import ellipse
-    n = 5
-    nScales = 5
-    ellipse.rrr()
-    #from hotspotter import extract_patch
-    img_fpath = realpath('zebra.png')
-    kpts, desc = detect_kpts(img_fpath, scale_min=20, scale_max=100)
-    imgBGR = cv2.imread(img_fpath, flags=cv2.IMREAD_COLOR)
-    imgLAB = cv2.cvtColor(imgBGR, cv2.COLOR_BGR2LAB)
-    imgL = imgLAB[:, :, 0]
-    zebra_fxs = [374, 520, 880]
-    fxs = np.array(spaced_elements2(kpts, n).tolist() + zebra_fxs)
-    sel_kpts = kpts[fxs]
-    sel_desc = desc[fxs]
-    nScales = 5
-    exkpts = ellipse.expand_scales(sel_kpts, nScales)
-    exkpts_ = np.vstack(exkpts)
-    #ellipse.adaptive_scale(imgBGR, exkpts_)
-    return locals()
-
-if __name__ == '__main__':
-    import multiprocessing
-    multiprocessing.freeze_support()
-    ensure_hotspotter()
-    from hotspotter import draw_func2 as df2
-    from hotspotter import helpers
-    np.set_printoptions(threshold=5000, linewidth=5000, precision=3)
-
-    # Read Image
-    test_data = load_test_data()
-    img_fpath = test_data['img_fpath']
-    image     = test_data['imgBGR']
-
-    def test_hesaff(n=None, fnum=1, **kwargs):
-        from hotspotter import interaction
-        reextract = kwargs.get('reextrac', False)
-        new_exe = kwargs.get('new_exe', False)
-        old_exe = kwargs.get('old_exe', False)
-        adaptive = kwargs.get('adaptive', False)
-        use_exe = new_exe or old_exe
-
-        if use_exe:
-            import _pyhesaffexe
-            if new_exe:
-                _pyhesaffexe.EXE_FPATH = _pyhesaffexe.find_hesaff_fpath(exe_name='hesaffexe')
-            if old_exe:
-                _pyhesaffexe.EXE_FPATH = _pyhesaffexe.find_hesaff_fpath(exe_name='hesaff')
-
-        print('[test]---------------------')
-        try:
-            # Select kpts
-            title = split(_pyhesaffexe.EXE_FPATH)[1] if use_exe else 'libhesaff'
-            detect_func = _pyhesaffexe.detect_kpts if use_exe else detect_kpts
-            with helpers.Timer(msg=title):
-                kpts, desc = detect_func(img_fpath, scale_min=0, scale_max=1000)
-            if reextract:
-                title = 'reextract'
-                with helpers.Timer(msg='reextract'):
-                    desc = extract_desc(img_fpath, kpts)
-            kpts_ = kpts if n is None else spaced_elements(kpts, n)
-            desc_ = desc if n is None else spaced_elements(desc, n)
-            if adaptive:
-                kpts_, desc_ = adaptive_scale(img_fpath, kpts_, desc_)
-            # Print info
-            print('detected %d keypoints' % len(kpts))
-            print('drawing %d/%d kpts' % (len(kpts_), len(kpts)))
-            title += ' ' + str(len(kpts))
-            #print(kpts_)
-            #print(desc_[:, 0:16])
-            # Draw kpts
-            interaction.interact_keypoints(image, kpts_, desc_, fnum, nodraw=True)
-            df2.set_figtitle(title)
-            #df2.imshow(image, fnum=fnum)
-            #df2.draw_kpts2(kpts_, ell_alpha=.9, ell_linewidth=4,
-                           #ell_color='distinct', arrow=True, rect=True)
-        except Exception as ex:
-            import traceback
-            traceback.format_exc()
-            print('EXCEPTION! ' + repr(ex))
-            raise
-        print('[test]---------------------')
-        return locals()
-
-    #n = None
-    n = 5
-    fnum = 1
-    #test_locals = test_hesaff(n, fnum, adaptive=True)
-    adaptive_locals = test_adaptive_scale(img_fpath)
-    # They seem to work
-    #test_locals = test_hesaff(n, fnum + 2, new_exe=True)
-    #test_locals = test_hesaff(n, fnum + 3, old_exe=True)
-    #test_locals = test_hesaff(n, fnum + 1, use_exe=True, reextract=True)
-
-    #exec(helpers.execstr_dict(test_locals, 'test_locals'))
-    #if '--cmd' in sys.argv:
-    exec(helpers.execstr_dict(adaptive_locals, 'adaptive_locals'))
-    #in_depth_locals = adaptive_locals['in_depth_locals']
-    #exec(helpers.execstr_dict(in_depth_locals, 'in_depth_locals'))
-    #exec(df2.present(override1=True))
-    #exec(df2.present())
