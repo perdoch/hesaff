@@ -245,7 +245,7 @@ if __name__ == '__main__':
     # Read Image
     test_data = load_test_data()
     img_fpath = test_data['img_fpath']
-    image     = test_data['image']
+    image     = test_data['imgBGR']
 
     def test_hesaff(n=None, fnum=1, **kwargs):
         from hotspotter import interaction
