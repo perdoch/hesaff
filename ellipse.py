@@ -78,14 +78,9 @@ def adaptive_scale(imgBGR, kpts, nScales=16, nSamples=64):
     border_vals_sum = border_vals.sum(3).sum(2)
     assert border_vals_sum.shape == (nKp, nScales)
 
-    #invalid_ell_bit = True - check_kpts_in_bounds(expanded_kpts, width, height)
-    #assert len(invalid_ell_bit) == (nKp * nScales)
-    #invalid_ell_bit.shape = (nKp, nScales)
-    #border_vals_sum[invalid_ell_bit] = 0
-
     # interpolate maxima
     def bin_to_subscale(bins):
-        return 2 ** ((peaks[:, 0] / nScales) - low) / (range_)
+        return 2 ** ((peaks[:, 0] / nScales) / (range_) + low)
 
     peak_list = interpolate_maxima(border_vals_sum)
     subscale_list = [bin_to_subscale(peaks) if len(peaks) > 0 else [] for peaks in peak_list]
@@ -94,16 +89,6 @@ def adaptive_scale(imgBGR, kpts, nScales=16, nSamples=64):
     isvalid = check_kpts_in_bounds(subscale_kpts, width, height)
     adapted_kpts = np.array(subscale_kpts[isvalid], dtype=dtype_)
     return adapted_kpts
-
-    #expanded_kpts2 = np.rollaxis(expanded_kpts.reshape(nScales, nKp, 5), 1)
-    #assert expanded_kpts2.shape == (nKp, nScales, 5)
-    # Dont select one of the original expanded scales
-    #sel_kpts_list = [[ekpts[np.round(peak[0])] for peak in peaks] for ekpts, peaks in izip(expanded_kpts2, peak_list)]
-    #sel_kpts_list = [kplist for kplist in sel_kpts_list if len(kplist) > 0]
-    #sel_kpts = np.vstack(sel_kpts_list)
-    # Instead interpolate the scale values
-    # df2.plot(x, y); df2.update() ; df2.plot(xv, yv, color=df2.RED, marker='x'); df2.update()
-    #_fn = interpolate_fn = sp.interpolate.interp1d(x, y, kind='quadratic')
 
 
 def expand_scales(kpts, scales):
@@ -164,7 +149,7 @@ def interpolate_peaks(x_data_list, y_data_list):
 def sample_uniform(kpts, nSamples=128):
     nKp = len(kpts)
     invV, V, Z = kpts_matrix(kpts)
-    circle_pts = homogenous_circle_pts(nSamples)
+    circle_pts = homogenous_circle_pts(nSamples + 1)[0:-1]
     assert circle_pts.shape == (nSamples, 3)
     polygon1_list = array([v.dot(circle_pts.T).T for v in invV])
     assert polygon1_list.shape == (nKp, nSamples, 3)
