@@ -23,6 +23,33 @@ def test_data():
     return locals()
 
 
+@profile
+def adaptive_scale(imgBGR, kpts, nScales=4, low=-.5, high=.5, nSamples=16):
+    nKp = len(kpts)
+    dtype_ = kpts.dtype
+
+    # Work with float65
+    kpts_ = np.array(kpts, dtype=np.float64)
+
+    # Expand each keypoint into a number of different scales
+    expanded_kpts = expand_scales(kpts_, nScales, low, high)
+
+    # Sample gradient magnitude around the border
+    border_vals_sum = sample_ell_border_vals(imgBGR, expanded_kpts, nKp, nScales, nSamples)
+
+    # interpolate maxima
+    subscale_kpts = subscale_peaks(border_vals_sum, kpts_, nScales, low, high)
+
+    # Make sure that the new shapes are in bounds
+    height, width = imgBGR.shape[0:2]
+    isvalid = check_kpts_in_bounds(subscale_kpts, width, height)
+
+    # Convert to the original dtype
+    adapted_kpts = np.array(subscale_kpts[isvalid], dtype=dtype_)
+    return adapted_kpts
+
+
+@profile
 def check_kpts_in_bounds(kpts_, width, height):
     # Test to make sure the extents of the keypoints are in bounds
     unit_bbox = np.array([(-1, -1, 1),
@@ -40,58 +67,58 @@ def check_kpts_in_bounds(kpts_, width, height):
 
 
 @profile
-def adaptive_scale(imgBGR, kpts, nScales=16, nSamples=64):
-    nKp = len(kpts)
-    dtype_ = kpts.dtype
-    kpts = np.array(kpts, dtype=np.float64)
-    assert kpts.shape == (nKp, 5)
-
-    # Expand each keypoint into a number of different scales
-    low = -.5
-    high = .5
-    range_ = high - low
+def expand_scales(kpts, nScales, low, high):
     scales = 2 ** np.linspace(low, high, nScales)
-    expanded_kpts_list = expand_scales(kpts, scales)
-    assert len(expanded_kpts_list) == nScales
+    expanded_kpts_list = expand_kpts(kpts, scales)
     expanded_kpts = np.vstack(expanded_kpts_list)
-    assert expanded_kpts.shape == (nKp * nScales, 5)
+    #assert len(expanded_kpts_list) == nScales
+    #assert expanded_kpts.shape == (nKp * nScales, 5)
+    return expanded_kpts
 
-    # Sample points uniformly across the boundary
+
+@profile
+def sample_ell_border_pts(expanded_kpts, nSamples):
     ell_border_pts_list = sample_uniform(expanded_kpts, nSamples)
-    assert len(ell_border_pts_list) == nKp * nScales
-    assert ell_border_pts_list[0].shape == (nSamples, 2)
+    #assert len(ell_border_pts_list) == nKp * nScales
+    #assert ell_border_pts_list[0].shape == (nSamples, 2)
     ell_border_pts = np.vstack(ell_border_pts_list)
-    assert ell_border_pts.shape == (nKp * nScales * nSamples, 2)
-    assert ell_border_pts.shape == (nKp * nScales * nSamples, 2)
+    #assert ell_border_pts.shape == (nKp * nScales * nSamples, 2)
+    #assert ell_border_pts.shape == (nKp * nScales * nSamples, 2)
+    return ell_border_pts
 
-    # Make sure that the new shapes are in bounds
-    height, width = imgBGR.shape[0:2]
+
+@profile
+def sample_ell_border_vals(imgBGR, expanded_kpts, nKp, nScales, nSamples):
+    # Sample points uniformly across the boundary
+    ell_border_pts = sample_ell_border_pts(expanded_kpts, nSamples)
+    # Build gradient magnitude imaeg
     imgLAB = cv2.cvtColor(imgBGR, cv2.COLOR_BGR2LAB)
     imgL = imgLAB[:, :, 0]
-    nChannels = get_num_channels(imgL)
-
-    # Sample intensity around the border
     imgMag = gradient_magnitude(imgL)
     border_vals = subpixel_values(imgMag, ell_border_pts)
-    assert len(border_vals) == (nKp * nScales * nSamples)
-    border_vals.shape = (nKp, nScales, nSamples, nChannels)
+    #assert len(border_vals) == (nKp * nScales * nSamples)
+    border_vals.shape = (nKp, nScales, nSamples, 1)
     border_vals_sum = border_vals.sum(3).sum(2)
-    assert border_vals_sum.shape == (nKp, nScales)
+    #assert border_vals_sum.shape == (nKp, nScales)
+    return border_vals_sum
 
-    # interpolate maxima
+
+def interpolate_between(peak_list, nScales, high, low):
     def bin_to_subscale(bins):
-        return 2 ** ((peaks[:, 0] / nScales) / (range_) + low)
-
-    peak_list = interpolate_maxima(border_vals_sum)
+        return 2 ** ((peaks[:, 0] / nScales) * (high - low) + low)
     subscale_list = [bin_to_subscale(peaks) if len(peaks) > 0 else [] for peaks in peak_list]
+    return subscale_list
+
+
+@profile
+def subscale_peaks(border_vals_sum, kpts, nScales, low, high):
+    peak_list = interpolate_maxima(border_vals_sum)
+    subscale_list = interpolate_between(peak_list, nScales, high, low)
     subscale_kpts = expand_subscales(kpts, subscale_list)
-    #
-    isvalid = check_kpts_in_bounds(subscale_kpts, width, height)
-    adapted_kpts = np.array(subscale_kpts[isvalid], dtype=dtype_)
-    return adapted_kpts
+    return subscale_kpts
 
 
-def expand_scales(kpts, scales):
+def expand_kpts(kpts, scales):
     expanded_kpts_list = []
     for scale in scales:
         kpts_ = kpts.copy()
@@ -110,26 +137,49 @@ def expand_subscales(kpts, subscale_list):
     return subscale_kpts
 
 
-def interpolate_maxima(scalar_list):
+def find_maxima(y_list):
+    maxima_list = [argrelextrema(y, np.greater)[0] for y in y_list]
+    return maxima_list
+
+
+def extrema_neighbors(extrema_list, nBins):
+    extrema_left_list  = [np.clip(extrema - 1, 0, nBins) for extrema in extrema_list]
+    extrema_right_list = [np.clip(extrema + 1, 0, nBins) for extrema in extrema_list]
+    return extrema_left_list, extrema_right_list
+
+
+def find_maxima_with_neighbors(scalar_list):
     y_list = [scalars for scalars in scalar_list]
     nBins = len(y_list[0])
     x = np.arange(nBins)
-    extrema_ = [argrelextrema(y, np.greater)[0] for y in y_list]
-    extrema_left_  = [np.clip(extrema - 1, 0, nBins) for extrema in extrema_]
-    extrema_right_ = [np.clip(extrema + 1, 0, nBins) for extrema in extrema_]
-    data_list = [np.vstack([exl, exm, exr]) for exl, exm, exr in izip(extrema_left_, extrema_, extrema_right_)]
-    x_data_list = [[] if data.size == 0 else y[data] for y, data in izip(y_list, data_list)]
-    y_data_list = [[] if data.size == 0 else x[data] for y, data in izip(y_list, data_list)]
+    maxima_list = find_maxima(y_list)
+    maxima_left_list, maxima_right_list = extrema_neighbors(maxima_list, nBins)
+    data_list = [np.vstack([exl, exm, exr]) for exl, exm, exr in izip(maxima_left_list, maxima_list, maxima_right_list)]
+    x_data_list = [[] if data.size == 0 else x[data] for data in iter(data_list)]
+    y_data_list = [[] if data.size == 0 else y[data] for y, data in izip(y_list, data_list)]
+    return x_data_list, y_data_list
 
+
+def interpolate_maxima(scalar_list):
+    # scalar_list = border_vals_sum
+    x_data_list, y_data_list = find_maxima_with_neighbors(scalar_list)
     peak_list = interpolate_peaks(x_data_list, y_data_list)
     return peak_list
+
+
+def interpolate_peaks2(x_data_list, y_data_list):
+    coeff_list = []
+    for x_data, y_data in izip(x_data_list, y_data_list):
+        for x, y in izip(x_data.T, y_data.T):
+            coeff = np.polyfit(x, y, 2)
+            coeff_list.append(coeff)
 
 
 @profile
 def interpolate_peaks(x_data_list, y_data_list):
     #http://stackoverflow.com/questions/717762/how-to-calculate-the-vertex-of-a-parabola-given-three-point
     peak_list = []
-    for y_data, x_data in izip(x_data_list, y_data_list):
+    for x_data, y_data in izip(x_data_list, y_data_list):
         if len(y_data) == 0:
             peak_list.append([])
             continue
