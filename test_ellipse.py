@@ -1,6 +1,13 @@
 #----------------
 # Test Functions
 #----------------
+from hotspotter import helpers
+from hotspotter import extract_patch
+from hotspotter import draw_func2 as df2
+from hotspotter import vizualizations as viz
+from hotspotter import draw_func2 as df2  # NOQA
+import numpy as np
+
 
 def draw_expanded_scales(imgL, sel_kpts, exkpts, exdesc_):
     draw_keypoint_patch = extract_patch.draw_keypoint_patch
@@ -34,13 +41,13 @@ def draw_expanded_scales(imgL, sel_kpts, exkpts, exdesc_):
     print('nRows = %r' % nRows)
     print('nCols = %r' % nCols)
 
+
 def in_depth_ellipse(kp):
     kp = np.array(kp, dtype=np.float64)
     print('kp = %r' % kp)
     #-----------------------
     # SETUP
     #-----------------------
-    from hotspotter import draw_func2 as df2
     np.set_printoptions(precision=3)
     tau = 2 * np.pi
     df2.reset()
