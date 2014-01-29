@@ -103,7 +103,7 @@ def new_hesaff(img_fpath, **kwargs):
 
 
 def detect_kpts(img_fpath, use_adaptive_scale=False, **kwargs):
-    print('Detecting Keypoints')
+    #print('Detecting Keypoints')
     hesaff_ptr = new_hesaff(img_fpath, **kwargs)
     # Return the number of keypoints detected
     nKpts = hesaff_lib.detect(hesaff_ptr)
@@ -114,7 +114,7 @@ def detect_kpts(img_fpath, use_adaptive_scale=False, **kwargs):
     hesaff_lib.exportArrays(hesaff_ptr, nKpts, kpts, desc)
     # Adapt scale if requested
     if use_adaptive_scale:
-        print('Adapting Scale')
+        #print('Adapting Scale')
         kpts, desc = adapt_scale(img_fpath, kpts)
     return kpts, desc
 
