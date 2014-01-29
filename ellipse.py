@@ -10,7 +10,7 @@ import cv2
 import numpy as np
 import scipy as sp  # NOQA
 # Hotspotter
-from hotspotter import __common__
+from hscom import __common__
 print, print_, print_on, print_off, rrr, profile, printDBG =\
     __common__.init(__name__, module_prefix='[ell]', DEBUG=False, initmpl=False)
 
@@ -24,7 +24,9 @@ def test_data():
 
 
 @profile
-def adaptive_scale(imgBGR, kpts, nScales=4, low=-.5, high=.5, nSamples=16):
+def adaptive_scale(img_fpath, kpts, nScales=4, low=-.5, high=.5, nSamples=16):
+    imgBGR = cv2.imread(img_fpath, flags=cv2.CV_LOAD_IMAGE_COLOR)
+
     nKp = len(kpts)
     dtype_ = kpts.dtype
 

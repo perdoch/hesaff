@@ -84,6 +84,14 @@ hesaff_lib = load_hesaff_clib()
 # hesaff python interface
 #============================
 
+def _make_hesaff_cpp_params(**kwargs):
+    hesaff_params = hesaff_param_dict.copy()
+    for key, val in kwargs.iteritems():
+        if key in hesaff_params:
+            hesaff_params[key] = val
+        else:
+            print('[pyhesaff] WARNING: key=%r is not known' % key)
+
 
 def new_hesaff(img_fpath, **kwargs):
     # Make detector and read image
@@ -94,7 +102,8 @@ def new_hesaff(img_fpath, **kwargs):
     return hesaff_ptr
 
 
-def detect_kpts(img_fpath, **kwargs):
+def detect_kpts(img_fpath, use_adaptive_scale=False, **kwargs):
+    print('Detecting Keypoints')
     hesaff_ptr = new_hesaff(img_fpath, **kwargs)
     # Return the number of keypoints detected
     nKpts = hesaff_lib.detect(hesaff_ptr)
@@ -103,7 +112,21 @@ def detect_kpts(img_fpath, **kwargs):
     desc = np.empty((nKpts, 128), desc_dtype)
     # Populate arrays
     hesaff_lib.exportArrays(hesaff_ptr, nKpts, kpts, desc)
+    # Adapt scale if requested
+    if use_adaptive_scale:
+        print('Adapting Scale')
+        kpts, desc = adapt_scale(img_fpath, kpts)
     return kpts, desc
+
+
+def adapt_scale(img_fpath, kpts):
+    import ellipse
+    nScales = 16
+    nSamples = 16
+    low, high = -1, 2
+    adapted_kpts = ellipse.adaptive_scale(img_fpath, kpts, nScales, low, high, nSamples)
+    adapted_desc = extract_desc(img_fpath, adapted_kpts)
+    return adapted_kpts, adapted_desc
 
 
 def extract_desc(img_fpath, kpts, **kwargs):
@@ -115,29 +138,3 @@ def extract_desc(img_fpath, kpts, **kwargs):
     # extract descriptors at given locations
     hesaff_lib.extractDesc(hesaff_ptr, nKpts, kpts, desc)
     return desc
-
-
-def adaptive_scale(img_fpath, kpts, desc=None):
-    #for channel in xrange(3):
-        #import matplotlib.pyplot as plt
-        #img = imgLAB[:, :, channel]
-
-        #laplace = cv2.Laplacian(img, cv2.CV_64F)
-        #sobelx = cv2.Sobel(img, cv2.CV_64F, 1, 0, ksize=5)
-        #sobely = cv2.Sobel(img, cv2.CV_64F, 0, 1, ksize=5)
-
-        #def _imshow(img, name, pnum):
-            #plt.subplot(*pnum)
-            #plt.imshow(img, cmap='gray')
-            #plt.title(name)
-            #plt.xticks([])
-            #plt.yticks([])
-
-        #plt.figure(channel)
-        #_imshow(img,     'Original', (2, 2, 1))
-        #_imshow(laplace, 'Laplace',  (2, 2, 2))
-        #_imshow(sobelx,  'Sobel X',  (2, 2, 3))
-        #_imshow(sobely,  'Sobel Y',  (2, 2, 4))
-    #plt.show()
-
-    return kpts, desc
