@@ -37,7 +37,7 @@ cmake ^
 :: make command that doesn't freeze on mingw
 :: mingw32-make -j7 "MAKE=mingw32-make -j3" -f CMakeFiles\Makefile2 all
 make
-python %HOME%\code\hotspotter\hotspotter\_tpl\localize.py
+python %HOME%\code\hotspotter\hstpl\localize.py
 exit /b
 
 :exit

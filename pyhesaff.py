@@ -9,7 +9,7 @@ import collections
 # Scientific
 import numpy as np
 # Hotspotter
-from hotspotter import __common__
+from hscom import __common__
 print, print_, print_on, print_off, rrr, profile, printDBG =\
     __common__.init(__name__, module_prefix='[hes]', DEBUG=False, initmpl=False)
 

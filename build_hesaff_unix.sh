@@ -7,4 +7,4 @@ cmake -G "Unix Makefiles" ..
 make
 # localize.py should take care of putting hotspotter in the path
 #export PYTHONPATH=$PYTHONPATH:~/code/  
-python ~/code/hotspotter/_tpl/localize.py
+python ~/code/hotspotter/hstpl/localize.py
