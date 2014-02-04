@@ -94,10 +94,14 @@ def load_clib(libname, root_dir):
         return clib, def_cfunc
     except OSError as ex:
         print('[C!] Caught OSError:\n%s' % ex)
-        errmsg = 'Is there a missing dependency?'
+        errsuffix = 'Is there a missing dependency?'
     except Exception as ex:
         print('[C!] Caught Exception:\n%s' % ex)
-        errmsg = 'Was the library correctly compiled?'
+        errsuffix = 'Was the library correctly compiled?'
+    import os
+    print('[C!] cwd=%r' % os.getcwd())
     print('[C!] load_clib(libname=%r root_dir=%r)' % (libname, root_dir))
     print('[C!] lib_fpath = %r' % lib_fpath)
-    raise ImportError('[C] Cannot LOAD dynamic library. ' + errmsg)
+    errmsg = '[C] Cannot LOAD dynamic library. ' + errsuffix
+    print(errmsg)
+    raise ImportError(errmsg)
