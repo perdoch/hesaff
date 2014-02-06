@@ -65,6 +65,14 @@ def load_hesaff_clib():
     '''
     # Get the root directory which should have the dynamic library in it
     #root_dir = realpath(dirname(__file__)) if '__file__' in vars() else realpath(os.getcwd())
+
+    # os.path.dirname(sys.executable)
+    #if getattr(sys, 'frozen', False):
+        # we are running in a |PyInstaller| bundle
+        #root_dir = realpath(sys._MEIPASS)
+    #else:
+        # we are running in a normal Python environment
+        #root_dir = realpath(dirname(__file__))
     root_dir = realpath(dirname(__file__))
     libname = 'hesaff'
     hesaff_lib, def_cfunc = ctypes_interface.load_clib(libname, root_dir)
