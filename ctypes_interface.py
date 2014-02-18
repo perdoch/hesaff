@@ -49,7 +49,8 @@ def find_lib_fpath(libname, root_dir, recurse_down=True, verbose=False):
                 if exists(lib_fpath):
                     if verbose:
                         print('\n[c] Checked: '.join(tried_fpaths))
-                    print('using: %r' % lib_fpath)
+                    if not '--quiet' in sys.argv:
+                        print('using: %r' % lib_fpath)
                     return lib_fpath
                 else:
                     # Remember which candiate library fpaths did not exist
