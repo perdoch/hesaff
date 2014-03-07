@@ -41,7 +41,7 @@ hesaff_typed_params = [
     # Affine Shape Params
     (int_t,   'maxIterations', 16),           # number of affine shape interations
     (float_t, 'convergenceThreshold', 0.05),  # maximum deviation from isotropic shape at convergence
-    (int_t,   'smmWindowSize', 19),           # width and height of the SMM mask
+    (int_t,   'smmWindowSize', 19),           # width and height of the SMM (second moment matrix) mask
     (float_t, 'mrSize', 3.0 * np.sqrt(3.0)),  # size of the measurement region (as multiple of the feature scale)
     # SIFT params
     (int_t,   'spatialBins', 4),
@@ -122,9 +122,11 @@ def detect_kpts(img_fpath, use_adaptive_scale=False, **kwargs):
     hesaff_ptr = new_hesaff(img_fpath, **kwargs)
     # Return the number of keypoints detected
     nKpts = hesaff_lib.detect(hesaff_ptr)
+    kpts_dim = 5
+    desc_dim = 128
     # Allocate arrays
-    kpts = np.empty((nKpts, 5), kpts_dtype)
-    desc = np.empty((nKpts, 128), desc_dtype)
+    kpts = np.empty((nKpts, kpts_dim), kpts_dtype)
+    desc = np.empty((nKpts, desc_dim), desc_dtype)
     hesaff_lib.exportArrays(hesaff_ptr, nKpts, kpts, desc)  # Populate arrays
     if use_adaptive_scale:  # Adapt scale if requested
         #print('Adapting Scale')

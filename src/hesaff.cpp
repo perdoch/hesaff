@@ -307,8 +307,10 @@ public:
     /*
      * Callback for when an affine shape is found.
      * This is the stack traceback for this function:
-     * {detectPyramidKeypoints -> detectOctaveKeypoints ->
-     *  localizeKeypoint -> findAffineShape -> onAffineShapeFound}
+     * {detectPyramidKeypoints ->
+     *  detectOctaveKeypoints ->
+     *  localizeKeypoint ->
+     *  findAffineShape -> onAffineShapeFound}
      * This function:
      *   - Filters scales outside of bounds
      *   - Computes the patch's rotation (if rotation_invariance is True)
@@ -330,11 +332,15 @@ public:
             {
             //print("passed: " << scale)
             //print("scale_min: " << scale_min << "; scale_max: " << scale_max)
+            //
             // Enforce the gravity vector: convert shape into a up is up frame
             rectifyAffineTransformationUpIsUp(a11, a12, a21, a22); //Helper
             // now sample the patch (populates this->patch)
             if (!normalizeAffine(this->image, x, y, s, a11, a12, a21, a22)) //affine.cpp
                 {
+                //DBG: write out patches
+                //make_str(fpath, "patches/patch_" << this->keys.size() << "c.png");
+                //cv::imwrite(fpath, this->patch);
                 // compute SIFT and append new keypoint and descriptor
                 this->sift.computeSiftDescriptor(this->patch);
                 this->keys.push_back(Keypoint());
