@@ -171,6 +171,7 @@ public:
 
     void extractDesc(int nKpts, float* kpts, uint8* desc)
         {
+        // Extract descriptors from user specified keypoints
         float x, y, ia, ib, ic, id;
         float sc;
         float a11, a12, a21, a22, s;
@@ -201,7 +202,9 @@ public:
                 //print("[extractDesc.c]    sc = "  << sc);
                 //print("[extractDesc.c] iabcd = [" << ia << ", " << ib << ", " << ic << ", " << id << "] ");
                 //print("[extractDesc.c]    xy = (" <<  x << ", " <<  y << ") ");
-                //print("[extractDesc.c]  abcd = [" << a11 << ", " << a12 << ", " << a21 << ", " << a22 << "] " << "s = " << s);
+                //print("[extractDesc.c]    ab = [" << a11 << ", " << a12 << ",
+                //print("[extractDesc.c]    cd =  " << a21 << ", " << a22 << "] ");
+                //print("[extractDesc.c]     s = " << s);
                 }
             #endif
             // now sample the patch (populates this->patch)
@@ -224,7 +227,7 @@ public:
 
     void write_features(char* img_fpath)
     {
-        // Write text keypoints to disk
+        // Dump keypoints to disk in text format
         char suffix[] = ".hesaff.sift";
         int len = strlen(img_fpath)+strlen(suffix)+1;
         #ifdef WIN32
@@ -295,9 +298,22 @@ public:
             float s, float pixelDistance,
             int type, float response)
         {
+        // A circular keypoint is detected. Adpat its shape to an ellipse
         findAffineShape(blur, x, y, s, pixelDistance, type, response);
         }
 
+    //------------------------------------------------------------
+    // BEGIN void onAffineShapeFound
+    /*
+     * Callback for when an affine shape is found.
+     * This is the stack traceback for this function:
+     * {detectPyramidKeypoints -> detectOctaveKeypoints ->
+     *  localizeKeypoint -> findAffineShape -> onAffineShapeFound}
+     * This function:
+     *   - Filters scales outside of bounds
+     *   - Computes the patch's rotation (if rotation_invariance is True)
+     *   - Computes the patch's SIFT Descriptor
+     */
     void onAffineShapeFound(const cv::Mat &blur, float x, float y,
             float s, float pixelDistance,
             float a11, float a12,
@@ -305,7 +321,6 @@ public:
             int type, float response,
             int iters)
         {
-        // detectPyramidKeypoints -> detectOctaveKeypoints -> localizeKeypoint -> findAffineShape -> onAffineShapeFound
         // check if detected keypoint is within scale thresholds
         float scale_min = AffineShape::par.scale_min;
         float scale_max = AffineShape::par.scale_max;
@@ -314,24 +329,21 @@ public:
         if ((scale_min < 0 || scale >= scale_min) && (scale_max < 0 || scale <= scale_max))
             {
             //print("passed: " << scale)
-            //print("scale_min: " << scale_min)
-            //print("scale_max: " << scale_max)
-            // convert shape into a up is up frame
+            //print("scale_min: " << scale_min << "; scale_max: " << scale_max)
+            // Enforce the gravity vector: convert shape into a up is up frame
             rectifyAffineTransformationUpIsUp(a11, a12, a21, a22); //Helper
             // now sample the patch (populates this->patch)
             if (!normalizeAffine(this->image, x, y, s, a11, a12, a21, a22)) //affine.cpp
                 {
-                // compute SIFT
-                sift.computeSiftDescriptor(this->patch);
-                // store the keypoint
-                keys.push_back(Keypoint());
+                // compute SIFT and append new keypoint and descriptor
+                this->sift.computeSiftDescriptor(this->patch);
+                this->keys.push_back(Keypoint());
                 Keypoint &k = keys.back();
                 k.x = x; k.y = y; k.s = s;
                 k.a11 = a11; k.a12 = a12;
                 k.a21 = a21; k.a22 = a22;
                 k.response = response;
                 k.type = type;
-                // store the descriptor
                 for (int i=0; i<128; i++)
                     {
                     k.desc[i] = (uint8) sift.vec[i];
@@ -339,17 +351,22 @@ public:
                 }
             }
         }
+    // END void onAffineShapeFound
+    //------------------------------------------------------------
 
 
 };
 // END class AffineHessianDetector
 
+
+//----------------------------------------------
+// BEGIN PYTHON BINDINGS
+// * python's ctypes module can talk to extern c code
+//http://nbviewer.ipython.org/github/pv/SciPy-CookBook/blob/master/ipython/Ctypes.ipynb
 #ifdef __cplusplus
 extern "C" {
 #endif
 typedef void*(*allocer_t)(int, int*);
-
-//http://nbviewer.ipython.org/github/pv/SciPy-CookBook/blob/master/ipython/Ctypes.ipynb
 
 extern HESAFF_EXPORT int detect(AffineHessianDetector* detector)
 {
@@ -359,7 +376,7 @@ extern HESAFF_EXPORT int detect(AffineHessianDetector* detector)
     return nKpts;
 }
 
-
+// new hessian affine detector
 extern HESAFF_EXPORT AffineHessianDetector* new_hesaff_from_params(char* img_fpath,
         // Pyramid Params
         int   numberOfScales,
@@ -381,7 +398,8 @@ extern HESAFF_EXPORT AffineHessianDetector* new_hesaff_from_params(char* img_fpa
         int patchSize,
         // My Params
         float scale_min,
-        float scale_max)
+        float scale_max,
+        bool rotation_invariance)
 {
     print("making detector for " << img_fpath);
     print("make hesaff. img_fpath = " << img_fpath);
@@ -426,6 +444,7 @@ extern HESAFF_EXPORT AffineHessianDetector* new_hesaff_from_params(char* img_fpa
     // Copy my params
     affShapeParams.scale_min            = scale_min;
     affShapeParams.scale_max            = scale_max;
+    affShapeParams.rotation_invariance  = rotation_invariance;
 
 #ifdef MYDEBUG
     //print("pyrParams.numberOfScales      = " << pyrParams.numberOfScales);
@@ -445,6 +464,7 @@ extern HESAFF_EXPORT AffineHessianDetector* new_hesaff_from_params(char* img_fpa
     //print("siftParams.patchSize       = " << siftParams.patchSize);
     print("affShapeParams.scale_min            = " << scale_min);
     print("affShapeParams.scale_max            = " << scale_max);
+    print("affShapeParams.rotation_invariance  = " << rotation_invariance);
 #endif
 
     // Create detector
@@ -452,6 +472,7 @@ extern HESAFF_EXPORT AffineHessianDetector* new_hesaff_from_params(char* img_fpa
     return detector;
 }
 
+// new hessian affine detector WRAPPER
 extern HESAFF_EXPORT AffineHessianDetector* new_hesaff(char* img_fpath)
 {
     // Pyramid Params
@@ -475,15 +496,17 @@ extern HESAFF_EXPORT AffineHessianDetector* new_hesaff(char* img_fpath)
     // My params
     float scale_min = -1;
     float scale_max = -1;
+    bool rotation_invariance = false;
 
     AffineHessianDetector* detector = new_hesaff_from_params(img_fpath,
             numberOfScales, threshold, edgeEigenValueRatio, border,
             maxIterations, convergenceThreshold, smmWindowSize, mrSize,
             spatialBins, orientationBins, maxBinValue, initialSigma, patchSize,
-            scale_min, scale_max);
+            scale_min, scale_max, rotation_invariance);
     return detector;
 }
 
+// extract descriptors from user specified keypoints
 extern HESAFF_EXPORT void extractDesc(AffineHessianDetector* detector, int nKpts, float* kpts, uint8* desc)
 {
     print("detector->extractDesc");
@@ -491,6 +514,7 @@ extern HESAFF_EXPORT void extractDesc(AffineHessianDetector* detector, int nKpts
     print("extracted nKpts = " << nKpts);
 }
 
+// export current detections to numpy arrays
 extern HESAFF_EXPORT void exportArrays(AffineHessianDetector* detector, int nKpts, float *kpts, uint8 *desc)
 {
     print("detector->exportArrays(" << nKpts << ")");
@@ -502,6 +526,7 @@ extern HESAFF_EXPORT void exportArrays(AffineHessianDetector* detector, int nKpt
     print("FINISHED detector->exportArrays");
 }
 
+// dump current detections to disk
 extern HESAFF_EXPORT void writeFeatures(AffineHessianDetector* detector, char* img_fpath)
 {
     print("detector->write_features");
@@ -511,7 +536,13 @@ extern HESAFF_EXPORT void writeFeatures(AffineHessianDetector* detector, char* i
 #ifdef __cplusplus
 }
 #endif
+// END PYTHON BINDINGS
+//----------------------------------------------
 
+
+//-------------------------------
+// int main
+// * program entry point for command line use if we build the executable
 int main(int argc, char **argv)
 {
     if (argc>1)

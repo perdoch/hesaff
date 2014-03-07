@@ -42,6 +42,9 @@ struct AffineShapeParams
    // maximum scale threshold
    float scale_max;
 
+   // are we assuming the gravity vector?
+   bool rotation_invariance;
+
    AffineShapeParams()
       {
          maxIterations = 16;
@@ -52,6 +55,7 @@ struct AffineShapeParams
          mrSize = 3.0f*sqrt(3.0f);
          scale_min = -1;
          scale_max = -1;
+         rotation_invariance = false;
       }
 };
 

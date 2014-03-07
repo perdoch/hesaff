@@ -23,11 +23,12 @@ kpts_dtype = np.float32
 desc_dtype = np.uint8
 # ctypes
 FLAGS_RW = 'aligned, c_contiguous, writeable'
-obj_t     = C.c_void_p
 kpts_t    = np.ctypeslib.ndpointer(dtype=kpts_dtype, ndim=2, flags=FLAGS_RW)
 desc_t    = np.ctypeslib.ndpointer(dtype=desc_dtype, ndim=2, flags=FLAGS_RW)
+obj_t     = C.c_void_p
 str_t     = C.c_char_p
 int_t     = C.c_int
+bool_t    = C.c_bool
 float_t   = C.c_float
 
 # THE ORDER OF THIS LIST IS IMPORTANT!
@@ -52,6 +53,7 @@ hesaff_typed_params = [
     # My params
     (float_t, 'scale_min', -1.0),
     (float_t, 'scale_max', -1.0),
+    (bool_t,  'rotation_invariance', False),
 ]
 
 OrderedDict = collections.OrderedDict
@@ -111,6 +113,11 @@ def new_hesaff(img_fpath, **kwargs):
 
 
 def detect_kpts(img_fpath, use_adaptive_scale=False, **kwargs):
+    '''
+    main driver function for detecting hessian affine keypoints.
+    extra parameters can be passed to the hessian affine detector by using
+    kwargs. Valid keyword arguments are:
+    ''' + str(hesaff_param_dict.keys())
     #print('Detecting Keypoints')
     hesaff_ptr = new_hesaff(img_fpath, **kwargs)
     # Return the number of keypoints detected
@@ -118,10 +125,8 @@ def detect_kpts(img_fpath, use_adaptive_scale=False, **kwargs):
     # Allocate arrays
     kpts = np.empty((nKpts, 5), kpts_dtype)
     desc = np.empty((nKpts, 128), desc_dtype)
-    # Populate arrays
-    hesaff_lib.exportArrays(hesaff_ptr, nKpts, kpts, desc)
-    # Adapt scale if requested
-    if use_adaptive_scale:
+    hesaff_lib.exportArrays(hesaff_ptr, nKpts, kpts, desc)  # Populate arrays
+    if use_adaptive_scale:  # Adapt scale if requested
         #print('Adapting Scale')
         kpts, desc = adapt_scale(img_fpath, kpts)
     return kpts, desc
