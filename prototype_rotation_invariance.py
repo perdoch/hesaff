@@ -8,7 +8,7 @@ import multiprocessing
 import numpy as np
 import cv2
 # Hotspotter
-from hscom import helpers  # NOQA
+from hscom import util  # NOQA
 from hsviz import draw_func2 as df2
 from hsviz import extract_patch
 from hsviz import viz  # NOQA
@@ -19,6 +19,7 @@ from hscom import __common__
 import pyhesaff
 print, print_, print_on, print_off, rrr, profile, printDBG =\
     __common__.init(__name__, module_prefix='[testhesaff]', DEBUG=False, initmpl=False)
+import vtool
 
 
 def ensure_hotspotter():
@@ -68,54 +69,13 @@ def spaced_elements2(list_, n):
     return indexes[0:-1:stride]
 
 
-def hist_edges_to_centers(edges):
-    from itertools import izip
-    return np.array([(e1 + e2) / 2 for (e1, e2) in izip(edges[:-1], edges[1:])])
-
-
-def wrap_histogram(hist, edges):
-    low, high = np.diff(edges)[[0, -1]]
-    hist_wrap = np.hstack((hist[-1:], hist, hist[0:1]))
-    edge_wrap = np.hstack((edges[0:1] - low, edges, edges[-1:] + high))
-    return hist_wrap, edge_wrap
-
-
-def hist_argmaxima(hist, centers=None):
-    from scipy.signal import argrelextrema
-    argmaxima = argrelextrema(hist, np.greater)[0]
-    maxima_x = argmaxima if centers is None else centers[argmaxima]
-    maxima_y = hist[argmaxima]
-    return maxima_x, maxima_y, argmaxima
-
-
-def maxima_neighbors(argmaxima, hist, centers=None):
-    neighbs = np.vstack((argmaxima - 1, argmaxima, argmaxima + 1))
-    y123 = hist[neighbs]
-    x123 = neighbs if centers is None else centers[neighbs]
-    return x123, y123
-
-
-def interpolate_submaxima(argmaxima, hist, centers=None):
-    x123, y123 = maxima_neighbors(argmaxima, hist, centers)
-    (y1, y2, y3) = y123
-    (x1, x2, x3) = x123
-    denom = (x1 - x2) * (x1 - x3) * (x2 - x3)
-    A     = (x3 * (y2 - y1) + x2 * (y1 - y3) + x1 * (y3 - y2)) / denom
-    B     = (x3 * x3 * (y1 - y2) + x2 * x2 * (y3 - y1) + x1 * x1 * (y2 - y3)) / denom
-    C     = (x2 * x3 * (x2 - x3) * y1 + x3 * x1 * (x3 - x1) * y2 + x1 * x2 * (x1 - x2) * y3) / denom
-    xv = -B / (2 * A)
-    yv = C - B * B / (4 * A)
-    submaxima_x, submaxima_y = np.vstack((xv.T, yv.T))
-    return submaxima_x, submaxima_y
-
-
 def draw_hist_subbin_maxima(hist, centers=None, fnum=None, pnum=None):
     # Find maxima
-    maxima_x, maxima_y, argmaxima = hist_argmaxima(hist, centers)
+    maxima_x, maxima_y, argmaxima = vtool.hist_argmaxima(hist, centers)
     # Expand parabola points around submaxima
-    x123, y123 = maxima_neighbors(argmaxima, hist, centers)
+    x123, y123 = vtool.maxima_neighbors(argmaxima, hist, centers)
     # Find submaxima
-    submaxima_x, submaxima_y = interpolate_submaxima(argmaxima, hist, centers)
+    submaxima_x, submaxima_y = vtool.interpolate_submaxima(argmaxima, hist, centers)
     xpoints = []
     ypoints = []
     for (x1, x2, x3), (y1, y2, y3) in zip(x123.T, y123.T):
@@ -138,82 +98,6 @@ def draw_hist_subbin_maxima(hist, centers=None, fnum=None, pnum=None):
     df2.update()
 
 
-def patch_gradient(image, ksize=1):
-    image_ = np.array(image, dtype=np.float64)
-    gradx = cv2.Sobel(image_, cv2.CV_64F, 1, 0, ksize=ksize)
-    grady = cv2.Sobel(image_, cv2.CV_64F, 0, 1, ksize=ksize)
-    return gradx, grady
-
-
-def patch_mag(gradx, grady):
-    return np.sqrt((gradx ** 2) + (grady ** 2))
-
-
-def patch_ori(gradx, grady):
-    np.tau = 2 * np.pi
-    gori = np.arctan2(grady, gradx)  # outputs from -pi to pi
-    gori[gori < 0] = gori[gori < 0] + np.tau  # map to 0 to tau (keep coords)
-    return gori
-
-
-def get_patch(imgBGR, kp):
-    wpatch, wkp = extract_patch.get_warped_patch(imgBGR, kp)
-    wpatchLAB = cv2.cvtColor(wpatch, cv2.COLOR_BGR2LAB)
-    wpatchL = wpatchLAB[:, :, 0]
-    return wpatchL
-
-
-def get_patch_grad_ori(imgBGR, kp):
-    patch = get_patch(imgBGR, kp)
-    gradx, grady = patch_gradient(patch)
-    gmag = patch_mag(gradx, grady)
-    gori = patch_ori(gradx, grady)
-    return patch, gradx, grady, gmag, gori
-
-
-def rotation_matrix(radians):
-    sin_ = np.sin(radians)
-    cos_ = np.cos(radians)
-    rot = np.array(((cos_, -sin_),
-                    (sin_,  cos_)))
-    return rot
-
-
-def get_orientation_histogram(gori):
-    # Get wrapped histogram (because we are finding a direction)
-    hist_, edges_ = np.histogram(gori.flatten(), bins=8)
-    hist, edges = wrap_histogram(hist_, edges_)
-    centers = hist_edges_to_centers(edges)
-    return hist, centers
-
-
-def find_dominant_gradient_direction(gori):
-    hist, centers = get_orientation_histogram(gori)
-    # Find submaxima
-    maxima_x, maxima_y, argmaxima = hist_argmaxima(hist, centers)
-    submaxima_x, submaxima_y = interpolate_submaxima(argmaxima, hist, centers)
-    rad = submaxima_x[submaxima_y.argmax()]
-    return rad
-
-
-def find_kpts_direction(imgBGR, kpts):
-    rad_list = []
-    for kp in kpts:
-        patch = get_patch(imgBGR, kp)
-        gradx, grady = patch_gradient(patch)
-        gori = patch_ori(gradx, grady)
-        hist, centers = get_orientation_histogram(gori)
-        # Find submaxima
-        maxima_x, maxima_y, argmaxima = hist_argmaxima(hist, centers)
-        submaxima_x, submaxima_y = interpolate_submaxima(argmaxima, hist, centers)
-        rad = submaxima_x[submaxima_y.argmax()]
-        rad_list.append(rad)
-    print(kpts.shape)
-    print(len(rad_list))
-    kpts2 = np.vstack([kpts.T, rad_list]).T
-    return kpts2
-
-
 if __name__ == '__main__':
     multiprocessing.freeze_support()
     ensure_hotspotter()
@@ -227,7 +111,7 @@ if __name__ == '__main__':
     kp = kpts[1]
 
     # Extract things to viz
-    patch, gradx, grady, gmag, gori = get_patch_grad_ori(imgBGR, kp)
+    patch, gradx, grady, gmag, gori = vtool.get_patch_grad_ori(imgBGR, kp)
 
     df2.update()
     nRow, nCol = (2, 3)
@@ -257,16 +141,16 @@ if __name__ == '__main__':
     df2.imshow(gorimag, pnum=(nRow, nCol, 6), fnum=1)
 
     # Get orientation histogram
-    hist, centers = get_orientation_histogram(gori)
+    hist, centers = vtool.get_orientation_histogram(gori)
     # Find orientation submaxima
-    maxima_x, maxima_y, argmaxima = hist_argmaxima(hist, centers)
-    submaxima_x, submaxima_y = interpolate_submaxima(argmaxima, hist, centers)
+    maxima_x, maxima_y, argmaxima = vtool.hist_argmaxima(hist, centers)
+    submaxima_x, submaxima_y = vtool.interpolate_submaxima(argmaxima, hist, centers)
 
     # Draw histogram with interpolation annotations
     draw_hist_subbin_maxima(hist, centers, fnum=3, pnum=(1, 1, 1))
 
     # Get dominant direction in radians
-    rad = find_dominant_gradient_direction(gori)
+    rad = vtool.find_dominant_gradient_direction(gori)
 
     # Augment keypoint and plot rotated patch
     kp2 = np.hstack([kp, [rad]])
@@ -278,7 +162,7 @@ if __name__ == '__main__':
 
     df2.update()
 
-    kpts2 = find_kpts_direction(imgBGR, kpts)
+    kpts2 = vtool.find_kpts_direction(imgBGR, kpts)
 
     #viz.show_keypoints(rchip, kpts)
     interact.interact_keypoints(imgBGR, kpts2, desc, arrow=True, rect=True)

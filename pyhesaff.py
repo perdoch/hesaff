@@ -112,7 +112,9 @@ def new_hesaff(img_fpath, **kwargs):
     return hesaff_ptr
 
 
-def detect_kpts(img_fpath, use_adaptive_scale=False, **kwargs):
+def detect_kpts(img_fpath,
+                use_adaptive_scale=False, assume_gravity=False,
+                **kwargs):
     '''
     main driver function for detecting hessian affine keypoints.
     extra parameters can be passed to the hessian affine detector by using
