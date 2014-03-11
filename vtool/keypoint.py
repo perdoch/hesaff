@@ -38,8 +38,40 @@ def cast_split(kpts, dtype=KPTS_DTYPE):
     return _xs, _ys, _acds, _oris
 
 
+# --- scaled and offset keypoint components ---
+
+def scaled_xys(kpts, scale_factor=1, offset=(0, 0)):
+    # Keypoint location modified by an offset and scale
+    __xs, __ys = xys(kpts)
+    _xs = (__xs * scale_factor) + offset[0]
+    _ys = (__ys * scale_factor) + offset[1]
+    return _xs, _ys
+
+
+def scaled_acds(kpts, scale_factor=1, withb=False):
+    # Keypoint location modified by an offset and scale
+    __as, __cs, __ds = acd(kpts)
+    _as = __as * scale_factor
+    _cs = __cs * scale_factor
+    _ds = __ds * scale_factor
+    if not withb:
+        return _as, _cs, _ds,
+    else:
+        _bs = np.zeros(len(_as), dtype=_as.dtype)
+        return _as, _bs, _cs, _ds,
+
+
+def scaled_kpts(kpts, scale_factor=1, offset=(0, 0)):
+    _xs, _ys = scaled_xys(kpts, scale_factor, offset)
+    _as, _bs, _cs, _ds = scaled_acds(kpts, scale_factor, withb=True)
+    _oris = ori(kpts)
+    return _xs, _ys, _as, _bs, _cs, _ds, _oris
+
+
+# --- raw keypoint components ---
+
 def xys(kpts):
-    'keypoint locations'
+    # Keypoint locations in chip space
     _xs, _ys   = kpts.T[0:2]
     return _xs, _ys
 
@@ -52,7 +84,13 @@ def acd(kpts):
 
 def ori(kpts):
     'keypoint orientations'
-    _oris = kpts.T[5:6]
+    if kpts.shape[1] == 5:
+        _oris = np.zeros(len(kpts), dtype=kpts.dtype)
+        _oris += (tau / 4)  # default to gravity vector
+    elif kpts.shape[1] == 6:
+        _oris = kpts.T[5]
+    else:
+        raise AssertionError('invalid kpts shape')
     return _oris
 
 

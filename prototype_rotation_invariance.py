@@ -145,16 +145,15 @@ if __name__ == '__main__':
     wpatch, wkp = ptool.get_warped_patch(imgBGR, kp2)
 
     # --- Draw Results --- #
+    print('Show patch, gradients, magintude, and orientation')
+    gorimag = color_orimag(gori, gmag)
     nRow, nCol = (2, 3)
     df2.figure(fnum=1, pnum=(nRow, nCol, 1))
-    print('Show patch, gradients, magintude, and orientation')
     df2.imshow(patch, pnum=(nRow, nCol, 1), fnum=1)
     df2.imshow(gradx, pnum=(nRow, nCol, 2), fnum=1)
     df2.imshow(grady, pnum=(nRow, nCol, 3), fnum=1)
     df2.imshow(gmag, pnum=(nRow, nCol, 4), fnum=1)
     df2.draw_vector_field(gradx, grady, pnum=(nRow, nCol, 5), fnum=1)
-
-    gorimag = color_orimag(gori, gmag)
     df2.imshow(gorimag, pnum=(nRow, nCol, 6), fnum=1)
 
     print('Draw histogram with interpolation annotations')
@@ -162,6 +161,7 @@ if __name__ == '__main__':
 
     df2.imshow(wpatch, fnum=4)
 
-    #viz.show_keypoints(rchip, kpts)
-    interact.interact_keypoints(imgBGR, kpts2, desc, arrow=True, rect=True)
+    viz.show_keypoints(imgBGR, kpts, sifts=desc, ell=True, eig=True, ori=True,
+                       rect=True, ell_alpha=1)
+    #pinteract.interact_keypoints(imgBGR, kpts2, desc, arrow=True, rect=True)
     exec(df2.present(wh=800))
