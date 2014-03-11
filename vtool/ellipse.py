@@ -10,9 +10,14 @@ import cv2
 import numpy as np
 import scipy as sp  # NOQA
 # Hotspotter
-from hscom import __common__
-print, print_, print_on, print_off, rrr, profile, printDBG =\
-    __common__.init(__name__, module_prefix='[ell]', DEBUG=False, initmpl=False)
+#from hscom import __common__
+#print, print_, print_on, print_off, rrr, profile, printDBG =\
+    #__common__.init(__name__, module_prefix='[ell]', DEBUG=False, initmpl=False)
+
+try:
+    profile
+except NameError:
+    profile = lambda func: func
 
 
 def test_data():
