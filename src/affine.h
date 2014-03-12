@@ -11,8 +11,8 @@
 #define __AFFINE_H__
 
 #include <vector>
-
 #include <opencv2/opencv.hpp>
+#include "helpers.h"
 
 
 //----------------------

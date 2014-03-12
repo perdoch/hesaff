@@ -8,7 +8,6 @@
  */
 
 #include "affine.h"
-#include "helpers.h"
 
 using namespace cv;
 
