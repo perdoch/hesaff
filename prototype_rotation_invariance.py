@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 from __future__ import print_function, division
 # Standard
-import sys
-from os.path import join, exists, realpath, expanduser
 from itertools import izip
 import multiprocessing
 # Scientific
@@ -11,64 +9,12 @@ import cv2
 # Hotspotter
 from hscom import util  # NOQA
 from hsviz import draw_func2 as df2
-from hsviz import viz  # NOQA
-from hsviz import interact  # NOQA
-from hscom import fileio as io
-from hscom import __common__
+from hsviz import viz
 # TPL
-import pyhesaff
-print, print_, print_on, print_off, rrr, profile, printDBG =\
-    __common__.init(__name__, module_prefix='[testhesaff]', DEBUG=False, initmpl=False)
+import pyhestest
 # VTool
 import vtool.patch as ptool
 import vtool.histogram as htool
-
-
-def ensure_hotspotter():
-    import matplotlib
-    matplotlib.use('Qt4Agg', warn=True, force=True)
-    # Look for hotspotter in ~/code
-    hotspotter_dir = join(expanduser('~'), 'code', 'hotspotter')
-    if not exists(hotspotter_dir):
-        print('[jon] hotspotter_dir=%r DOES NOT EXIST!' % (hotspotter_dir,))
-    # Append hotspotter to PYTHON_PATH (i.e. sys.path)
-    if not hotspotter_dir in sys.path:
-        sys.path.append(hotspotter_dir)
-
-
-def load_test_data(short=False, n=0):
-    if not 'short' in vars():
-        short = False
-    # Read Image
-    #ellipse.rrr()
-    nScales = 4
-    nSamples = 16
-    img_fname = 'zebra.png'
-    #img_fname = 'lena.png'
-    img_fpath = realpath(img_fname)
-    imgBGR = io.imread(img_fpath)
-    imgLAB = cv2.cvtColor(imgBGR, cv2.COLOR_BGR2LAB)
-    imgL = imgLAB[:, :, 0]
-    kpts, desc = pyhesaff.detect_kpts(img_fpath, scale_min=20, scale_max=100)
-    if short:
-        extra_fxs = []
-        if img_fname == 'zebra.png':
-            extra_fxs = [374, 520, 880][0:1]
-        fxs = np.array(spaced_elements2(kpts, n).tolist() + extra_fxs)
-        kpts = kpts[fxs]
-        desc = desc[fxs]
-    test_data = locals()
-    return test_data
-
-
-def spaced_elements2(list_, n):
-    if n is None:
-        return np.arange(len(list_))
-    if n == 0:
-        return np.empty(0)
-    indexes = np.arange(len(list_))
-    stride = len(indexes) // n
-    return indexes[0:-1:stride]
 
 
 def draw_hist_subbin_maxima(hist, centers=None, fnum=None, pnum=None):
@@ -113,12 +59,10 @@ def color_orimag(gori, gmag, fnum=None, pnum=None):
 
 if __name__ == '__main__':
     multiprocessing.freeze_support()
-    ensure_hotspotter()
     np.set_printoptions(threshold=5000, linewidth=5000, precision=3)
-
     # Read data
     print('[rot-invar] loading test data')
-    test_data = load_test_data(short=True, n=3)
+    test_data = pyhestest.load_test_data(short=True, n=3)
     kpts = test_data['kpts']
     desc = test_data['desc']
     imgBGR = test_data['imgBGR']

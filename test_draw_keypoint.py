@@ -110,10 +110,10 @@ for row, col in iprod(xrange(nRows), xrange(nCols)):
 
 #scale_factor = 1
 #offset = (0, 0)
-#(_xs, _ys, _as, _bs, _cs, _ds, _oris) = ktool.scaled_kpts(kpts, scale_factor, offset)
+#(_xs, _ys, _iv11s, _iv12s, _iv21s, _iv22s, _oris) = ktool.scaled_kpts(kpts, scale_factor, offset)
 
-#aff_list = mpl_keypoint.get_aff_list(_xs, _ys, _as, _bs, _cs, _ds)
-#aff = aff_list[0]
+#invVR_aff2Ds = mpl_keypoint.get_invV_aff2Ds(_xs, _ys, _iv11s, _iv12s, _iv21s, _iv22s)
+#aff = invVR_aff2Ds[0]
 
 #ori = _oris[0]
 #aff2 = mpl.transforms.Affine2D().rotate(-ori)

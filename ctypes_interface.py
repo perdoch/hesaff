@@ -1,12 +1,15 @@
 from __future__ import print_function, division
 from os.path import join, exists, dirname, normpath
 import sys
+import os
 import ctypes as C
 
 
 #============================
 # general ctypes interface
 #============================
+
+__QUIET__ = '--quiet' in sys.argv
 
 
 def get_lib_fname_list(libname):
@@ -49,7 +52,7 @@ def find_lib_fpath(libname, root_dir, recurse_down=True, verbose=False):
                 if exists(lib_fpath):
                     if verbose:
                         print('\n[c] Checked: '.join(tried_fpaths))
-                    if not '--quiet' in sys.argv:
+                    if not __QUIET__:
                         print('using: %r' % lib_fpath)
                     return lib_fpath
                 else:
@@ -99,7 +102,6 @@ def load_clib(libname, root_dir):
     except Exception as ex:
         print('[C!] Caught Exception:\n%s' % ex)
         errsuffix = 'Was the library correctly compiled?'
-    import os
     print('[C!] cwd=%r' % os.getcwd())
     print('[C!] load_clib(libname=%r root_dir=%r)' % (libname, root_dir))
     print('[C!] lib_fpath = %r' % lib_fpath)

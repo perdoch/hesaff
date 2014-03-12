@@ -417,11 +417,22 @@ extern "C" {
 
     PYHESAFF int detect(AffineHessianDetector* detector)
     {
-    print("detector->detect");
-    int nKpts = detector->detect();
-    print("nKpts = " << nKpts);
-    return nKpts;
+        print("detector->detect");
+        int nKpts = detector->detect();
+        print("nKpts = " << nKpts);
+        return nKpts;
     }
+
+
+    PYHESAFF int get_kpts_dim()
+        {
+        return KPTS_DIM;
+        }
+
+    PYHESAFF int get_desc_dim()
+        {
+        return DESC_DIM;
+        }
 
     // new hessian affine detector
     PYHESAFF AffineHessianDetector* new_hesaff_from_params(char* img_fpath,
