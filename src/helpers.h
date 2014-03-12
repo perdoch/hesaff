@@ -4,7 +4,7 @@
  *
  * This file is part of the HessianAffine detector and is made available under
  * the terms of the BSD license (see the COPYING file).
- * 
+ *
  */
 
 #ifndef __HELPERS_H__
@@ -17,6 +17,7 @@ void computeGaussMask(cv::Mat &mask);
 void computeCircularGaussMask(cv::Mat &mask);
 void rectifyAffineTransformationUpIsUp(float *U);
 void rectifyAffineTransformationUpIsUp(float &a11, float &a12, float &a21, float &a22);
+void rotateAffineTransformation(float &a11, float &a12, float &a21, float &a22, float &theta);
 bool interpolate(const cv::Mat &im, float ofsx, float ofsy, float a11, float a12, float a21, float a22, cv::Mat &res);
 bool interpolateCheckBorders(const cv::Mat &im, float ofsx, float ofsy, float a11, float a12, float a21, float a22, const cv::Mat &res);
 void photometricallyNormalize(cv::Mat &image, const cv::Mat &weight_mask, float &sum, float &var);
@@ -27,5 +28,5 @@ cv::Mat doubleImage(const cv::Mat &input);
 cv::Mat halfImage(const cv::Mat &input);
 
 double getTime();
-   
+
 #endif // __HELPERS_H__

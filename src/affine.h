@@ -14,105 +14,104 @@
 
 #include <opencv2/opencv.hpp>
 
-#include "helpers.h"
 
+//----------------------
+// Params Struct
+//----------------------
 struct AffineShapeParams
 {
-   // number of affine shape interations
-   int maxIterations;
+    int maxIterations; // number of affine shape interations
+    float convergenceThreshold; // max deviation from isotropic shape to converge
+    int smmWindowSize;   // width and height of the SMM mask
+    int patchSize;       // width and height of the patch
+    float initialSigma;  // amount of smoothing applied to the initial level of first octave
+    float mrSize;        // size of the measurement region (as multiple of the feature scale)
+    float scale_min;     // minimum scale threshold
+    float scale_max;     // maximum scale threshold
+    bool rotation_invariance;  // are we assuming the gravity vector?
 
-   // convergence threshold, i.e. maximum deviation from isotropic shape at convergence
-   float convergenceThreshold;
-
-   // width and height of the SMM mask
-   int smmWindowSize;
-
-   // width and height of the patch
-   int patchSize;
-
-   // amount of smoothing applied to the initial level of first octave
-   float initialSigma;
-
-   // size of the measurement region (as multiple of the feature scale)
-   float mrSize;
-
-   // minimum scale threshold
-   float scale_min;
-
-   // maximum scale threshold
-   float scale_max;
-
-   // are we assuming the gravity vector?
-   bool rotation_invariance;
-
-   AffineShapeParams()
-      {
-         maxIterations = 16;
-         initialSigma = 1.6f;
-         convergenceThreshold = 0.05;
-         patchSize = 41;
-         smmWindowSize = 19;
-         mrSize = 3.0f*sqrt(3.0f);
-         scale_min = -1;
-         scale_max = -1;
-         rotation_invariance = false;
-      }
+    AffineShapeParams()
+    {
+        maxIterations = 16;
+        initialSigma = 1.6f;
+        convergenceThreshold = 0.05;
+        patchSize = 41;
+        smmWindowSize = 19;
+        mrSize = 3.0f*sqrt(3.0f);
+        scale_min = -1;
+        scale_max = -1;
+        rotation_invariance = false;
+    }
 };
 
+
+//----------------------
+// Callback Struct
+//----------------------
 struct AffineShapeCallback
 {
-   virtual void onAffineShapeFound(
-      const cv::Mat &blur,     // corresponding scale level
-      float x, float y,     // subpixel, image coordinates
-      float s,              // scale
-      float pixelDistance,  // distance between pixels in provided blured image
-      float a11, float a12, // affine shape matrix
-      float a21, float a22,
-      int type, float response, int iters) = 0;
+    virtual void onAffineShapeFound(
+            const cv::Mat &blur,     // corresponding scale level
+            float x, float y,     // subpixel, image coordinates
+            float s,              // scale
+            float pixelDistance,  // distance between pixels in provided blured image
+            float a11, float a12, // affine shape matrix
+            float a21, float a22,
+            int type, float response, int iters) = 0;
 };
 
+//----------------------
+// Computing Struct
+//----------------------
 struct AffineShape
 {
-public:
-   AffineShape(const AffineShapeParams &par) :
-      patch(par.patchSize, par.patchSize, CV_32FC1),
-      mask(par.smmWindowSize, par.smmWindowSize, CV_32FC1),
-      img(par.smmWindowSize, par.smmWindowSize, CV_32FC1),
-      fx(par.smmWindowSize, par.smmWindowSize, CV_32FC1),
-      fy(par.smmWindowSize, par.smmWindowSize, CV_32FC1)
-      {
-         this->par = par;
-         computeGaussMask(mask);
-         affineShapeCallback = 0;
-         fx = cv::Scalar(0);
-         fy = cv::Scalar(0);
-      }
+    public:
+        //---------------------
+        // Standard functions
+        //---------------------
+        AffineShape(const AffineShapeParams &par) :
+            patch(par.patchSize, par.patchSize, CV_32FC1),
+            mask(par.smmWindowSize, par.smmWindowSize, CV_32FC1),
+            img(par.smmWindowSize, par.smmWindowSize, CV_32FC1),
+            fx(par.smmWindowSize, par.smmWindowSize, CV_32FC1),
+            fy(par.smmWindowSize, par.smmWindowSize, CV_32FC1)
+            {
+                this->par = par;
+                computeGaussMask(mask);
+                affineShapeCallback = 0;
+                fx = cv::Scalar(0);
+                fy = cv::Scalar(0);
+            }
 
-   ~AffineShape()
-      {
-      }
+        ~AffineShape() {}
 
-   // computes affine shape
-   bool findAffineShape(const cv::Mat &blur, float x, float y, float s, float pixelDistance, int type, float response);
+        void setAffineShapeCallback(AffineShapeCallback *callback)
+        {
+            affineShapeCallback = callback;
+        }
 
-   // fills patch with affine normalized neighbourhood around point in the img, enlarged mrSize times
-   bool normalizeAffine(const cv::Mat &img, float x, float y, float s, float a11, float a12, float a21, float a22);
+        //---------------------
+        // Work functions
+        //---------------------
 
-   void setAffineShapeCallback(AffineShapeCallback *callback)
-      {
-         affineShapeCallback = callback;
-      }
+        // computes affine shape
+        bool findAffineShape(const cv::Mat &blur, float x, float y, float s,
+                float pixelDistance, int type, float response);
 
-public:
-   cv::Mat patch;
+        // fills patch with affine normalized neighbourhood around point in the img, enlarged mrSize times
+        bool normalizeAffine(const cv::Mat &img, float x, float y, float s,
+                float a11, float a12, float a21, float a22, float theta);
 
-protected:
-   AffineShapeParams par;
+    public:
+        cv::Mat patch;  // member var to store a computed patch in
 
-private:
-   AffineShapeCallback *affineShapeCallback;
-   std::vector<unsigned char> workspace;
-   cv::Mat mask, img, fx, fy;
+    protected:
+        AffineShapeParams par;
+
+    private:
+        AffineShapeCallback *affineShapeCallback;
+        std::vector<unsigned char> workspace;
+        cv::Mat mask, img, fx, fy;
 };
 
 #endif // __AFFINE_H__

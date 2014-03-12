@@ -4,9 +4,7 @@ cd build
 
 export HOTSPOTTER_DIR=~/code/hotspotter
 
-cmake -G "Unix Makefiles" ..
-
-make
-# localize.py should take care of putting hotspotter in the path
+# need better way of setting hotspotterdir or not setting it at all
 export PYTHONPATH=$PYTHONPATH:$HOTSPOTTER_DIR
-python $HOTSPOTTER_DIR/hstpl/localize.py
+
+cmake -G "Unix Makefiles" .. && make && python $HOTSPOTTER_DIR/hstpl/localize.py
