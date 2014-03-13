@@ -23,7 +23,7 @@ def ensure_hotspotter():
         sys.path.append(hotspotter_dir)
 
 
-def load_test_data(short=False, n=0):
+def load_test_data(short=False, n=0, **kwargs):
     if not 'short' in vars():
         short = False
     # Read Image
@@ -35,7 +35,12 @@ def load_test_data(short=False, n=0):
     imgBGR = io.imread(img_fpath)
     imgLAB = cv2.cvtColor(imgBGR, cv2.COLOR_BGR2LAB)
     imgL = imgLAB[:, :, 0]
-    kpts, desc = pyhesaff.detect_kpts(img_fpath, scale_min=20, scale_max=100)
+    detect_kwargs = {
+        'scale_min': 20,
+        'scale_max': 100
+    }
+    detect_kwargs.update(kwargs)
+    kpts, desc = pyhesaff.detect_kpts(img_fpath, **detect_kwargs)
     if short:
         extra_fxs = []
         if img_fname == 'zebra.png':

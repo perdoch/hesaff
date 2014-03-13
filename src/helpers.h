@@ -29,4 +29,6 @@ cv::Mat halfImage(const cv::Mat &input);
 
 double getTime();
 
+bool almost_eq(float, float);
+
 #endif // __HELPERS_H__

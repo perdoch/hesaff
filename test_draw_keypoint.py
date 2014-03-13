@@ -10,10 +10,11 @@ from itertools import product as iprod
 
 np.tau = 2 * np.pi
 
-RIGHT = (0 * np.tau / 4)
-DOWN  = (1 * np.tau / 4)
-LEFT  = (2 * np.tau / 4)
-UP    = (3 * np.tau / 4)
+# Hack these directions to be relative to gravity
+RIGHT = ((0 * np.tau / 4) - ktool.GRAVITY_THETA) % np.tau
+DOWN  = ((1 * np.tau / 4) - ktool.GRAVITY_THETA) % np.tau
+LEFT  = ((2 * np.tau / 4) - ktool.GRAVITY_THETA) % np.tau
+UP    = ((3 * np.tau / 4) - ktool.GRAVITY_THETA) % np.tau
 
 
 def test_keypoint(xscale=1, yscale=1, ori=DOWN, skew=0):
@@ -67,7 +68,7 @@ def test_shape(ori=0, skew=0, xscale=1, yscale=1, pnum=(1, 1, 1), fnum=1):
                                 ori_color=df2.DEEP_PINK, eig_color=df2.PINK,
                                 rect=True, eig=True, bin_color=df2.RED,
                                 arm1_color=df2.YELLOW, arm2_color=df2.BLACK)
-    title = 'xyscale=(%.1f, %.1f),\n skew=%.1f, ori=%.1fpi' % (xscale, yscale, skew, ori / np.pi)
+    title = 'xyscale=(%.1f, %.1f),\n skew=%.1f, ori=%.2ftau' % (xscale, yscale, skew, ori / np.tau)
     df2.set_title(title)
     df2.dark_background()
     return kpts, sifts

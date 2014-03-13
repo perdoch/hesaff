@@ -1,17 +1,19 @@
+#!/usr/bin/env python
+from __future__ import print_function, division
 #----------------
 # Test Functions
 #----------------
-from hotspotter import helpers
-from hotspotter import extract_patch
-from hotspotter import draw_func2 as df2
-from hotspotter import vizualizations as viz
-from hotspotter import draw_func2 as df2  # NOQA
+from itertools import izip
+from hscom import util
+from hsviz import draw_func2 as df2
+from hsviz import viz
 import numpy as np
+import vtool.linalg as ltool
 
 
 def draw_expanded_scales(imgL, sel_kpts, exkpts, exdesc_):
-    draw_keypoint_patch = extract_patch.draw_keypoint_patch
-    get_warped_patch = extract_patch.get_warped_patch  # NOQA
+    draw_keypoint_patch = df2.draw_keypoint_patch
+    get_warped_patch = df2.get_warped_patch  # NOQA
 
     # Rows are for different scales
     # Cols are for different patches
@@ -34,7 +36,6 @@ def draw_expanded_scales(imgL, sel_kpts, exkpts, exdesc_):
             sift = exdesc_[px]
             pnum = (nRows + nPreRows, nCols, px + nPreCols)
             draw_keypoint_patch(imgL, kp, sift, warped=True, fnum=fnum, pnum=pnum)
-            #exchip, wkp = extract_patch.get_warped_patch(imgL, kp)
             px += 1
     df2.draw()
 
@@ -80,22 +81,22 @@ def in_depth_ellipse(kp):
     print('Input from Perdoch\'s detector: ')
 
     # We are given the keypoint in invA format
-    (ix, iy, ia11, ia21, ia22), ia12 = kp, 0
-    invV = np.array([[ia11, ia12, ix],
-                     [ia21, ia22, iy],
+    (ix, iy, iv11, iv21, iv22), iv12 = kp, 0
+    invV = np.array([[iv11, iv12, ix],
+                     [iv21, iv22, iy],
                      [   0,    0,  1]])
     V = np.linalg.inv(invV)
     Z = (V.T).dot(V)
 
     print('invV is a transform from points on a unit-circle to the ellipse')
-    helpers.horiz_print('invV = ', invV)
+    util.horiz_print('invV = ', invV)
     print('--------------------------------')
     print('V is a transformation from points on the ellipse to a unit circle')
-    helpers.horiz_print('V = ', V)
+    util.horiz_print('V = ', V)
     print('--------------------------------')
     print('Points on a matrix satisfy (x_ - x_0).T.dot(Z).dot(x_ - x_0) = 1')
     print('where Z = (V.T).dot(V)')
-    helpers.horiz_print('Z = ', Z)
+    util.horiz_print('Z = ', Z)
 
     # Define points on a unit circle
     nSamples = 12
@@ -111,14 +112,14 @@ def in_depth_ellipse(kp):
     try:
         # HELP: The phase is off here. in 3x3 version I'm not sure why
         #assert all([almost_eq(1, check) for check in checks1])
-        is_almost_eq_pos1 = [almost_eq(1, check) for check in checks]
-        is_almost_eq_neg1 = [almost_eq(-1, check) for check in checks]
+        is_almost_eq_pos1 = [util.almost_eq(1, check) for check in checks]
+        is_almost_eq_neg1 = [util.almost_eq(-1, check) for check in checks]
         assert all(is_almost_eq_pos1)
     except AssertionError as ex:
         print('circle pts = %r ' % cicrle_pts)
         print(ex)
         print(checks)
-        print([almost_eq(-1, check, 1E-9) for check in checks])
+        print([util.almost_eq(-1, check, 1E-9) for check in checks])
         raise
     else:
         #assert all([abs(1 - check) < 1E-11 for check in checks2])
@@ -150,14 +151,14 @@ def in_depth_ellipse(kp):
     con = np.array((('    A', 'B / 2', 'D / 2'),
                     ('B / 2', '    C', 'E / 2'),
                     ('D / 2', 'E / 2', '    F')))
-    helpers.horiz_print('A matrix A_Q = ', con)
+    util.horiz_print('A matrix A_Q = ', con)
 
     # A_Q is our conic section (aka ellipse matrix)
     A_Q = np.array(((    A, B / 2, D / 2),
                     (B / 2,     C, E / 2),
                     (D / 2, E / 2,     F)))
 
-    helpers.horiz_print('A_Q = ', A_Q)
+    util.horiz_print('A_Q = ', A_Q)
 
     #-----------------------
     # DEGENERATE CONICS
@@ -169,7 +170,7 @@ def in_depth_ellipse(kp):
     assert np.linalg.det(A_Q) != 0, 'degenerate conic'
     A_33 = np.array(((    A, B / 2),
                      (B / 2,     C)))
-    helpers.horiz_print('A_33 = ', A_33)
+    util.horiz_print('A_33 = ', A_33)
 
     #-----------------------
     # CONIC CLASSIFICATION
@@ -195,8 +196,8 @@ def in_depth_ellipse(kp):
     # shits and giggles
     x_center = (B * E - (2 * C * D)) / (4 * A * C - B ** 2)
     y_center = (D * B - (2 * A * E)) / (4 * A * C - B ** 2)
-    helpers.horiz_print('x_center = ', x_center)
-    helpers.horiz_print('y_center = ', y_center)
+    util.horiz_print('x_center = ', x_center)
+    util.horiz_print('y_center = ', y_center)
 
     #-----------------------
     # MAJOR AND MINOR AXES
@@ -228,8 +229,8 @@ def in_depth_ellipse(kp):
     print('theta = ' + str(theta[0] / tau) + ' * 2pi')
     # The warped eigenvects should have the same magintude
     # As the axis lengths
-    assert almost_eq(a, major.dot(rotation(theta))[0])
-    assert almost_eq(b, minor.dot(rotation(theta))[1])
+    assert util.almost_eq(a, major.dot(ltool.rotation2x2(theta))[0])
+    assert util.almost_eq(b, minor.dot(ltool.rotation2x2(theta))[1])
 
     #-----------------------
     # ECCENTRICITY
@@ -251,7 +252,7 @@ def in_depth_ellipse(kp):
     # Eccentricity is a little easier in axis aligned coordinates
     # Make sure they aggree
     ecc2 = np.sqrt(1 - (b ** 2) / (a ** 2))
-    assert almost_eq(ecc, ecc2)
+    assert util.almost_eq(ecc, ecc2)
 
     #-----------------------
     # APPROXIMATE UNIFORM SAMPLING
@@ -272,9 +273,9 @@ def in_depth_ellipse(kp):
         return np.array((a * np.cos(t), b * np.sin(t))).T
 
     #nSamples = 16
-    #(ix, iy, ia11, ia21, ia22), ia12 = kp, 0
-    #invV = np.array([[ia11, ia12, ix],
-                     #[ia21, ia22, iy],
+    #(ix, iy, iv11, iv21, iv22), iv12 = kp, 0
+    #invV = np.array([[iv11, iv12, ix],
+                     #[iv21, iv22, iy],
                      #[   0,    0,  1]])
     #theta_list = np.linspace(0, tau, nSamples)
     #cicrle_pts = np.array([(np.cos(t_), np.sin(t_), 1) for t_ in theta_list])
@@ -343,14 +344,14 @@ def in_depth_ellipse(kp):
     new_unit = V.dot(new_hlocs).T
     # normalize new_unit
     new_mag = np.sqrt((new_unit ** 2).sum(1))
-    new_unorm_unit = new_unit / np.vstack([new_mag]*3).T
-    new_norm_unit = new_unorm_unit / np.vstack([new_unorm_unit[:,2]]*3).T
+    new_unorm_unit = new_unit / np.vstack([new_mag] * 3).T
+    new_norm_unit = new_unorm_unit / np.vstack([new_unorm_unit[:, 2]] * 3).T
     # Get angle (might not be necessary)
     x_axis = np.array([1, 0, 0])
     arccos_list = x_axis.dot(new_norm_unit.T)
     uniform_theta_list = np.arccos(arccos_list)
     # Maybe this?
-    uniform_theta_list = np.arctan2(new_norm_unit[:,1], new_norm_unit[:,0])
+    uniform_theta_list = np.arctan2(new_norm_unit[:, 1], new_norm_unit[:, 0])
     #
     unevn_cicrle_pts = np.array([(np.cos(t_), np.sin(t_), 1) for t_ in uniform_theta_list])
     # This is the output. Approximately uniform points sampled along an ellipse
@@ -359,7 +360,6 @@ def in_depth_ellipse(kp):
 
     _plotpts(new_locations, 0, df2.YELLOW, label='new points', marker='o-')
     _plotpts(uniform_ell_pts, 0, df2.RED, label='first points', marker='o-')
-
 
     # Desired number of points
     #ecc = np.sqrt(1 - (b ** 2) / (a ** 2))
@@ -378,7 +378,6 @@ def in_depth_ellipse(kp):
             #break
         #uniform_points.append((x_, y_))
     # The angle between the major axis and our x axis is:
-
     #-----------------------
     # DRAWING
     #-----------------------
@@ -395,7 +394,7 @@ def in_depth_ellipse(kp):
     _plotarrow(x_center, y_center, dx2, -dy2, color=df2.GRAY, label='major axis')
 
     # Rotate the ellipse so it is axis aligned and plot that
-    rot = rotation_around(theta, ix, iy)
+    rot = ltool.rotation3x3_around(theta, ix, iy)
     ellipse_pts3 = rot.dot(ellipse_pts1.T).T
     #!_plotpts(ellipse_pts3, 0, df2.GREEN, label='axis aligned points')
 

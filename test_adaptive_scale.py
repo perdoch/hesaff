@@ -1,36 +1,22 @@
 #!/usr/bin/env python
 from __future__ import print_function, division
 # Standard
-import sys
-from os.path import join, exists, realpath, expanduser, split
 import multiprocessing
 from itertools import izip
 # Scientific
 import numpy as np
-import cv2
 # Hotspotter
 from hscom import helpers  # NOQA
 from hsviz import draw_func2 as df2
 from hsviz import viz  # NOQA
-from hscom import fileio as io
 from hscom import __common__
 # TPL
 import pyhesaff
-import ellipse
+import pyhestest
+# VTool
+import vtool.ellipse as etool
 print, print_, print_on, print_off, rrr, profile, printDBG =\
     __common__.init(__name__, module_prefix='[testhesaff]', DEBUG=False, initmpl=False)
-
-
-def ensure_hotspotter():
-    import matplotlib
-    matplotlib.use('Qt4Agg', warn=True, force=True)
-    # Look for hotspotter in ~/code
-    hotspotter_dir = join(expanduser('~'), 'code', 'hotspotter')
-    if not exists(hotspotter_dir):
-        print('[jon] hotspotter_dir=%r DOES NOT EXIST!' % (hotspotter_dir,))
-    # Append hotspotter to PYTHON_PATH (i.e. sys.path)
-    if not hotspotter_dir in sys.path:
-        sys.path.append(hotspotter_dir)
 
 
 @profile
@@ -55,56 +41,15 @@ def test_hesaff_kpts(img_fpath, **kwargs):
     return kpts, desc
 
 
-def spaced_elements2(list_, n):
-    if n is None:
-        return np.arange(len(list_))
-    if n == 0:
-        return np.empty(0)
-    indexes = np.arange(len(list_))
-    stride = len(indexes) // n
-    return indexes[0:-1:stride]
-
-
-def spaced_elements(list_, n):
-    if n is None:
-        return 'list'
-    indexes = np.arange(len(list_))
-    stride = len(indexes) // n
-    return list_[indexes[0:-1:stride]]
-
-
-def load_test_data(short=False, n=0):
-    if not 'short' in vars():
-        short = False
-    # Read Image
-    #ellipse.rrr()
-    nScales = 4
-    nSamples = 16
-    img_fname = 'zebra.png'
-    img_fpath = realpath(img_fname)
-    imgBGR = io.imread(img_fpath)
-    imgLAB = cv2.cvtColor(imgBGR, cv2.COLOR_BGR2LAB)
-    imgL = imgLAB[:, :, 0]
-    kpts, desc = pyhesaff.detect_kpts(img_fpath, scale_min=20, scale_max=100)
-    if short:
-        extra_fxs = []
-        if img_fname == 'zebra.png':
-            extra_fxs = [374, 520, 880][0:1]
-        fxs = np.array(spaced_elements2(kpts, n).tolist() + extra_fxs)
-        kpts = kpts[fxs]
-        desc = desc[fxs]
-    test_data = locals()
-    return test_data
-
-
 def test_adaptive_scale():
     # Get relevant test data
     '''
     __name__ = 'IPython'
     exec(open('test_pyhesaff.py').read())
-    exec(open('ellipse.py').read())
+    exec(open('etool.py').read())
     '''
-    test_data = load_test_data(short=True)
+    print('test_adaptive_scale()')
+    test_data = pyhestest.load_test_data(short=True)
     img_fpath = test_data['img_fpath']
     imgL = test_data['imgL']
     imgBGR = test_data['imgBGR']
@@ -139,13 +84,15 @@ def test_adaptive_scale():
     show_kpts(kpts, 1, 'original keypoints')
 
     # STEP1: EXPAND KEYPOINTS
-    expanded_kpts = ellipse.expand_scales(kpts, nScales, low, high)
+    print('step1: expand_keypoints()')
+    expanded_kpts = etool.expand_scales(kpts, nScales, low, high)
     show_kpts(expanded_kpts, 2, 'expanded keypoint')
 
     # STEP2: UNIFORM SAMPLE / INTERPOLATE MAXIMA
-    border_vals_sum = ellipse.sample_ell_border_vals(imgBGR, expanded_kpts, nKp, nScales, nSamples)
-    x_data_list, y_data_list = ellipse.find_maxima_with_neighbors(border_vals_sum)
-    peak_list = ellipse.interpolate_peaks(x_data_list, y_data_list)
+    print('step2: uniform_sample / interpolate maxima()')
+    border_vals_sum = etool.sample_ell_border_vals(imgBGR, expanded_kpts, nKp, nScales, nSamples)
+    x_data_list, y_data_list = etool.find_maxima_with_neighbors(border_vals_sum)
+    peak_list = etool.interpolate_peaks(x_data_list, y_data_list)
 
     plot_line(border_vals_sum[fx], 'gradient mag')
     plot_marks([x_data_list[fx][0], y_data_list[fx][0]], 'go', 'left')
@@ -170,21 +117,23 @@ def test_adaptive_scale():
         plot_marks([xdat, ydat], 'g--', '')
 
     # STEP 3: INTERPOLATE SCALES
-    subscale_list = ellipse.interpolate_between(peak_list, nScales, high, low)
-    subscale_kpts = ellipse.expand_subscales(kpts, subscale_list)
+    print('step3: interpolate scales')
+    subscale_list = etool.interpolate_between(peak_list, nScales, high, low)
+    subscale_kpts = etool.expand_subscales(kpts, subscale_list)
     #show_kpts(subscale_kpts, 3, 'subscale keypoint')
 
     # STEP 4: Check Image Bounds
+    print('step4: check image bounds')
     # Make sure that the new shapes are in bounds
     height, width = imgBGR.shape[0:2]
-    isvalid = ellipse.check_kpts_in_bounds(subscale_kpts, width, height)
+    isvalid = etool.check_kpts_in_bounds(subscale_kpts, width, height)
     adapted_kpts = np.array(subscale_kpts[isvalid], dtype=np.float32)
     show_kpts(adapted_kpts, 3, 'adapted keypoint')
 
     df2.update()
 
     scales = 2 ** np.linspace(low, high, nScales)
-    adapted_kpts = ellipse.adaptive_scale(img_fpath, kpts, nScales, low, high, nSamples)
+    adapted_kpts = etool.adaptive_scale(img_fpath, kpts, nScales, low, high, nSamples)
 
     #plot_vals(adapted_kpts, pnum=(3
 
@@ -199,7 +148,7 @@ def test_adaptive_scale():
 
 if __name__ == '__main__':
     multiprocessing.freeze_support()
-    ensure_hotspotter()
+    print('__main__ = test_adaptive_scale.py')
     np.set_printoptions(threshold=5000, linewidth=5000, precision=3)
 
     #adaptive_locals = test_adaptive_scale()

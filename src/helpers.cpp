@@ -386,3 +386,10 @@ Mat halfImage(const Mat &input)
             *out++ = input.at<float>(ri,ci);
     return n;
 }
+
+
+bool almost_eq(float f1, float f2)
+{
+    float thresh = 1E-10;
+    return fabs(f1 - f2) < thresh;
+}

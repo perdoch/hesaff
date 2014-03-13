@@ -9,6 +9,25 @@
 
 #include "affine.h"
 
+// Gravity points downward = tau / 4 = pi / 2
+#ifndef M_GRAVITY_THETA
+#define M_GRAVITY_THETA 1.570795
+// relative to gravity
+#define R_GRAVITY_THETA 0
+#endif
+
+#ifdef MYDEBUG
+#undef MYDEBUG
+#endif
+#define MYDEBUG
+
+#ifdef MYDEBUG
+#define printDBG(msg) std::cout << "[hesaff.c] " << msg << std::endl;
+#define write(msg) std::cout << msg;
+#else
+#define printDBG(msg);
+#endif
+
 using namespace cv;
 
 void computeGradient(const Mat &img, Mat &gradx, Mat &grady)
@@ -115,12 +134,15 @@ bool AffineShape::normalizeAffine(const Mat &img,
         float s,
         float a11, float a12,
         float a21, float a22,
-        float theta)
+        float ori)
 {
     // img is passed from onAffineShapeFound as this->image
-    if (theta != 0)
+    if (!almost_eq(ori, R_GRAVITY_THETA))
         {
-        rotateAffineTransformation(a11, a12, a21, a22, theta); // helper
+        // rotate relative to the gravity vector
+        float ori_offst = ori - R_GRAVITY_THETA;
+        printDBG("Rotating Patch ori=" << ori << "; offst_ori=" << ori_offst)
+        rotateAffineTransformation(a11, a12, a21, a22, ori_offst); // helper
         }
 
     // determinant == 1 assumed (i.e. isotropic scaling should be separated in mrScale
