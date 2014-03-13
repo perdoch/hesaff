@@ -16,11 +16,11 @@ LEFT  = (2 * np.tau / 4)
 UP    = (3 * np.tau / 4)
 
 
-def test_keypoint(ori=DOWN, skew=0):
+def test_keypoint(xscale=1, yscale=1, ori=DOWN, skew=0):
     # Test Keypoint
     x, y = 0, 0
-    a, c, d = 2, skew, 3
-    kp = np.array([x, y, a, c, d, ori])
+    iv11, iv21, iv22 = xscale, skew, yscale
+    kp = np.array([x, y, iv11, iv21, iv22, ori])
 
     # Test SIFT descriptor
     sift = np.zeros(128)
@@ -57,9 +57,9 @@ def square_axis(ax, s=4):
     df2.set_yticks([])
 
 
-def test_shape(ori=0, skew=0, pnum=(1, 1, 1), fnum=1):
+def test_shape(ori=0, skew=0, xscale=1, yscale=1, pnum=(1, 1, 1), fnum=1):
     df2.figure(fnum=fnum, pnum=pnum)
-    kpts, sifts = test_keypoint(ori=ori, skew=skew)
+    kpts, sifts = test_keypoint(ori=ori, skew=skew, xscale=xscale, yscale=yscale)
     ax = df2.gca()
     square_axis(ax)
     mpl_keypoint.draw_keypoints(ax, kpts, sifts=sifts, ell_color=df2.ORANGE, ori=True,
@@ -67,7 +67,7 @@ def test_shape(ori=0, skew=0, pnum=(1, 1, 1), fnum=1):
                                 ori_color=df2.DEEP_PINK, eig_color=df2.PINK,
                                 rect=True, eig=True, bin_color=df2.RED,
                                 arm1_color=df2.YELLOW, arm2_color=df2.BLACK)
-    title = 'ori = %.2fpi' % (ori / np.pi)
+    title = 'xyscale=(%.1f, %.1f),\n skew=%.1f, ori=%.1fpi' % (xscale, yscale, skew, ori / np.pi)
     df2.set_title(title)
     df2.dark_background()
     return kpts, sifts
@@ -98,14 +98,24 @@ MIN_ORI = np.tau / 4
 MAX_SKEW = 1.5
 MIN_SWEW = 0
 
+MIN_Y = 1
+MAX_Y = 1
+
 
 for row, col in iprod(xrange(nRows), xrange(nCols)):
-    print((row, col))
+    #print((row, col))
     alpha = col / (nCols)
     beta  = row / (nRows)
     ori  = (MIN_ORI  * (1 - alpha)) + (MAX_ORI  * (alpha))
     skew = (MIN_SWEW * (1 - beta))  + (MAX_SKEW * (beta))
-    kpts, sifts = test_shape(pnum=pnum_(), ori=ori, skew=skew)
+    ysca = (MIN_Y * (1 - beta))  + (MAX_Y * (beta))
+
+    kpts, sifts = test_shape(pnum=pnum_(),
+                             ori=ori,
+                             skew=skew,
+                             xscale=1,
+                             yscale=ysca)
+    print(kpts)
 
 
 #scale_factor = 1
