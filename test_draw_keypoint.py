@@ -49,7 +49,7 @@ def test_keypoint(xscale=1, yscale=1, ori=DOWN, skew=0):
     return kpts, sifts
 
 
-def square_axis(ax, s=4):
+def square_axis(ax, s=3):
     ax.set_xlim(-s, s)
     ax.set_ylim(-s, s)
     ax.set_aspect('equal')
@@ -83,8 +83,8 @@ THETA3 = (DOWN + RIGHT) / 2
 THETA4 = (DOWN + RIGHT + RIGHT) / 3
 THETA5 = RIGHT
 
-nRows = 3
-nCols = 4
+nRows = 5
+nCols = 3
 
 
 def pnum_(px=None):
@@ -95,28 +95,68 @@ def pnum_(px=None):
     return (nRows, nCols, px)
 
 MAX_ORI = np.tau
-MIN_ORI = np.tau / 4
-MAX_SKEW = 1.5
-MIN_SWEW = 0
+MIN_ORI = np.tau / 4 - .01
 
-MIN_Y = 1
-MAX_Y = 1
+MIN_X = .5
+MAX_X = 2
+
+MAX_SKEW = 0
+MIN_SWEW = 1
+
+MIN_Y = .5
+MAX_Y = 2
+
+kp_list = []
 
 
 for row, col in iprod(xrange(nRows), xrange(nCols)):
     #print((row, col))
     alpha = col / (nCols)
     beta  = row / (nRows)
+    xsca = (MIN_X    * (1 - alpha)) + (MAX_X    * (alpha))
     ori  = (MIN_ORI  * (1 - alpha)) + (MAX_ORI  * (alpha))
     skew = (MIN_SWEW * (1 - beta))  + (MAX_SKEW * (beta))
-    ysca = (MIN_Y * (1 - beta))  + (MAX_Y * (beta))
+    ysca = (MIN_Y    * (1 - beta))  + (MAX_Y    * (beta))
 
     kpts, sifts = test_shape(pnum=pnum_(),
                              ori=ori,
                              skew=skew,
-                             xscale=1,
+                             xscale=xsca,
                              yscale=ysca)
-    print(kpts)
+    print('+----')
+    kp_list.append(kpts[0])
+    S_list = ktool.orthogonal_scales(kpts=kpts)
+    #print('xscale=%r yscale=%r, skew=%r' % (xsca, ysca, skew))
+    #print(S_list)
+
+    import vtool.linalg as ltool
+    #kpts = np.vstack(kp_list)
+    invV_mats = ktool.get_invV_mats(kpts, ashomog=False)
+    'gets the scales of the major and minor elliptical axis'
+    USV_list = [ltool.svd(invV) for invV in invV_mats]
+
+    from hscom import util
+    str_list = []
+    for USV in USV_list:
+        U, s, V = USV
+        S = np.diag(s)
+
+        S2 = S[::-1, ::-1]
+        U2 = U[::-1, ::-1].T
+        V2 = V[::-1, ::-1].T
+
+        A = U.dot(S).dot(V)
+        A2 = U2.dot(S2).dot(V2)
+
+        str_ = util.horiz_string([U, ' * ', S, ' * ', V, ' = ', A])
+        str2_ = util.horiz_string([V2, ' * ', S2, ' * ', U2, ' = ', A2])
+        str_list.append(str_)
+        print(util.horiz_string(('Input: ', invV)))
+        print('')
+        print(str_)
+        #print(str2_)
+    print('---')
+
 
 
 #scale_factor = 1

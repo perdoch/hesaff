@@ -272,9 +272,9 @@ struct AffineHessianDetector : public HessianDetector, AffineShape, HessianKeypo
                     << e11 << " " << e12 << " " << e22 ;
                 #endif
                 for (size_t i=0; i < DESC_DIM; i++)
-                    {
+                {
                     out << " " << int(k.desc[i]);
-                    }
+                }
                 out << std::endl;
             }
         }
@@ -311,9 +311,9 @@ struct AffineHessianDetector : public HessianDetector, AffineShape, HessianKeypo
                 ori  = kpts[rowk + 5];
                 #else
                 ori  = R_GRAVITY_THETA
-                #endif
-                // Extract scale.
-                sc = sqrt(abs((iv11 * iv22) - (iv12 * iv21)));
+                    #endif
+                    // Extract scale.
+                    sc = sqrt(abs((iv11 * iv22) - (iv12 * iv21)));
                 // Deintegrate scale. Keep invA format
                 s  = (sc / AffineShape::par.mrSize); // scale
                 a11 = iv11 / sc;
@@ -403,10 +403,10 @@ struct AffineHessianDetector : public HessianDetector, AffineShape, HessianKeypo
         // END void onAffineShapeFound
         //------------------------------------------------------------
         void computeDominantRotation(float x, float y, float s, float a11, float a12, float a21, float a22)
-            {
+        {
             // TODO: Write code to extract the dominant gradient direction in C++
             //float rotation_invariance = AffineShape::par.rotation_invariance;
-            }
+        }
 
         void populateDescriptor(uint8* desc, size_t offst)
         {
@@ -418,14 +418,14 @@ struct AffineHessianDetector : public HessianDetector, AffineShape, HessianKeypo
         }
 
         void DBG_patch()
-            {
+        {
             //DBG: write out patches
             //make_str(fpath, "patches/patch_" << this->keys.size() << "c.png");
             //cv::imwrite(fpath, this->patch);
-            }
+        }
 
         void DBG_keypoint(float* kpts, int rowk)
-            {
+        {
             float x, y, iv11, iv12, iv21, iv22, ori;
             x = kpts[rowk + 0];
             y = kpts[rowk + 1];
@@ -441,7 +441,7 @@ struct AffineHessianDetector : public HessianDetector, AffineShape, HessianKeypo
             printDBG("|         (" << iv21 << ", " << iv22 << ")] ");
             printDBG("|  ori = " << ori);
             printDBG("L___");
-            }
+        }
 
 
 
@@ -457,7 +457,7 @@ struct AffineHessianDetector : public HessianDetector, AffineShape, HessianKeypo
 extern "C" {
 #endif
 
-// Python binds to extern C code
+    // Python binds to extern C code
 #define PYHESAFF extern HESAFF_EXPORT
 
     typedef void*(*allocer_t)(int, int*);
@@ -472,14 +472,14 @@ extern "C" {
 
 
     PYHESAFF int get_kpts_dim()
-        {
+    {
         return KPTS_DIM;
-        }
+    }
 
     PYHESAFF int get_desc_dim()
-        {
+    {
         return DESC_DIM;
-        }
+    }
 
     // new hessian affine detector
     PYHESAFF AffineHessianDetector* new_hesaff_from_params(char* img_fpath,
@@ -505,7 +505,7 @@ extern "C" {
             float scale_min,
             float scale_max,
             bool rotation_invariance)
-                {
+            {
                 printDBG("making detector for " << img_fpath);
                 printDBG("make hesaff. img_fpath = " << img_fpath);
                 // Read in image and convert to uint8
@@ -514,11 +514,11 @@ extern "C" {
                 float *imgout = image.ptr<float>(0);
                 uint8 *imgin  = tmp.ptr<uint8>(0);
                 for (size_t i=tmp.rows*tmp.cols; i > 0; i--)
-                    {
+                {
                     *imgout = (float(imgin[0]) + imgin[1] + imgin[2]) / 3.0f;
                     imgout++;
                     imgin+=3;
-                    }
+                }
 
                 // Define params
                 SIFTDescriptorParams siftParams;
@@ -571,11 +571,11 @@ extern "C" {
                 // Create detector
                 AffineHessianDetector* detector = new AffineHessianDetector(image, pyrParams, affShapeParams, siftParams);
                 return detector;
-                }
+            }
 
     // new hessian affine detector WRAPPER
     PYHESAFF AffineHessianDetector* new_hesaff(char* img_fpath)
-        {
+    {
         // Pyramid Params
         int   numberOfScales = 3;
         float threshold = 16.0f / 3.0f;
@@ -605,21 +605,21 @@ extern "C" {
                 spatialBins, orientationBins, maxBinValue, initialSigma, patchSize,
                 scale_min, scale_max, rotation_invariance);
         return detector;
-        }
+    }
 
     // extract descriptors from user specified keypoints
     PYHESAFF void extractDesc(AffineHessianDetector* detector,
             int nKpts, float* kpts, uint8* desc)
-        {
+    {
         printDBG("detector->extractDesc");
         detector->extractDesc(nKpts, kpts, desc);
         printDBG("extracted nKpts = " << nKpts);
-        }
+    }
 
     // export current detections to numpy arrays
     PYHESAFF void exportArrays(AffineHessianDetector* detector,
             int nKpts, float *kpts, uint8 *desc)
-        {
+    {
         printDBG("detector->exportArrays(" << nKpts << ")");
         //printDBG("detector->exportArrays kpts[0]" << kpts[0] << ")");
         //printDBG("detector->exportArrays desc[0]" << (int) desc[0] << ")");
@@ -627,15 +627,15 @@ extern "C" {
         //printDBG("detector->exportArrays kpts[0]" << kpts[0] << ")");
         //printDBG("detector->exportArrays desc[0]" << (int) desc[0] << ")");
         printDBG("FINISHED detector->exportArrays");
-        }
+    }
 
     // dump current detections to disk
     PYHESAFF void writeFeatures(AffineHessianDetector* detector,
             char* img_fpath)
-        {
+    {
         printDBG("detector->write_features");
         detector->write_features(img_fpath);
-        }
+    }
 
 #ifdef __cplusplus
 }
@@ -650,16 +650,16 @@ extern "C" {
 int main(int argc, char **argv)
 {
     if (argc>1)
-        {
+    {
         printDBG("main()");
         char* img_fpath = argv[1];
         int nKpts;
         AffineHessianDetector* detector = new_hesaff(img_fpath);
         nKpts = detect(detector);
         writeFeatures(detector, img_fpath);
-        }
+    }
     else
-        {
+    {
         printf("\nUsage: ell_desc image_name.png kpts_file.txt\nDescribes elliptical keypoints (with gravity vector) given in kpts_file.txt using a SIFT descriptor.\n\n");
-        }
+    }
 }
