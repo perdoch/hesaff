@@ -7,6 +7,7 @@ import vtool.keypoint as ktool  # NOQA
 import numpy as np
 import matplotlib as mpl  # NOQA
 from itertools import product as iprod
+import vtool  # NOQA
 
 np.tau = 2 * np.pi
 
@@ -132,7 +133,6 @@ for row, col in iprod(xrange(nRows), xrange(nCols)):
     import vtool.linalg as ltool
     #kpts = np.vstack(kp_list)
     invV_mats = ktool.get_invV_mats(kpts, ashomog=False)
-    'gets the scales of the major and minor elliptical axis'
     USV_list = [ltool.svd(invV) for invV in invV_mats]
 
     from hscom import util
@@ -147,6 +147,9 @@ for row, col in iprod(xrange(nRows), xrange(nCols)):
 
         A = U.dot(S).dot(V)
         A2 = U2.dot(S2).dot(V2)
+        A3 = S2.dot(V2)
+
+        (np.diag(s).dot(V) ** 2).sum(0)
 
         str_ = util.horiz_string([U, ' * ', S, ' * ', V, ' = ', A])
         str2_ = util.horiz_string([V2, ' * ', S2, ' * ', U2, ' = ', A2])
@@ -154,10 +157,10 @@ for row, col in iprod(xrange(nRows), xrange(nCols)):
         print(util.horiz_string(('Input: ', invV)))
         print('')
         print(str_)
+        print('')
+        print(A3)
         #print(str2_)
     print('---')
-
-
 
 #scale_factor = 1
 #offset = (0, 0)
@@ -173,6 +176,6 @@ for row, col in iprod(xrange(nRows), xrange(nCols)):
 #print((aff2 + aff).frozen())
 
 #mpl_sift.draw_sift(ax, sift)
-df2.update()
+#df2.update()
 
 exec(df2.present(wh=(700, 700)))
