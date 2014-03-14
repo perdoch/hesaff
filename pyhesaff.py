@@ -1,7 +1,8 @@
+'the python hessian affine keypoint module'
+# TODO: it would be nice to be able to pass around an image
+# already in memory instead of having to pass around its path
 from __future__ import print_function, division
 # Standard
-#from itertools import izip
-#from ctypes.util import find_library
 from os.path import realpath, dirname
 import ctypes_interface
 import ctypes as C
@@ -77,7 +78,7 @@ def load_hesaff_clib():
         #root_dir = realpath(dirname(__file__))
     root_dir = realpath(dirname(__file__))
     libname = 'hesaff'
-    hesaff_lib, def_cfunc = ctypes_interface.load_clib(libname, root_dir)
+    hesaff_clib, def_cfunc = ctypes_interface.load_clib(libname, root_dir)
     # Expose extern C Functions
     def_cfunc(int_t, 'detect',                 [obj_t])
     def_cfunc(int_t, 'get_kpts_dim',           [])
@@ -85,12 +86,12 @@ def load_hesaff_clib():
     def_cfunc(None,  'extractDesc',            [obj_t, int_t, kpts_t, desc_t])
     def_cfunc(obj_t, 'new_hesaff',             [str_t])
     def_cfunc(obj_t, 'new_hesaff_from_params', [str_t] + hesaff_param_types)
-    return hesaff_lib
+    return hesaff_clib
 
 # Create a global interface to the hesaff lib
-hesaff_lib = load_hesaff_clib()
-KPTS_DIM = hesaff_lib.get_kpts_dim()
-DESC_DIM = hesaff_lib.get_desc_dim()
+HESAFF_CLIB = load_hesaff_clib()
+KPTS_DIM = HESAFF_CLIB.get_kpts_dim()
+DESC_DIM = HESAFF_CLIB.get_desc_dim()
 
 print('%r KPTS_DIM = %r' % (type(KPTS_DIM), KPTS_DIM))
 print('%r DESC_DIM = %r' % (type(KPTS_DIM), DESC_DIM))
@@ -99,6 +100,18 @@ print('%r DESC_DIM = %r' % (type(KPTS_DIM), DESC_DIM))
 #============================
 # hesaff python interface
 #============================
+
+
+def _alloc_desc(nKpts):
+    desc = np.empty((nKpts, DESC_DIM), desc_dtype)
+    return desc
+
+
+def _allocate_kpts_and_desc(nKpts):
+    kpts = np.empty((nKpts, KPTS_DIM), kpts_dtype)
+    desc = _alloc_desc(nKpts)
+    return kpts, desc
+
 
 def _make_hesaff_cpp_params(**kwargs):
     hesaff_params = hesaff_param_dict.copy()
@@ -109,58 +122,63 @@ def _make_hesaff_cpp_params(**kwargs):
             print('[pyhesaff] WARNING: key=%r is not known' % key)
 
 
-def new_hesaff(img_fpath, **kwargs):
-    # Make detector and read image
+def _new_hesaff(img_fpath, **kwargs):
+    'Creates new detector object which reads the image'
     hesaff_params = hesaff_param_dict.copy()
     hesaff_params.update(kwargs)
-    hesaff_args = hesaff_params.values()
-    hesaff_ptr = hesaff_lib.new_hesaff_from_params(realpath(img_fpath), *hesaff_args)
+    hesaff_args = hesaff_params.values()  # pass all parameters to HESAFF_CLIB
+    hesaff_ptr = HESAFF_CLIB.new_hesaff_from_params(realpath(img_fpath), *hesaff_args)
     return hesaff_ptr
 
 
-def allocate_kpts(nKpts):
-    kpts = np.empty((nKpts, KPTS_DIM), kpts_dtype)
-    desc = np.empty((nKpts, DESC_DIM), desc_dtype)
-    return kpts, desc
+def extract_desc(img_fpath, kpts, **kwargs):
+    hesaff_ptr = _new_hesaff(img_fpath, **kwargs)
+    nKpts = len(kpts)
+    desc = _alloc_desc(nKpts)  # allocate memory for new descriptors
+    kpts = np.ascontiguousarray(kpts)  # kpts might not be contiguous
+    # extract descriptors at given locations
+    HESAFF_CLIB.extractDesc(hesaff_ptr, nKpts, kpts, desc)
+    return desc
 
 
 def detect_kpts(img_fpath,
-                use_adaptive_scale=False, assume_gravity=False,
+                use_adaptive_scale=False, nogravity_hack=False,
                 **kwargs):
     '''
     main driver function for detecting hessian affine keypoints.
     extra parameters can be passed to the hessian affine detector by using
     kwargs. Valid keyword arguments are:
     ''' + str(hesaff_param_dict.keys())
-    #print('Detecting Keypoints')
-    hesaff_ptr = new_hesaff(img_fpath, **kwargs)
-    # Return the number of keypoints detected
-    nKpts = hesaff_lib.detect(hesaff_ptr)
-    # Allocate arrays
-    kpts, desc = allocate_kpts(nKpts)
-    hesaff_lib.exportArrays(hesaff_ptr, nKpts, kpts, desc)  # Populate arrays
+    #print('[hes] Detecting Keypoints')
+    #print('[hes] use_adaptive_scale=%r' % (use_adaptive_scale,))
+    #print('[hes] nogravity_hack=%r' % (nogravity_hack,))
+    #print('[hes] kwargs=%r' % (kwargs,))
+    hesaff_ptr = _new_hesaff(img_fpath, **kwargs)
+    nKpts = HESAFF_CLIB.detect(hesaff_ptr)  # Get num detected
+    kpts, desc = _allocate_kpts_and_desc(nKpts)  # Allocate arrays
+    HESAFF_CLIB.exportArrays(hesaff_ptr, nKpts, kpts, desc)  # Populate arrays
     if use_adaptive_scale:  # Adapt scale if requested
         #print('Adapting Scale')
         kpts, desc = adapt_scale(img_fpath, kpts)
+    if nogravity_hack:
+        kpts, desc = adapt_rotation(img_fpath, kpts)
     return kpts, desc
 
 
+def adapt_rotation(img_fpath, kpts):
+    import vtool.patch as ptool
+    import vtool.image as gtool
+    imgBGR = gtool.imread(img_fpath)
+    kpts2 = ptool.find_kpts_direction(imgBGR, kpts)
+    desc2 = extract_desc(img_fpath, kpts2)
+    return kpts2, desc2
+
+
 def adapt_scale(img_fpath, kpts):
-    import ellipse
+    import vtool.ellipse as etool
     nScales = 16
     nSamples = 16
     low, high = -1, 2
-    adapted_kpts = ellipse.adaptive_scale(img_fpath, kpts, nScales, low, high, nSamples)
-    adapted_desc = extract_desc(img_fpath, adapted_kpts)
-    return adapted_kpts, adapted_desc
-
-
-def extract_desc(img_fpath, kpts, **kwargs):
-    hesaff_ptr = new_hesaff(img_fpath, **kwargs)
-    nKpts = len(kpts)
-    # allocate memory for new descriptors
-    desc = np.empty((nKpts, 128), desc_dtype)
-    kpts = np.ascontiguousarray(kpts)  # kpts might not be contiguous
-    # extract descriptors at given locations
-    hesaff_lib.extractDesc(hesaff_ptr, nKpts, kpts, desc)
-    return desc
+    kpts2 = etool.adaptive_scale(img_fpath, kpts, nScales, low, high, nSamples)
+    desc2 = extract_desc(img_fpath, kpts2)
+    return kpts2, desc2

@@ -19,7 +19,7 @@
 #ifdef MYDEBUG
 #undef MYDEBUG
 #endif
-#define MYDEBUG
+//#define MYDEBUG
 
 #ifdef MYDEBUG
 #define printDBG(msg) std::cout << "[hesaff.c] " << msg << std::endl;
