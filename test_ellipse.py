@@ -7,8 +7,10 @@ from itertools import izip
 from hscom import util
 from hsviz import draw_func2 as df2
 from hsviz import viz
+import matplotlib as mpl
 import numpy as np
 import vtool.linalg as ltool
+import pyhestest
 
 
 def draw_expanded_scales(imgL, sel_kpts, exkpts, exdesc_):
@@ -64,7 +66,7 @@ def in_depth_ellipse(kp):
     def _plotarrow(x, y, dx, dy, color=df2.BLUE, label=''):
         ax = df2.gca()
         arrowargs = dict(head_width=.5, length_includes_head=True, label=label)
-        arrow = df2.FancyArrow(x, y, dx, dy, **arrowargs)
+        arrow = mpl.patches.FancyArrow(x, y, dx, dy, **arrowargs)
         arrow.set_edgecolor(color)
         arrow.set_facecolor(color)
         ax.add_patch(arrow)
@@ -81,7 +83,10 @@ def in_depth_ellipse(kp):
     print('Input from Perdoch\'s detector: ')
 
     # We are given the keypoint in invA format
-    (ix, iy, iv11, iv21, iv22), iv12 = kp, 0
+    if len(kp) == 5:
+        (ix, iy, iv11, iv21, iv22), iv12 = kp, 0
+    elif len(kp) == 6:
+        (ix, iy, iv11, iv21, iv22, ori), iv12 = kp, 0
     invV = np.array([[iv11, iv12, ix],
                      [iv21, iv22, iy],
                      [   0,    0,  1]])
@@ -414,3 +419,20 @@ def in_depth_ellipse(kp):
     return locals()
     # Algebraic form of connic
     #assert (a * (x ** 2)) + (b * (x * y)) + (c * (y ** 2)) + (d * x) + (e * y) + (f) == 0
+
+
+if __name__ == '__main__':
+    print('__main__ = test_ellipse.py')
+    np.set_printoptions(threshold=5000, linewidth=5000, precision=3)
+
+    test_data = pyhestest.load_test_data(short=True)
+    kpts = test_data['kpts']
+    kp = kpts[0]
+    in_depth_ellipse(kp)
+    #exec(helpers.execstr_dict(test_locals, 'test_locals'))
+    #if '--cmd' in sys.argv:
+    #exec(helpers.execstr_dict(adaptive_locals, 'adaptive_locals'))
+    #in_depth_locals = adaptive_locals['in_depth_locals']
+    #exec(helpers.execstr_dict(in_depth_locals, 'in_depth_locals'))
+    #exec(df2.present(override1=True))
+    exec(df2.present())

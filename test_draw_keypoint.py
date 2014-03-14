@@ -126,41 +126,9 @@ for row, col in iprod(xrange(nRows), xrange(nCols)):
                              yscale=ysca)
     print('+----')
     kp_list.append(kpts[0])
-    S_list = ktool.orthogonal_scales(kpts=kpts)
-    #print('xscale=%r yscale=%r, skew=%r' % (xsca, ysca, skew))
-    #print(S_list)
-
-    import vtool.linalg as ltool
-    #kpts = np.vstack(kp_list)
-    invV_mats = ktool.get_invV_mats(kpts, ashomog=False)
-    USV_list = [ltool.svd(invV) for invV in invV_mats]
-
-    from hscom import util
-    str_list = []
-    for USV in USV_list:
-        U, s, V = USV
-        S = np.diag(s)
-
-        S2 = S[::-1, ::-1]
-        U2 = U[::-1, ::-1].T
-        V2 = V[::-1, ::-1].T
-
-        A = U.dot(S).dot(V)
-        A2 = U2.dot(S2).dot(V2)
-        A3 = S2.dot(V2)
-
-        (np.diag(s).dot(V) ** 2).sum(0)
-
-        str_ = util.horiz_string([U, ' * ', S, ' * ', V, ' = ', A])
-        str2_ = util.horiz_string([V2, ' * ', S2, ' * ', U2, ' = ', A2])
-        str_list.append(str_)
-        print(util.horiz_string(('Input: ', invV)))
-        print('')
-        print(str_)
-        print('')
-        print(A3)
-        #print(str2_)
-    print('---')
+    S_list = ktool.get_xy_axis_extents(kpts=kpts)
+    print('xscale=%r yscale=%r, skew=%r' % (xsca, ysca, skew))
+    print(S_list)
 
 #scale_factor = 1
 #offset = (0, 0)
