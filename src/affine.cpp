@@ -140,7 +140,7 @@ bool AffineShape::normalizeAffine(const Mat &img,
     if (!almost_eq(ori, R_GRAVITY_THETA))
         {
         // rotate relative to the gravity vector
-        float ori_offst = ori - R_GRAVITY_THETA;
+        float ori_offst = (ori - R_GRAVITY_THETA);
         printDBG("Rotating Patch ori=" << ori << "; offst_ori=" << ori_offst)
         rotateAffineTransformation(a11, a12, a21, a22, ori_offst); // helper
         }

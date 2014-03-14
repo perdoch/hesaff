@@ -95,6 +95,8 @@ def TEST_keypoint(imgBGR, img_fpath, kpts, desc, sel):
     TEST_figure2(imgBGR, kpts2, desc2, sel, fnum=3)
     df2.set_figtitle('Rotation Invariant')
 
+    df2.draw_keypoint_gradient_orientations(imgBGR, kp=kpts2[sel],
+                                            sift=desc[sel], mode='vec', fnum=4)
     #df2.draw_vector_field(gradx, grady, pnum=(1, 1, 1), fnum=4)
     #df2.draw_kpts2(np.array([wkp]), sifts=desc[sel:sel + 1], ori=True)
 
