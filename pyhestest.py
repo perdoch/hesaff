@@ -31,6 +31,12 @@ def load_test_data(short=False, n=0, **kwargs):
     nScales = 4
     nSamples = 16
     img_fname = 'zebra.png'
+    if '--test.png' in sys.argv:
+        img_fname = 'test.png'
+    if '--zebra.png' in sys.argv:
+        img_fname = 'zebra.png'
+    if '--lena.png' in sys.argv:
+        img_fname = 'lena.png'
     img_fpath = realpath(img_fname)
     imgBGR = io.imread(img_fpath)
     imgLAB = cv2.cvtColor(imgBGR, cv2.COLOR_BGR2LAB)
@@ -41,7 +47,7 @@ def load_test_data(short=False, n=0, **kwargs):
     }
     detect_kwargs.update(kwargs)
     kpts, desc = pyhesaff.detect_kpts(img_fpath, **detect_kwargs)
-    if short:
+    if short and n > 0:
         extra_fxs = []
         if img_fname == 'zebra.png':
             extra_fxs = [374, 520, 880][0:1]

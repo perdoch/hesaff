@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 'the python hessian affine keypoint module'
 # TODO: it would be nice to be able to pass around an image
 # already in memory instead of having to pass around its path
@@ -180,5 +181,6 @@ def adapt_scale(img_fpath, kpts):
     nSamples = 16
     low, high = -1, 2
     kpts2 = etool.adaptive_scale(img_fpath, kpts, nScales, low, high, nSamples)
+    # passing in 0 orientation results in gravity vector direction keypoint
     desc2 = extract_desc(img_fpath, kpts2)
     return kpts2, desc2

@@ -36,22 +36,31 @@ def TEST_figure1(wpatch, gradx, grady, gmag, gori, hist, centers):
     print('[rotinvar] 4) Draw histogram with interpolation annotations')
     fnum = 1
     gorimag = dtool.color_orimag(gori, gmag)
+    nRow, nCol = (2, 7)
 
-    df2.figure(fnum=1, pnum=(2, 1, 2), doclf=True, docla=True)
+    df2.figure(fnum=1, pnum=(nRow, 1, nRow), doclf=True, docla=True)
     dtool.draw_hist_subbin_maxima(hist, centers)
     df2.set_xlabel('grad orientation (radians)')
     df2.set_ylabel('grad magnitude')
     df2.set_title('dominant orientations')
 
     print('[rotinvar] 5) Show patch, gradients, magintude, and orientation')
-    nRow, nCol = (2, 6)
     df2.imshow(wpatch,    pnum=(nRow, nCol, 1), fnum=fnum, title='patch')
-    df2.draw_vector_field(gradx, grady, pnum=(nRow, nCol, 2), fnum=fnum)
-    df2.set_title('gori (vec)')
+    df2.draw_vector_field(gradx, grady, pnum=(nRow, nCol, 2), fnum=fnum, title='gori (vec)')
     df2.imshow(gorimag, pnum=(nRow, nCol, 3), fnum=fnum, title='gori (col)')
-    df2.imshow(gradx,   pnum=(nRow, nCol, 4), fnum=fnum, title='gradx')
-    df2.imshow(grady,   pnum=(nRow, nCol, 5), fnum=fnum, title='grady')
+    df2.imshow(np.abs(gradx),   pnum=(nRow, nCol, 4), fnum=fnum, title='gradx')
+    df2.imshow(np.abs(grady),   pnum=(nRow, nCol, 5), fnum=fnum, title='grady')
     df2.imshow(gmag,    pnum=(nRow, nCol, 6), fnum=fnum, title='gmag')
+
+    gpatch = ptool.gaussian_patch(shape=gori.shape)
+    df2.imshow(gpatch * 255, pnum=(nRow, nCol, 7), fnum=fnum, title='gauss weights', cmap_='hot')
+    #gpatch3 = np.dstack((gpatch, gpatch, gpatch))
+    #df2.draw_vector_field(gradx * gpatch, grady * gpatch, pnum=(nRow, nCol, 8), fnum=fnum, title='gori (vec)')
+    #df2.imshow(gorimag * gpatch3, pnum=(nRow, nCol, 9), fnum=fnum, title='gori (col)')
+    #df2.imshow(gradx * gpatch,   pnum=(nRow, nCol, 10), fnum=fnum, title='gradx')
+    #df2.imshow(grady * gpatch,   pnum=(nRow, nCol, 11), fnum=fnum, title='grady')
+    #df2.imshow(gmag * gpatch,    pnum=(nRow, nCol, 12), fnum=fnum, title='gmag')
+    return locals()
 
 
 def TEST_figure2(imgBGR, kpts, desc, sel, fnum=2):
@@ -87,7 +96,7 @@ def TEST_keypoint(imgBGR, img_fpath, kpts, desc, sel):
     #----------------------#
     # --- Draw Results --- #
     #----------------------#
-    TEST_figure1(wpatch, gradx, grady, gmag, gori, hist, centers)
+    f1_loc = TEST_figure1(wpatch, gradx, grady, gmag, gori, hist, centers)
     df2.set_figtitle('Dominant Orienation Extraction')
 
     TEST_figure2(imgBGR, kpts, desc, sel, fnum=2)
@@ -101,6 +110,7 @@ def TEST_keypoint(imgBGR, img_fpath, kpts, desc, sel):
 
     #df2.draw_vector_field(gradx, grady, pnum=(1, 1, 1), fnum=4)
     #df2.draw_kpts2(np.array([wkp]), sifts=desc[sel:sel + 1], ori=True)
+    return locals()
 
 
 if __name__ == '__main__':
@@ -113,9 +123,11 @@ if __name__ == '__main__':
     kpts = test_data['kpts']
     desc = test_data['desc']
     imgBGR = test_data['imgBGR']
-    sel = 3
+    sel = min(len(kpts) - 1, 3)
 
-    TEST_keypoint(imgBGR, img_fpath, kpts, desc, sel)
+    locals_ = TEST_keypoint(imgBGR, img_fpath, kpts, desc, sel)
+    exec(util.execstr_dict(locals_, 'locals_'))
+    exec(util.execstr_dict(f1_loc, 'f1_loc'))  # NOQA
 
     #pinteract.interact_keypoints(imgBGR, kpts2, desc, arrow=True, rect=True)
     exec(df2.present(wh=800))

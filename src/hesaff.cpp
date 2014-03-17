@@ -59,8 +59,8 @@
 #define R_GRAVITY_THETA 0
 #endif
 
-#define ROTINVAR  // developing rotational invariance
-#ifdef ROTINVAR
+#define USE_ORI  // developing rotational invariance
+#ifdef USE_ORI
 const int KPTS_DIM = 6;
 #else
 const int KPTS_DIM = 5;
@@ -73,7 +73,7 @@ struct Keypoint
 {
     float x, y, s;
     float a11,a12,a21,a22;
-    #ifdef ROTINVAR
+    #ifdef USE_ORI
     float ori;
     #endif
     float response;
@@ -183,7 +183,7 @@ struct AffineHessianDetector : public HessianDetector, AffineShape, HessianKeypo
                 kpts[rowk + 2] = iv11;
                 kpts[rowk + 3] = iv21;
                 kpts[rowk + 4] = iv22;
-                #ifdef ROTINVAR
+                #ifdef USE_ORI
                 kpts[rowk + 5] = k.ori;
                 #endif
 
@@ -262,7 +262,7 @@ struct AffineHessianDetector : public HessianDetector, AffineShape, HessianKeypo
                 float e11 = invE.at<float>(0,0);
                 float e12 = invE.at<float>(0,1); // also e12 because of E symetry
                 float e22 = invE.at<float>(1,1);
-                #ifdef ROTINVAR
+                #ifdef USE_ORI
                 float ori = k.ori;
                 out << k.x << " " << k.y << " "
                     << e11 << " " << e12 << " "
@@ -307,13 +307,13 @@ struct AffineHessianDetector : public HessianDetector, AffineShape, HessianKeypo
                 iv12 = 0;
                 iv21 = kpts[rowk + 3];
                 iv22 = kpts[rowk + 4];
-                #ifdef ROTINVAR
+                #ifdef USE_ORI
                 ori  = kpts[rowk + 5];
                 #else
                 ori  = R_GRAVITY_THETA
-                    #endif
-                    // Extract scale.
-                    sc = sqrt(abs((iv11 * iv22) - (iv12 * iv21)));
+                #endif
+                // Extract scale.
+                sc = sqrt(abs((iv11 * iv22) - (iv12 * iv21)));
                 // Deintegrate scale. Keep invA format
                 s  = (sc / AffineShape::par.mrSize); // scale
                 a11 = iv11 / sc;
@@ -374,7 +374,8 @@ struct AffineHessianDetector : public HessianDetector, AffineShape, HessianKeypo
             float scale_max = AffineShape::par.scale_max;
             float scale = AffineShape::par.mrSize * s;
             // negative thresholds turn the threshold test off
-            if ((scale_min < 0 || scale >= scale_min) && (scale_max < 0 || scale <= scale_max))
+            if ((scale_min < 0 || scale >= scale_min) &&
+                (scale_max < 0 || scale <= scale_max))
             {
                 //printDBG("passed: " << scale)
                 //printDBG("scale_min: " << scale_min << "; scale_max: " << scale_max)
@@ -393,7 +394,7 @@ struct AffineHessianDetector : public HessianDetector, AffineShape, HessianKeypo
                     k.response = response;
                     k.x = x; k.y = y; k.s = s;
                     k.a11 = a11; k.a12 = a12; k.a21 = a21; k.a22 = a22;
-                    #ifdef ROTINVAR
+                    #ifdef USE_ORI
                     k.ori = ori;
                     #endif
                     this->populateDescriptor(k.desc, 0);
