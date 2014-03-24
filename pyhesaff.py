@@ -10,11 +10,9 @@ import ctypes as C
 import collections
 # Scientific
 import numpy as np
-# Hotspotter
-from hscom import __common__
-print, print_, print_on, print_off, rrr, profile, printDBG =\
-    __common__.init(__name__, module_prefix='[hes]', DEBUG=False, initmpl=False)
 
+
+__VERBOSE__ = True
 
 #============================
 # hesaff ctypes interface
@@ -94,8 +92,10 @@ HESAFF_CLIB = load_hesaff_clib()
 KPTS_DIM = HESAFF_CLIB.get_kpts_dim()
 DESC_DIM = HESAFF_CLIB.get_desc_dim()
 
-print('%r KPTS_DIM = %r' % (type(KPTS_DIM), KPTS_DIM))
-print('%r DESC_DIM = %r' % (type(KPTS_DIM), DESC_DIM))
+
+if __VERBOSE__:
+    print('%r KPTS_DIM = %r' % (type(KPTS_DIM), KPTS_DIM))
+    print('%r DESC_DIM = %r' % (type(KPTS_DIM), DESC_DIM))
 
 
 #============================
@@ -127,6 +127,9 @@ def _new_hesaff(img_fpath, **kwargs):
     'Creates new detector object which reads the image'
     hesaff_params = hesaff_param_dict.copy()
     hesaff_params.update(kwargs)
+    if __VERBOSE__:
+        print('[hes] New Hesaff')
+        print('[hes] hesaff_params=%r' % (hesaff_params,))
     hesaff_args = hesaff_params.values()  # pass all parameters to HESAFF_CLIB
     hesaff_ptr = HESAFF_CLIB.new_hesaff_from_params(realpath(img_fpath), *hesaff_args)
     return hesaff_ptr
@@ -150,18 +153,29 @@ def detect_kpts(img_fpath,
     extra parameters can be passed to the hessian affine detector by using
     kwargs. Valid keyword arguments are:
     ''' + str(hesaff_param_dict.keys())
-    #print('[hes] Detecting Keypoints')
-    #print('[hes] use_adaptive_scale=%r' % (use_adaptive_scale,))
-    #print('[hes] nogravity_hack=%r' % (nogravity_hack,))
-    #print('[hes] kwargs=%r' % (kwargs,))
+    if __VERBOSE__:
+        print('[hes] Detecting Keypoints')
+        print('[hes] use_adaptive_scale=%r' % (use_adaptive_scale,))
+        print('[hes] nogravity_hack=%r' % (nogravity_hack,))
+        print('[hes] kwargs=%r' % (kwargs,))
     hesaff_ptr = _new_hesaff(img_fpath, **kwargs)
+    if __VERBOSE__:
+        print('[hes] detect')
     nKpts = HESAFF_CLIB.detect(hesaff_ptr)  # Get num detected
+    if __VERBOSE__:
+        print('[hes] allocate')
     kpts, desc = _allocate_kpts_and_desc(nKpts)  # Allocate arrays
+    if __VERBOSE__:
+        print('[hes] export')
     HESAFF_CLIB.exportArrays(hesaff_ptr, nKpts, kpts, desc)  # Populate arrays
     if use_adaptive_scale:  # Adapt scale if requested
         #print('Adapting Scale')
+        if __VERBOSE__:
+            print('[hes] adapt_scale')
         kpts, desc = adapt_scale(img_fpath, kpts)
     if nogravity_hack:
+        if __VERBOSE__:
+            print('[hes] adapt_rotation')
         kpts, desc = adapt_rotation(img_fpath, kpts)
     return kpts, desc
 
