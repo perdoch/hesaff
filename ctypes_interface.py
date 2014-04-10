@@ -9,7 +9,7 @@ import ctypes as C
 # general ctypes interface
 #============================
 
-__QUIET__ = '--quiet' in sys.argv
+__DEBUG_CLIB__ = '--debug' in sys.argv or '--debug-clib' in sys.argv
 
 
 def get_lib_fname_list(libname):
@@ -52,7 +52,7 @@ def find_lib_fpath(libname, root_dir, recurse_down=True, verbose=False):
                 if exists(lib_fpath):
                     if verbose:
                         print('\n[c] Checked: '.join(tried_fpaths))
-                    if not __QUIET__:
+                    if __DEBUG_CLIB__:
                         print('using: %r' % lib_fpath)
                     return lib_fpath
                 else:

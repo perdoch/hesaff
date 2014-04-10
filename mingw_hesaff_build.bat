@@ -10,7 +10,7 @@ set INSTALL32=C:\Program Files (x86)
 set HESAFF_INSTALL="%INSTALL32%\Hesaff"
 
 :: go into hesaff directory
-cd %HOME%\code\hesaff
+:: cd %HOME%\code\hesaff
 mkdir build
 cd build
 
@@ -37,7 +37,7 @@ cmake ^
 :: make command that doesn't freeze on mingw
 :: mingw32-make -j7 "MAKE=mingw32-make -j3" -f CMakeFiles\Makefile2 all
 make
-python %HOME%\code\hotspotter\hstpl\localize.py
+:: python %HOME%\code\hotspotter\hstpl\localize.py
 exit /b
 
 :exit

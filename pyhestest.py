@@ -1,26 +1,24 @@
-from __future__ import print_function, division
+from __future__ import absolute_import, print_function, division
 # Standard
 import sys
 from os.path import join, exists, realpath, expanduser
 # Scientific
 import numpy as np
 import cv2
-# Hotspotter
-from hscom import fileio as io
 # TPL
 import pyhesaff
 
 
-def ensure_hotspotter():
+def ensure_ibeis():
     import matplotlib
     matplotlib.use('Qt4Agg', warn=True, force=True)
     # Look for hotspotter in ~/code
-    hotspotter_dir = join(expanduser('~'), 'code', 'hotspotter')
-    if not exists(hotspotter_dir):
-        print('[jon] hotspotter_dir=%r DOES NOT EXIST!' % (hotspotter_dir,))
+    ibeis_dir = join(expanduser('~'), 'code', 'ibeis')
+    if not exists(ibeis_dir):
+        print('[jon] ibeis_dir=%r DOES NOT EXIST!' % (ibeis_dir,))
     # Append hotspotter to PYTHON_PATH (i.e. sys.path)
-    if not hotspotter_dir in sys.path:
-        sys.path.append(hotspotter_dir)
+    if not ibeis_dir in sys.path:
+        sys.path.append(ibeis_dir)
 
 
 def load_test_data(short=False, n=0, **kwargs):
@@ -38,7 +36,7 @@ def load_test_data(short=False, n=0, **kwargs):
     if '--lena.png' in sys.argv:
         img_fname = 'lena.png'
     img_fpath = realpath(img_fname)
-    imgBGR = io.imread(img_fpath)
+    imgBGR = cv2.imread(img_fpath)
     imgLAB = cv2.cvtColor(imgBGR, cv2.COLOR_BGR2LAB)
     imgL = imgLAB[:, :, 0]
     detect_kwargs = {
@@ -75,4 +73,4 @@ def spaced_elements(list_, n):
     stride = len(indexes) // n
     return list_[indexes[0:-1:stride]]
 
-ensure_hotspotter()
+ensure_ibeis()
