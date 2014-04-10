@@ -15,7 +15,6 @@ import numpy as np
 
 __DEBUG__ = '--debug-pyhesaff' in sys.argv or '--debug' in sys.argv
 
-
 #============================
 # hesaff ctypes interface
 #============================
