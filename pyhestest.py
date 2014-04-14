@@ -1,24 +1,13 @@
 from __future__ import absolute_import, print_function, division
+import __sysreq__  # NOQA
 # Standard
 import sys
-from os.path import join, exists, realpath, expanduser
+from os.path import realpath
 # Scientific
 import numpy as np
 import cv2
 # TPL
 import pyhesaff
-
-
-def ensure_ibeis():
-    import matplotlib
-    matplotlib.use('Qt4Agg', warn=True, force=True)
-    # Look for hotspotter in ~/code
-    ibeis_dir = join(expanduser('~'), 'code', 'ibeis')
-    if not exists(ibeis_dir):
-        print('[jon] ibeis_dir=%r DOES NOT EXIST!' % (ibeis_dir,))
-    # Append hotspotter to PYTHON_PATH (i.e. sys.path)
-    if not ibeis_dir in sys.path:
-        sys.path.append(ibeis_dir)
 
 
 def load_test_data(short=False, n=0, **kwargs):
@@ -72,5 +61,3 @@ def spaced_elements(list_, n):
     indexes = np.arange(len(list_))
     stride = len(indexes) // n
     return list_[indexes[0:-1:stride]]
-
-ensure_ibeis()
