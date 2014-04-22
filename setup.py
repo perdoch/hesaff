@@ -8,6 +8,7 @@ from os.path import join, dirname
 
 # TODO: Account for flags before calling cmake build scripts
 # TODO: Account for mingw_build.bat
+# TODO: Learn how to work with setup.py build and setup.py install
 
 
 def read(fname):
