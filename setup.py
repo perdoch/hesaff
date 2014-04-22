@@ -1,12 +1,17 @@
 from setuptools import setup
 import os
 import subprocess
+from os.path import join, dirname
 
 #using "http://pythonhosted.org/an_example_pypi_project/setuptools.html"'s setup.py as a template
 
 
+# TODO: Account for flags before calling cmake build scripts
+# TODO: Account for mingw_build.bat
+
+
 def read(fname):
-    return open(os.path.join(os.path.dirname(__file__), fname)).read()
+    return open(join(dirname(__file__), fname)).read()
 
 subprocess.call(['mkdir', 'build'])
 
