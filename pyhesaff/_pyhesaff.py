@@ -2,11 +2,11 @@
 'the python hessian affine keypoint module'
 # TODO: it would be nice to be able to pass around an image
 # already in memory instead of having to pass around its path
-from __future__ import print_function, division
+from __future__ import absolute_import, print_function, division
 # Standard
 import sys
 from os.path import realpath, dirname
-import ctypes_interface
+from . import ctypes_interface
 import ctypes as C
 import collections
 # Scientific

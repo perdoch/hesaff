@@ -1,3 +1,5 @@
 hesaff
 build
 *.pyc
+*.egg-info
+dist
