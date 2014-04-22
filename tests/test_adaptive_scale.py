@@ -61,7 +61,7 @@ def test_adaptive_scale():
 
     def show_kpts(kpts_, px, title):
         show_keypoints(imgBGR, kpts_, pnum=(2, 3, px + 3), fnum=1,
-                           color=df2.BLUE, title=title)
+                       color=df2.BLUE, title=title)
 
     def plot_line(vals, title):
         df2.figure(fnum=1, pnum=(2, 1, 1))
