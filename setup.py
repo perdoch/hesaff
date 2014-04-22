@@ -1,4 +1,5 @@
 from setuptools import setup
+import sys
 import os
 import subprocess
 from os.path import join, dirname
@@ -16,14 +17,16 @@ def read(fname):
 
 
 if __name__ == '__main__':
-    subprocess.call(['mkdir', 'build'])
 
-    os.chdir('build')
+    if 'build' in sys.argv:
+        subprocess.call(['mkdir', 'build'])
 
-    if subprocess.call(['cmake', '-G', 'Unix Makefiles', '..']):
-        subprocess.call(['make'])
+        os.chdir('build')
 
-    os.chdir('..')
+        if subprocess.call(['cmake', '-G', 'Unix Makefiles', '..']):
+            subprocess.call(['make'])
+
+        os.chdir('..')
 
     setup(
         name='pyhesaff',
