@@ -2,7 +2,8 @@ from __future__ import absolute_import, print_function, division
 import __sysreq__  # NOQA
 # Standard
 import sys
-from os.path import realpath
+from os.path import realpath, join, dirname
+import vtool
 # Scientific
 import numpy as np
 import cv2
@@ -17,14 +18,14 @@ def load_test_data(short=False, n=0, **kwargs):
     #ellipse.rrr()
     nScales = 4
     nSamples = 16
-    img_fname = 'zebra.png'
+    img_fname = 'zebra.jpg'
     if '--test.png' in sys.argv:
-        img_fname = 'test.png'
+        img_fname = 'jeff.png'
     if '--zebra.png' in sys.argv:
-        img_fname = 'zebra.png'
+        img_fname = 'zebra.jpg'
     if '--lena.png' in sys.argv:
-        img_fname = 'lena.png'
-    img_fpath = realpath(img_fname)
+        img_fname = 'lena.jpg'
+    img_fpath = realpath(join(dirname(vtool.__file__), 'tests', 'testdata', img_fname))
     imgBGR = cv2.imread(img_fpath)
     imgLAB = cv2.cvtColor(imgBGR, cv2.COLOR_BGR2LAB)
     imgL = imgLAB[:, :, 0]

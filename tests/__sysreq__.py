@@ -15,3 +15,6 @@ def ensure_ibeis():
         sys.path.append(ibeis_dir)
 
 ensure_ibeis()
+import utool
+utool.inject_colored_exceptions()
+utool.ensure_in_pythonpath('hesaff')

@@ -16,11 +16,7 @@ from matplotlib import pyplot as plt
 
 
 def test_detect_then_show(ax, img_fpath):
-    print("detecting on image = %r" % img_fpath)
     kpts, desc = pyhesaff.detect_kpts(img_fpath)
-    print("len(kpts) = %r" % len(kpts))
-    assert len(kpts) > 0, "No keypoints detected."
-    assert len(kpts) == len(desc), "Descriptor's keypoints don't match the cardinality of the keypoints."
     img = mpl.image.imread(img_fpath)
     plt.imshow(img)
     _xs, _ys = kpts.T[0:2]

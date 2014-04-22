@@ -1,6 +1,8 @@
 #!/usr/bin/env python
+# ALREADY PORTED FIXME DELETE
 from __future__ import print_function, division
 import sys
+import __sysreq__  # NOQA
 sys.argv.append('--nologgging')
 #from hscom import __common__
 from os.path import realpath
@@ -10,21 +12,23 @@ from os.path import realpath
 # Scientific
 import numpy as np
 # Hotspotter
-from hscom import util  # NOQA
-from hsviz import draw_func2 as df2
-from hsviz import viz
+from plottool import draw_func2 as df2
+from plottool.viz_keypoints import show_keypoints
+#from hsdev import dev_consistency
 # TPL
 import pyhesaff
 # VTool
+from os.path import join, dirname
+import vtool  # NOQA
 import vtool.image as gtool
-import vtool.patch as ptool  # NOQA
 import vtool.keypoint as ktool
 
 if __name__ == '__main__':
     np.set_printoptions(threshold=5000, linewidth=5000, precision=3)
     # Read data
     print('[rotinvar] loading test data')
-    img_fname = 'test.png'
+
+    img_fname = join(dirname(vtool.__file__), 'tests', 'testdata', 'jeff.png')
     img_fpath = realpath(img_fname)
     imgL = gtool.cvt_BGR2L(gtool.imread(img_fpath))
     detect_kw0 = {
@@ -93,16 +97,15 @@ if __name__ == '__main__':
     df2.figure(fnum=1, doclf=True, docla=True)
 
     def show_kpts_(fnum, pnum, kpts, desc, title):
-        from hsdev import dev_consistency
         print('--------')
         print('show_kpts: %r.%r' % (fnum, pnum))
         print('kpts  = %r' % (kpts,))
         print('scales = %r' % ktool.get_scales(kpts))
-        dev_consistency.check_desc(desc3)
+        # FIXME: this exists in ibeis. move to vtool
+        #dev_consistency.check_desc(desc3)
 
-        viz.show_keypoints(imgL, kpts, sifts=desc, pnum=pnum, rect=True,
-                           ori=True, fnum=fnum, title=title, ell_alpha=1)
-        #df2.iup()
+        show_keypoints(imgL, kpts, sifts=desc, pnum=pnum, rect=True,
+                       ori=True, fnum=fnum, title=title, ell_alpha=1)
 
     show_kpts_(1, (nRow, nCol, 1), kpts3, desc3, 'kpts3: original')
     show_kpts_(1, (nRow, nCol, 2), kpts4, desc4, 'kpts4: isotropic + redetect')

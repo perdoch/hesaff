@@ -5,21 +5,15 @@ import multiprocessing
 from itertools import izip
 # Scientific
 import numpy as np
-# Hotspotter
-from hscom import helpers  # NOQA
-from hsviz import draw_func2 as df2
-from hsviz import viz  # NOQA
-from hscom import __common__
 # TPL
-import pyhesaff
 import pyhestest
+import pyhesaff
 # VTool
+from plottool import draw_func2 as df2
+from plottool.viz_keypoints import show_keypoints
 import vtool.ellipse as etool
-print, print_, print_on, print_off, rrr, profile, printDBG =\
-    __common__.init(__name__, module_prefix='[testhesaff]', DEBUG=False, initmpl=False)
 
 
-@profile
 def test_hesaff_kpts(img_fpath, **kwargs):
     if not 'kwargs' in vars():
         kwargs = {}
@@ -66,7 +60,7 @@ def test_adaptive_scale():
     df2.figure(fnum=1, doclf=True, docla=True)
 
     def show_kpts(kpts_, px, title):
-        viz.show_keypoints(imgBGR, kpts_, pnum=(2, 3, px + 3), fnum=1,
+        show_keypoints(imgBGR, kpts_, pnum=(2, 3, px + 3), fnum=1,
                            color=df2.BLUE, title=title)
 
     def plot_line(vals, title):
@@ -155,10 +149,4 @@ if __name__ == '__main__':
     # They seem to work
     test_adaptive_scale()
 
-    #exec(helpers.execstr_dict(test_locals, 'test_locals'))
-    #if '--cmd' in sys.argv:
-    #exec(helpers.execstr_dict(adaptive_locals, 'adaptive_locals'))
-    #in_depth_locals = adaptive_locals['in_depth_locals']
-    #exec(helpers.execstr_dict(in_depth_locals, 'in_depth_locals'))
-    #exec(df2.present(override1=True))
     exec(df2.present())
