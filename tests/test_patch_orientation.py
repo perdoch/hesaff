@@ -1,26 +1,20 @@
 #!/usr/bin/env python
-from __future__ import print_function, division
-#from hscom import __common__
-#(print, print_, print_on, print_off,
- #rrr, profile, printDBG) = __common__.init(__name__, '[util]', DEBUG=False)
-# Standard
-import multiprocessing
-# Scientific
+from __future__ import absolute_import, division, print_function
 import numpy as np
-# Hotspotter
-from hscom import util  # NOQA
-from hsviz import draw_func2 as df2
-from hsviz import viz
-# TPL
+# Hesaff
 import pyhestest
 import pyhesaff
-# VTool
+# Tools
+import utool
+from plottool import draw_func2 as df2
+from plottool.viz_keypoints import _annotate_kpts, show_keypoints
+from plottool.viz_featrow import draw_feat_row
+import plottool
 import vtool.patch as ptool
-import vtool.drawtool as dtool
 
 
 def TEST_ptool_find_kpts_direction(imgBGR, kpts):
-    hrint = util.horiz_print
+    hrint = utool.horiz_print
     print('[rotinvar] +---')
     print('[rotinvar] | 3) Find dominant orientation in histogram')
     hrint('[rotinvar] |  * kpts.shape = ', (kpts.shape,))
@@ -35,11 +29,11 @@ def TEST_ptool_find_kpts_direction(imgBGR, kpts):
 def TEST_figure1(wpatch, gradx, grady, gmag, gori, hist, centers):
     print('[rotinvar] 4) Draw histogram with interpolation annotations')
     fnum = 1
-    gorimag = dtool.color_orimag(gori, gmag)
+    gorimag = plottool.color_orimag(gori, gmag)
     nRow, nCol = (2, 7)
 
     df2.figure(fnum=1, pnum=(nRow, 1, nRow), doclf=True, docla=True)
-    dtool.draw_hist_subbin_maxima(hist, centers)
+    plottool.draw_hist_subbin_maxima(hist, centers)
     df2.set_xlabel('grad orientation (radians)')
     df2.set_ylabel('grad magnitude')
     df2.set_title('dominant orientations')
@@ -68,9 +62,9 @@ def TEST_figure2(imgBGR, kpts, desc, sel, fnum=2):
     sift = desc[sel]
     viz_kwargs = dict(ell=True, eig=False,
                       rect=True, ori_color=df2.DEEP_PINK, ell_alpha=1, fnum=fnum, pnum=(2, 1, 1))
-    viz.show_keypoints(imgBGR, kpts, sifts=None, sel_fx=sel, ori=False, **viz_kwargs)
-    viz._annotate_kpts(kpts, sel, True, False, ori=True, **viz_kwargs)
-    viz.draw_feat_row(imgBGR, sel, kpts[sel], sift, fnum=fnum, nRows=2, nCols=3, px=3)
+    show_keypoints(imgBGR, kpts, sifts=None, sel_fx=sel, ori=False, **viz_kwargs)
+    _annotate_kpts(kpts, sel, ori=True, **viz_kwargs)
+    draw_feat_row(imgBGR, sel, kpts[sel], sift, fnum=fnum, nRows=2, nCols=3, px=3)
 
 
 def TEST_keypoint(imgBGR, img_fpath, kpts, desc, sel):
@@ -114,8 +108,6 @@ def TEST_keypoint(imgBGR, img_fpath, kpts, desc, sel):
 
 
 if __name__ == '__main__':
-    multiprocessing.freeze_support()
-    np.set_printoptions(threshold=5000, linewidth=5000, precision=3)
     # Read data
     print('[rotinvar] loading test data')
     test_data = pyhestest.load_test_data(short=True, n=3)
@@ -126,8 +118,8 @@ if __name__ == '__main__':
     sel = min(len(kpts) - 1, 3)
 
     locals_ = TEST_keypoint(imgBGR, img_fpath, kpts, desc, sel)
-    exec(util.execstr_dict(locals_, 'locals_'))
-    exec(util.execstr_dict(f1_loc, 'f1_loc'))  # NOQA
+    exec(utool.execstr_dict(locals_, 'locals_'))
+    exec(utool.execstr_dict(f1_loc, 'f1_loc'))  # NOQA
 
     #pinteract.interact_keypoints(imgBGR, kpts2, desc, arrow=True, rect=True)
-    exec(df2.present(wh=800))
+    exec(df2.present())

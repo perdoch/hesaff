@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # ALREADY PORTED FIXME DELETE
-from __future__ import print_function, division
+from __future__ import absolute_import, division, print_function
 import sys
 import __sysreq__  # NOQA
 sys.argv.append('--nologgging')
@@ -18,18 +18,17 @@ from plottool.viz_keypoints import show_keypoints
 # TPL
 import pyhesaff
 # VTool
-from os.path import join, dirname
 import vtool  # NOQA
 import vtool.image as gtool
 import vtool.keypoint as ktool
+from vtool.tests import grabdata
 
 if __name__ == '__main__':
     np.set_printoptions(threshold=5000, linewidth=5000, precision=3)
     # Read data
     print('[rotinvar] loading test data')
 
-    img_fname = join(dirname(vtool.__file__), 'tests', 'testdata', 'jeff.png')
-    img_fpath = realpath(img_fname)
+    img_fpath = grabdata.get_testimg_path('jeff.png')
     imgL = gtool.cvt_BGR2L(gtool.imread(img_fpath))
     detect_kw0 = {
     }

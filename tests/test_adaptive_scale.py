@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from __future__ import print_function, division
+from __future__ import absolute_import, division, print_function
 # Standard
 import multiprocessing
 from itertools import izip
@@ -23,8 +23,8 @@ def test_hesaff_kpts(img_fpath, **kwargs):
     nKpts = pyhesaff.hesaff_lib.detect(hesaff_ptr)
     #print('[pyhesaff] detected: %r keypoints' % nKpts)
     # Allocate arrays
-    kpts = np.empty((nKpts, 5), pyhesaff.kpts_dtype)
-    desc = np.empty((nKpts, 128), pyhesaff.desc_dtype)
+    kpts = np.empty((nKpts, pyhesaff.KPTS_DIM), pyhesaff.kpts_dtype)
+    desc = np.empty((nKpts, pyhesaff.DESC_DIM), pyhesaff.desc_dtype)
     # Populate arrays
     pyhesaff.hesaff_lib.exportArrays(hesaff_ptr, nKpts, kpts, desc)
     # TODO: Incorporate parameters
@@ -43,7 +43,7 @@ def test_adaptive_scale():
     exec(open('etool.py').read())
     '''
     print('test_adaptive_scale()')
-    test_data = pyhestest.load_test_data(short=True)
+    test_data = pyhestest.load_test_data(short=True, n=4)
     img_fpath = test_data['img_fpath']
     imgL = test_data['imgL']
     imgBGR = test_data['imgBGR']
