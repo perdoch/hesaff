@@ -1,17 +1,8 @@
 #!/usr/bin/env python
 # ALREADY PORTED FIXME DELETE
 from __future__ import absolute_import, division, print_function
-import sys
 import __sysreq__  # NOQA
-sys.argv.append('--nologgging')
-#from hscom import __common__
-from os.path import realpath
-#(print, print_, print_on, print_off,
- #rrr, profile, printDBG) = __common__.init(__name__, '[util]', DEBUG=False)
-# Standard
-# Scientific
 import numpy as np
-# Hotspotter
 from plottool import draw_func2 as df2
 from plottool.viz_keypoints import show_keypoints
 #from hsdev import dev_consistency

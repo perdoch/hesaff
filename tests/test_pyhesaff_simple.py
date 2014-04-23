@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from __future__ import absolute_import, division, print_function
+import sys
 import pyhesaff
 import matplotlib as mpl
 from matplotlib import pyplot as plt
@@ -43,4 +44,5 @@ if __name__ == '__main__':
     ax = fig.add_subplot(2, 2, 4)
     test_detect_then_show(ax, ada_fpath)
 
-    plt.show()
+    if not '--noshow' in sys.argv:
+        plt.show()

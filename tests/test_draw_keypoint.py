@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 from __future__ import absolute_import, division, print_function
 import __sysreq__  # NOQA
-from drawtool import draw_func2 as df2
-from drawtool import mpl_keypoint
-from drawtool import mpl_sift  # NOQA
+from plottool import draw_func2 as df2
+from plottool import mpl_keypoint
+from plottool import mpl_sift  # NOQA
 import vtool.keypoint as ktool  # NOQA
 import numpy as np
 import matplotlib as mpl  # NOQA
