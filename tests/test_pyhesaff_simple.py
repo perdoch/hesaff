@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 from __future__ import absolute_import, division, print_function
+import os
 import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(os.getcwd())
 import pyhesaff
 import matplotlib as mpl
 from matplotlib import pyplot as plt
