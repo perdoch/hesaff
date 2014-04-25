@@ -3,6 +3,7 @@
 # TODO: it would be nice to be able to pass around an image
 # already in memory instead of having to pass around its path
 from __future__ import absolute_import, print_function, division
+import __builtin__
 # Standard
 import sys
 from os.path import realpath, dirname
@@ -11,6 +12,12 @@ import ctypes as C
 from collections import OrderedDict
 # Scientific
 import numpy as np
+
+try:
+    getattr(__builtin__, 'profile')
+except AttributeError:
+    def profile(func):
+        return func
 
 
 __DEBUG__ = '--debug-pyhesaff' in sys.argv or '--debug' in sys.argv
@@ -145,6 +152,7 @@ def extract_desc(img_fpath, kpts, **kwargs):
     return desc
 
 
+@profile
 def detect_kpts(img_fpath,
                 use_adaptive_scale=False, nogravity_hack=False,
                 **kwargs):
@@ -180,6 +188,7 @@ def detect_kpts(img_fpath,
     return kpts, desc
 
 
+@profile
 def adapt_rotation(img_fpath, kpts):
     import vtool.patch as ptool
     import vtool.image as gtool
@@ -189,6 +198,7 @@ def adapt_rotation(img_fpath, kpts):
     return kpts2, desc2
 
 
+@profile
 def adapt_scale(img_fpath, kpts):
     import vtool.ellipse as etool
     nScales = 16
