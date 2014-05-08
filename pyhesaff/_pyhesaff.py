@@ -10,6 +10,7 @@ from os.path import realpath, dirname
 from . import ctypes_interface
 import ctypes as C
 from collections import OrderedDict
+from itertools import izip
 # Scientific
 import numpy as np
 
@@ -33,6 +34,9 @@ desc_dtype = np.uint8
 FLAGS_RW = 'aligned, c_contiguous, writeable'
 kpts_t    = np.ctypeslib.ndpointer(dtype=kpts_dtype, ndim=2, flags=FLAGS_RW)
 desc_t    = np.ctypeslib.ndpointer(dtype=desc_dtype, ndim=2, flags=FLAGS_RW)
+kpts_array_t = np.ctypeslib.ndpointer(dtype=kpts_t, ndim=1, flags=FLAGS_RW)
+desc_array_t = np.ctypeslib.ndpointer(dtype=desc_t, ndim=1, flags=FLAGS_RW)
+int_array_t = np.ctypeslib.ndpointer(dtype=C.c_int, ndim=1, flags=FLAGS_RW)
 obj_t     = C.c_void_p
 str_t     = C.c_char_p
 int_t     = C.c_int
@@ -77,11 +81,11 @@ def load_hesaff_clib():
 
     # os.path.dirname(sys.executable)
     #if getattr(sys, 'frozen', False):
-        # we are running in a |PyInstaller| bundle
-        #root_dir = realpath(sys._MEIPASS)
+    #    # we are running in a |PyInstaller| bundle
+    #     root_dir = realpath(sys._MEIPASS)
     #else:
-        # we are running in a normal Python environment
-        #root_dir = realpath(dirname(__file__))
+    #    # we are running in a normal Python environment
+    #    root_dir = realpath(dirname(__file__))
     root_dir = realpath(dirname(__file__))
     libname = 'hesaff'
     hesaff_clib, def_cfunc = ctypes_interface.load_clib(libname, root_dir)
@@ -92,6 +96,7 @@ def load_hesaff_clib():
     def_cfunc(None,  'extractDesc',            [obj_t, int_t, kpts_t, desc_t])
     def_cfunc(obj_t, 'new_hesaff',             [str_t])
     def_cfunc(obj_t, 'new_hesaff_from_params', [str_t] + hesaff_param_types)
+    def_cfunc(None,  'detectKeypointsList',    [int_t, C.POINTER(str_t), kpts_array_t, desc_array_t, int_array_t] + hesaff_param_types)
     return hesaff_clib
 
 # Create a global interface to the hesaff lib
@@ -116,8 +121,8 @@ def _alloc_desc(nKpts):
 
 
 def _allocate_kpts_and_desc(nKpts):
-    kpts = np.empty((nKpts, KPTS_DIM), kpts_dtype)
-    desc = _alloc_desc(nKpts)
+    kpts = np.empty((nKpts, KPTS_DIM), kpts_dtype)  # array of floats
+    desc = _alloc_desc(nKpts)  # array of bytes
     return kpts, desc
 
 
@@ -188,7 +193,42 @@ def detect_kpts(img_fpath,
     return kpts, desc
 
 
-@profile
+#adapted from "http://stackoverflow.com/questions/3494598/passing-a-list-of-strings-to-from-python-ctypes-to-c-function-expecting-char"
+def _python_list_to_c_string_array(python_list):
+    arr = (C.c_char_p * len(python_list))()
+    arr[:] = python_list
+    return (len(python_list), arr)
+
+
+def detect_kpts_list(image_paths_list, **kwargs):
+    (listlen, c_strings) = _python_list_to_c_string_array([realpath(path) for path in image_paths_list])
+    kpts_array = np.empty((listlen), kpts_t)   # array of float arrays
+    desc_array = np.empty((listlen), desc_t)   # array of byte arrays
+    length_array = np.empty((listlen), int_t)  # array of ints
+    hesaff_params = hesaff_param_dict.copy()
+    hesaff_params.update(kwargs)
+    hesaff_args = hesaff_params.values()  # pass all parameters to HESAFF_CLIB
+    HESAFF_CLIB.detectKeypointsList(listlen, c_strings, kpts_array, desc_array, length_array, *hesaff_args)
+    #kpts_array2 = [np.ctypeslib.as_array(C.cast(kpts_ptr.astype(int),C.POINTER(C.c_char * kpts_dtype().itemsize)),(length, KPTS_DIM)) for (kpts_ptr, length) in izip(kpts_array,length_array)]
+
+    as_array = np.ctypeslib.as_array
+    kpts_dtype_size = C.POINTER(C.c_char * kpts_dtype().itemsize)
+    def _cast_kpts(kpts_ptr, length):
+        c_kpts = C.cast(kpts_ptr.astype(int), kpts_dtype_size)
+        np_kpts = as_array(c_kpts, (length, KPTS_DIM))
+        np_kpts.dtype = kpts_dtype
+        return np_kpts
+    kpts_array2 = [_cast_kpts(kpts_ptr, length) for (kpts_ptr, length) in izip(kpts_array, length_array)]
+    desc_dtype_size = C.POINTER(C.c_char * desc_dtype().itemsize)
+    def _cast_desc(desc_ptr, length):
+        c_desc = C.cast(desc_ptr.astype(int), desc_dtype_size)
+        np_desc = as_array(c_desc, (length, DESC_DIM))
+        np_desc.dtype = desc_dtype
+        return np_desc
+    desc_array2 = [_cast_desc(desc_ptr, length) for (desc_ptr, length) in izip(desc_array, length_array)]
+    return (kpts_array2, desc_array2, length_array)
+
+
 def adapt_rotation(img_fpath, kpts):
     import vtool.patch as ptool
     import vtool.image as gtool

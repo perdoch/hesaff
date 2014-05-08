@@ -450,6 +450,7 @@ struct AffineHessianDetector : public HessianDetector, AffineShape, HessianKeypo
 // END class AffineHessianDetector
 
 
+
 //----------------------------------------------
 // BEGIN PYTHON BINDINGS
 // * python's ctypes module can talk to extern c code
@@ -462,6 +463,8 @@ extern "C" {
 #define PYHESAFF extern HESAFF_EXPORT
 
     typedef void*(*allocer_t)(int, int*);
+	
+	
 
     PYHESAFF int detect(AffineHessianDetector* detector)
     {
@@ -638,6 +641,70 @@ extern "C" {
         detector->write_features(img_fpath);
     }
 
+    void detectKeypoints(char* image_filename, float** keypoints, uint8** descriptors, int* length,
+                // Pyramid Params
+                int   numberOfScales,
+                float threshold,
+                float edgeEigenValueRatio,
+                int   border,
+                // Affine Params Shape
+                int   maxIterations,
+                float convergenceThreshold,
+                int   smmWindowSize,
+                float mrSize,
+                // SIFT params
+                int spatialBins,
+                int orientationBins,
+                float maxBinValue,
+                // Shared Pyramid + Affine
+                float initialSigma,
+                // Shared SIFT + Affine
+                int patchSize,
+                // My Params
+                float scale_min,
+                float scale_max,
+                bool rotation_invariance)
+    {
+    	AffineHessianDetector* detector = new_hesaff_from_params(image_filename, numberOfScales, threshold, edgeEigenValueRatio, border, maxIterations, convergenceThreshold, smmWindowSize, mrSize, spatialBins, orientationBins, maxBinValue, initialSigma, patchSize, scale_min, scale_max, rotation_invariance);
+    	*length = detector->detect();
+    	*keypoints = new float[(*length)*KPTS_DIM];
+    	*descriptors = new uint8[(*length)*DESC_DIM];
+    	detector->exportArrays((*length),*keypoints,*descriptors);
+    	//may need to add support for "use_adaptive_scale" and "nogravity_hack" here (needs translation from Python to C++ first)
+    	delete detector;
+    }
+
+    PYHESAFF void detectKeypointsList(int num_filenames, char** image_filename_list, float** keypoints_array, uint8** descriptors_array, int* length_array,
+                                      // Pyramid Params
+                                      int   numberOfScales,
+                                      float threshold,
+                                      float edgeEigenValueRatio,
+                                      int   border,
+                                      // Affine Params Shape
+                                      int   maxIterations,
+                                      float convergenceThreshold,
+                                      int   smmWindowSize,
+                                      float mrSize,
+                                      // SIFT params
+                                      int spatialBins,
+                                      int orientationBins,
+                                      float maxBinValue,
+                                      // Shared Pyramid + Affine
+                                      float initialSigma,
+                                      // Shared SIFT + Affine
+                                      int patchSize,
+                                      // My Params
+                                      float scale_min,
+                                      float scale_max,
+                                      bool rotation_invariance)
+    {
+    	int index;
+    	#pragma omp parallel for
+    	for(index=0;index < num_filenames;++index)
+    	{
+    		detectKeypoints(image_filename_list[index],&(keypoints_array[index]),&(descriptors_array[index]), &(length_array[index]), numberOfScales, threshold, edgeEigenValueRatio, border, maxIterations, convergenceThreshold, smmWindowSize, mrSize, spatialBins, orientationBins, maxBinValue, initialSigma, patchSize, scale_min, scale_max, rotation_invariance);
+    	}
+    }
 #ifdef __cplusplus
 }
 #endif

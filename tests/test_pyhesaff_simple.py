@@ -21,11 +21,20 @@ from matplotlib import pyplot as plt
 
 def test_detect_then_show(ax, img_fpath):
     kpts, desc = pyhesaff.detect_kpts(img_fpath)
+    print((kpts, desc))
     img = mpl.image.imread(img_fpath)
     plt.imshow(img)
     _xs, _ys = kpts.T[0:2]
     ax.plot(_xs, _ys, 'ro', alpha=.5)
 
+def test_detect_then_show_parallel(axs, img_fpaths):
+    (kpts_array, desc_array, length_array) = pyhesaff.detect_kpts_list(img_fpaths)
+    for (ax, img_fpath, kpts, desc) in zip(axs, img_fpaths, kpts_array, desc_array):
+        print((kpts, desc))
+        img = mpl.image.imread(img_fpath)
+        plt.imshow(img)
+        _xs, _ys = kpts.T[0:2]
+        ax.plot(_xs, _ys, 'ro', alpha=.5)
 
 if __name__ == '__main__':
 
@@ -46,6 +55,10 @@ if __name__ == '__main__':
 
     ax = fig.add_subplot(2, 2, 4)
     test_detect_then_show(ax, ada_fpath)
+
+    axs = [fig.add_subplot(2, 2, i) for i in xrange(1,5)]
+    img_fpaths = [lena_fpath, logo_fpath, grace_fpath, ada_fpath]
+    test_detect_then_show_parallel(axs,img_fpaths)
 
     if not '--noshow' in sys.argv:
         plt.show()
