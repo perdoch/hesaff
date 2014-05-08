@@ -50,7 +50,8 @@ if __name__ == '__main__':
     print('Iterative ran in %r seconds' % itertime)
     print('Keypoints seem consistent')
 
-    if '--noshow' not in sys.argv:
+    if '--show' in sys.argv:
+        # Do not plot by default
         for count, (img_fpath, kpts, desc) in enumerate(izip(img_fpaths,
                                                              kpts_array,
                                                              desc_array)):
