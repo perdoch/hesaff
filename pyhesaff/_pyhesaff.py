@@ -8,7 +8,7 @@ import sys
 from os.path import realpath, dirname
 from . import ctypes_interface
 import ctypes as C
-import collections
+from collections import OrderedDict
 # Scientific
 import numpy as np
 
@@ -57,7 +57,6 @@ hesaff_typed_params = [
     (bool_t,  'rotation_invariance', False),
 ]
 
-OrderedDict = collections.OrderedDict
 hesaff_param_dict = OrderedDict([(key, val) for (type_, key, val) in hesaff_typed_params])
 hesaff_param_types = [type_ for (type_, key, val) in hesaff_typed_params]
 

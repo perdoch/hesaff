@@ -1,13 +1,15 @@
 #!/usr/bin/env python
-from __future__ import print_function, division
-from hsviz import draw_func2 as df2
-from vtool.drawtool import mpl_keypoint
-from vtool.drawtool import mpl_sift  # NOQA
+from __future__ import absolute_import, division, print_function
+import __sysreq__  # NOQA
+from plottool import draw_func2 as df2
+from plottool import mpl_keypoint
+from plottool import mpl_sift  # NOQA
 import vtool.keypoint as ktool  # NOQA
 import numpy as np
 import matplotlib as mpl  # NOQA
 from itertools import product as iprod
 import vtool  # NOQA
+import utool
 
 np.tau = 2 * np.pi
 
@@ -69,6 +71,11 @@ def test_shape(ori=0, skew=0, xscale=1, yscale=1, pnum=(1, 1, 1), fnum=1):
                                 ori_color=df2.DEEP_PINK, eig_color=df2.PINK,
                                 rect=True, eig=True, bin_color=df2.RED,
                                 arm1_color=df2.YELLOW, arm2_color=df2.BLACK)
+
+    kptsstr = '\n'.join(ktool.get_kpts_strs(kpts))
+    #print(kptsstr)
+    df2.upperleft_text(kptsstr)
+
     title = 'xyscale=(%.1f, %.1f),\n skew=%.1f, ori=%.2ftau' % (xscale, yscale, skew, ori / np.tau)
     df2.set_title(title)
     df2.dark_background()
@@ -84,8 +91,8 @@ THETA3 = (DOWN + RIGHT) / 2
 THETA4 = (DOWN + RIGHT + RIGHT) / 3
 THETA5 = RIGHT
 
-nRows = 5
-nCols = 3
+nRows = 2
+nCols = 4
 
 
 def pnum_(px=None):
@@ -95,14 +102,14 @@ def pnum_(px=None):
         px = px_
     return (nRows, nCols, px)
 
-MAX_ORI = np.tau
-MIN_ORI = np.tau / 4 - .01
+MIN_ORI = utool.get_arg('--min-ori', float, DOWN)
+MAX_ORI = utool.get_arg('--max-ori', float, DOWN + np.tau - .2)
 
 MIN_X = .5
 MAX_X = 2
 
-MAX_SKEW = 0
-MIN_SWEW = 1
+MIN_SWEW = utool.get_arg('--min-skew', float, 0)
+MAX_SKEW = utool.get_arg('--max-skew', float, 1)
 
 MIN_Y = .5
 MAX_Y = 2
@@ -124,11 +131,11 @@ for row, col in iprod(xrange(nRows), xrange(nCols)):
                              skew=skew,
                              xscale=xsca,
                              yscale=ysca)
-    print('+----')
-    kp_list.append(kpts[0])
-    S_list = ktool.get_xy_axis_extents(kpts=kpts)
-    print('xscale=%r yscale=%r, skew=%r' % (xsca, ysca, skew))
-    print(S_list)
+    #print('+----')
+    #kp_list.append(kpts[0])
+    #S_list = ktool.get_xy_axis_extents(kpts)
+    #print('xscale=%r yscale=%r, skew=%r' % (xsca, ysca, skew))
+    #print(S_list)
 
 #scale_factor = 1
 #offset = (0, 0)
@@ -146,4 +153,4 @@ for row, col in iprod(xrange(nRows), xrange(nCols)):
 #mpl_sift.draw_sift(ax, sift)
 #df2.update()
 
-exec(df2.present(wh=(700, 700)))
+exec(df2.present(wh=(900, 950)))

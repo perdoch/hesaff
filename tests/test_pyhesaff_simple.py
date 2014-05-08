@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 from __future__ import absolute_import, division, print_function
+import os
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(os.getcwd())
 import pyhesaff
 import matplotlib as mpl
 from matplotlib import pyplot as plt
@@ -16,11 +20,7 @@ from matplotlib import pyplot as plt
 
 
 def test_detect_then_show(ax, img_fpath):
-    print("detecting on image = %r" % img_fpath)
     kpts, desc = pyhesaff.detect_kpts(img_fpath)
-    print("len(kpts) = %r" % len(kpts))
-    assert len(kpts) > 0, "No keypoints detected."
-    assert len(kpts) == len(desc), "Descriptor's keypoints don't match the cardinality of the keypoints."
     img = mpl.image.imread(img_fpath)
     plt.imshow(img)
     _xs, _ys = kpts.T[0:2]
@@ -47,4 +47,5 @@ if __name__ == '__main__':
     ax = fig.add_subplot(2, 2, 4)
     test_detect_then_show(ax, ada_fpath)
 
-    plt.show()
+    if not '--noshow' in sys.argv:
+        plt.show()

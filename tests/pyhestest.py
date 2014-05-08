@@ -1,24 +1,14 @@
 from __future__ import absolute_import, print_function, division
+import __sysreq__  # NOQA
 # Standard
 import sys
-from os.path import join, exists, realpath, expanduser
+from os.path import realpath, join
+from vtool.tests import grabdata
 # Scientific
 import numpy as np
 import cv2
 # TPL
 import pyhesaff
-
-
-def ensure_ibeis():
-    import matplotlib
-    matplotlib.use('Qt4Agg', warn=True, force=True)
-    # Look for hotspotter in ~/code
-    ibeis_dir = join(expanduser('~'), 'code', 'ibeis')
-    if not exists(ibeis_dir):
-        print('[jon] ibeis_dir=%r DOES NOT EXIST!' % (ibeis_dir,))
-    # Append hotspotter to PYTHON_PATH (i.e. sys.path)
-    if not ibeis_dir in sys.path:
-        sys.path.append(ibeis_dir)
 
 
 def load_test_data(short=False, n=0, **kwargs):
@@ -28,14 +18,15 @@ def load_test_data(short=False, n=0, **kwargs):
     #ellipse.rrr()
     nScales = 4
     nSamples = 16
-    img_fname = 'zebra.png'
-    if '--test.png' in sys.argv:
-        img_fname = 'test.png'
+    img_fname = 'zebra.jpg'
     if '--zebra.png' in sys.argv:
-        img_fname = 'zebra.png'
+        img_fname = 'zebra.jpg'
     if '--lena.png' in sys.argv:
-        img_fname = 'lena.png'
-    img_fpath = realpath(img_fname)
+        img_fname = 'lena.jpg'
+    if '--jeff.png' in sys.argv:
+        img_fname = 'jeff.png'
+    imgdir = grabdata.get_testdata_dir()
+    img_fpath = realpath(join(imgdir, img_fname))
     imgBGR = cv2.imread(img_fpath)
     imgLAB = cv2.cvtColor(imgBGR, cv2.COLOR_BGR2LAB)
     imgL = imgLAB[:, :, 0]
@@ -72,5 +63,3 @@ def spaced_elements(list_, n):
     indexes = np.arange(len(list_))
     stride = len(indexes) // n
     return list_[indexes[0:-1:stride]]
-
-ensure_ibeis()

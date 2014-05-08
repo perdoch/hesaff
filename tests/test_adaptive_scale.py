@@ -1,25 +1,19 @@
 #!/usr/bin/env python
-from __future__ import print_function, division
+from __future__ import absolute_import, division, print_function
 # Standard
 import multiprocessing
 from itertools import izip
 # Scientific
 import numpy as np
-# Hotspotter
-from hscom import helpers  # NOQA
-from hsviz import draw_func2 as df2
-from hsviz import viz  # NOQA
-from hscom import __common__
 # TPL
-import pyhesaff
 import pyhestest
+import pyhesaff
 # VTool
+from plottool import draw_func2 as df2
+from plottool.viz_keypoints import show_keypoints
 import vtool.ellipse as etool
-print, print_, print_on, print_off, rrr, profile, printDBG =\
-    __common__.init(__name__, module_prefix='[testhesaff]', DEBUG=False, initmpl=False)
 
 
-@profile
 def test_hesaff_kpts(img_fpath, **kwargs):
     if not 'kwargs' in vars():
         kwargs = {}
@@ -29,8 +23,8 @@ def test_hesaff_kpts(img_fpath, **kwargs):
     nKpts = pyhesaff.hesaff_lib.detect(hesaff_ptr)
     #print('[pyhesaff] detected: %r keypoints' % nKpts)
     # Allocate arrays
-    kpts = np.empty((nKpts, 5), pyhesaff.kpts_dtype)
-    desc = np.empty((nKpts, 128), pyhesaff.desc_dtype)
+    kpts = np.empty((nKpts, pyhesaff.KPTS_DIM), pyhesaff.kpts_dtype)
+    desc = np.empty((nKpts, pyhesaff.DESC_DIM), pyhesaff.desc_dtype)
     # Populate arrays
     pyhesaff.hesaff_lib.exportArrays(hesaff_ptr, nKpts, kpts, desc)
     # TODO: Incorporate parameters
@@ -49,7 +43,7 @@ def test_adaptive_scale():
     exec(open('etool.py').read())
     '''
     print('test_adaptive_scale()')
-    test_data = pyhestest.load_test_data(short=True)
+    test_data = pyhestest.load_test_data(short=True, n=4)
     img_fpath = test_data['img_fpath']
     imgL = test_data['imgL']
     imgBGR = test_data['imgBGR']
@@ -66,8 +60,8 @@ def test_adaptive_scale():
     df2.figure(fnum=1, doclf=True, docla=True)
 
     def show_kpts(kpts_, px, title):
-        viz.show_keypoints(imgBGR, kpts_, pnum=(2, 3, px + 3), fnum=1,
-                           color=df2.BLUE, title=title)
+        show_keypoints(imgBGR, kpts_, pnum=(2, 3, px + 3), fnum=1,
+                       color=df2.BLUE, title=title)
 
     def plot_line(vals, title):
         df2.figure(fnum=1, pnum=(2, 1, 1))
@@ -155,10 +149,4 @@ if __name__ == '__main__':
     # They seem to work
     test_adaptive_scale()
 
-    #exec(helpers.execstr_dict(test_locals, 'test_locals'))
-    #if '--cmd' in sys.argv:
-    #exec(helpers.execstr_dict(adaptive_locals, 'adaptive_locals'))
-    #in_depth_locals = adaptive_locals['in_depth_locals']
-    #exec(helpers.execstr_dict(in_depth_locals, 'in_depth_locals'))
-    #exec(df2.present(override1=True))
     exec(df2.present())
