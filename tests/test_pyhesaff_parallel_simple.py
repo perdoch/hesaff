@@ -23,7 +23,6 @@ import time
 
 
 if __name__ == '__main__':
-
     lena_fpath  = mpl.cbook.get_sample_data('lena.jpg', False)
     logo_fpath  = mpl.cbook.get_sample_data('logo2.png', False)
     grace_fpath = mpl.cbook.get_sample_data('grace_hopper.jpg', False)
