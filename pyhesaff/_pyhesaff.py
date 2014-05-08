@@ -86,6 +86,7 @@ def load_hesaff_clib():
     def_cfunc(None,  'extractDesc',            [obj_t, int_t, kpts_t, desc_t])
     def_cfunc(obj_t, 'new_hesaff',             [str_t])
     def_cfunc(obj_t, 'new_hesaff_from_params', [str_t] + hesaff_param_types)
+    def_cfunc(None,  'detectKeypointsList',    [int_t,C.POINTER(str_t),C.POINTER(ktps_t),C.POINTER(desc_t)] + hesaff_param_types)
     return hesaff_clib
 
 # Create a global interface to the hesaff lib
@@ -110,8 +111,8 @@ def _alloc_desc(nKpts):
 
 
 def _allocate_kpts_and_desc(nKpts):
-    kpts = np.empty((nKpts, KPTS_DIM), kpts_dtype)
-    desc = _alloc_desc(nKpts)
+    kpts = np.empty((nKpts, KPTS_DIM), kpts_dtype) # array of floats
+    desc = _alloc_desc(nKpts) # array of bytes
     return kpts, desc
 
 
@@ -134,6 +135,9 @@ def _new_hesaff(img_fpath, **kwargs):
     hesaff_args = hesaff_params.values()  # pass all parameters to HESAFF_CLIB
     hesaff_ptr = HESAFF_CLIB.new_hesaff_from_params(realpath(img_fpath), *hesaff_args)
     return hesaff_ptr
+
+
+#def _
 
 
 def extract_desc(img_fpath, kpts, **kwargs):
@@ -179,6 +183,24 @@ def detect_kpts(img_fpath,
             print('[hes] adapt_rotation')
         kpts, desc = adapt_rotation(img_fpath, kpts)
     return kpts, desc
+
+
+#adapted from "http://stackoverflow.com/questions/3494598/passing-a-list-of-strings-to-from-python-ctypes-to-c-function-expecting-char"
+def _python_list_to_c_string_array(python_list)
+    arr = (C.c_char_p * len(python_list))()
+    arr[:] = python_list
+    return (len(python_list), arr)
+
+
+def detect_kpts_list(image_paths_list, **kwargs):
+    (listlen, c_strings) = _python_list_to_c_string_array([realpath(path) for path in image_paths_list])
+    kpts_array = np.empty((listlen, 1), kpts_t) # array of float arrays
+    desc_array = np.empty((listlen, 1), desc_t) # array of byte arrays
+    hesaff_params = hesaff_param_dict.copy()
+    hesaff_params.update(kwargs)
+    hesaff_args = hesaff_params.values()  # pass all parameters to HESAFF_CLIB
+    HESAFF_CLIB.detectKeypointsList(listlen, c_strings, kpts_array, desc_array, *hesaff_args)
+    return (kpts_array, desc_array)
 
 
 def adapt_rotation(img_fpath, kpts):

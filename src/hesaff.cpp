@@ -449,6 +449,39 @@ struct AffineHessianDetector : public HessianDetector, AffineShape, HessianKeypo
 };
 // END class AffineHessianDetector
 
+void detectKeypoints(const char* image_filename, float* keypoints, uint8* descriptors,
+            // Pyramid Params
+            int   numberOfScales,
+            float threshold,
+            float edgeEigenValueRatio,
+            int   border,
+            // Affine Params Shape
+            int   maxIterations,
+            float convergenceThreshold,
+            int   smmWindowSize,
+            float mrSize,
+            // SIFT params
+            int spatialBins,
+            int orientationBins,
+            float maxBinValue,
+            // Shared Pyramid + Affine
+            float initialSigma,
+            // Shared SIFT + Affine
+            int patchSize,
+            // My Params
+            float scale_min,
+            float scale_max,
+            bool rotation_invariance)
+{
+	AffineHessianDetector* detector = new_hesaff_from_params(image_filename, numberOfScales, threshold, edgeEigenValueRatio, border, maxIterations, convergenceThreshold, smmWindowSize, mrSize, spatialBins, orientationBins, maxBinValue, initialSigma, patchSize, scale_min, scale_max, rotation_invariance);
+	int num_keypoints = detector->detect();
+	keypoints = new float[num_keypoints*KPTS_DIM];
+	descriptors = new uint8[num_keypoints*DESC_DIM];
+	detector->exportArrays(num_keypoints,keypoints,descriptors);
+	//may need to add support for "use_adaptive_scale" and "nogravity_hack" here (needs translation from Python to C++ first)
+	delete detector;
+}
+
 
 //----------------------------------------------
 // BEGIN PYTHON BINDINGS
@@ -462,6 +495,39 @@ extern "C" {
 #define PYHESAFF extern HESAFF_EXPORT
 
     typedef void*(*allocer_t)(int, int*);
+	
+	
+    PYHESAFF void detectKeypointsList(int num_filenames, const char** image_filename_list, float** keypoints_array, uint8** descriptors_array,
+                                      // Pyramid Params
+                                      int   numberOfScales,
+                                      float threshold,
+                                      float edgeEigenValueRatio,
+                                      int   border,
+                                      // Affine Params Shape
+                                      int   maxIterations,
+                                      float convergenceThreshold,
+                                      int   smmWindowSize,
+                                      float mrSize,
+                                      // SIFT params
+                                      int spatialBins,
+                                      int orientationBins,
+                                      float maxBinValue,
+                                      // Shared Pyramid + Affine
+                                      float initialSigma,
+                                      // Shared SIFT + Affine
+                                      int patchSize,
+                                      // My Params
+                                      float scale_min,
+                                      float scale_max,
+                                      bool rotation_invariance)
+    {
+    	int index;
+    	#pragma omp parallel for
+    	for(index=0;index < num_filenames;++index)
+    	{
+    		detectKeypoints(image_filename[index],keypoints_array[index],descriptors_array[index], numberOfScales, threshold, edgeEigenValueRatio, border, maxIterations, convergenceThreshold, smmWindowSize, mrSize, spatialBins, orientationBins, maxBinValue, initialSigma, patchSize, scale_min, scale_max, rotation_invariance);
+    	}
+    }
 
     PYHESAFF int detect(AffineHessianDetector* detector)
     {
