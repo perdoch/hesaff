@@ -33,20 +33,21 @@ __DEBUG__ = '--debug-pyhesaff' in sys.argv or '--debug' in sys.argv
 # numpy dtypes
 kpts_dtype = np.float32
 desc_dtype = np.uint8
-# ctypes
-FLAGS_RW = 'aligned, c_contiguous, writeable'
+# scalar ctypes
 obj_t     = C.c_void_p
 str_t     = C.c_char_p
 int_t     = C.c_int
 bool_t    = C.c_bool
 float_t   = C.c_float
 byte_t    = C.c_char
-kpts_t    = np.ctypeslib.ndpointer(dtype=kpts_dtype, ndim=2, flags=FLAGS_RW)
-desc_t    = np.ctypeslib.ndpointer(dtype=desc_dtype, ndim=2, flags=FLAGS_RW)
+# array ctypes
+FLAGS_RW = 'aligned, c_contiguous, writeable'
+kpts_t       = np.ctypeslib.ndpointer(dtype=kpts_dtype, ndim=2, flags=FLAGS_RW)
+desc_t       = np.ctypeslib.ndpointer(dtype=desc_dtype, ndim=2, flags=FLAGS_RW)
 kpts_array_t = np.ctypeslib.ndpointer(dtype=kpts_t, ndim=1, flags=FLAGS_RW)
 desc_array_t = np.ctypeslib.ndpointer(dtype=desc_t, ndim=1, flags=FLAGS_RW)
-int_array_t = np.ctypeslib.ndpointer(dtype=C.c_int, ndim=1, flags=FLAGS_RW)
-str_list_t = C.POINTER(str_t)
+int_array_t  = np.ctypeslib.ndpointer(dtype=int_t, ndim=1, flags=FLAGS_RW)
+str_list_t   = C.POINTER(str_t)
 
 # THE ORDER OF THIS LIST IS IMPORTANT!
 hesaff_typed_params = [
