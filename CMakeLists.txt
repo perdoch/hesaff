@@ -10,6 +10,17 @@ cmake_minimum_required(VERSION 2.8)
 project(hesaff)
 set(CMAKE_BUILD_TYPE "Release")
 
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+message(STATUS "Checking OpenMP")
+find_package(OpenMP REQUIRED)
+IF(OPENMP_FOUND)
+	# add flags for OpenMP
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}	${OpenMP_SHARED_LINKER_FLAGS}")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+ENDIF()
+
 
 
 message(STATUS "Checking OpenCV")

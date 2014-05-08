@@ -33,7 +33,7 @@ if __name__ == '__main__':
     img_fpaths = [lena_fpath, logo_fpath, grace_fpath, ada_fpath] * 10
 
     start = time.time()
-    kpts_array, desc_array, length_array = pyhesaff.detect_kpts_list(img_fpaths)
+    kpts_array, desc_array = pyhesaff.detect_kpts_list(img_fpaths)
     partime = time.time() - start
     print('Parallel ran in %r seconds' % partime)
 
