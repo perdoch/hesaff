@@ -1,4 +1,4 @@
-cd ~/code/hesaff
+#cd ~/code/hesaff
 mkdir build
 cd build
 
@@ -9,3 +9,5 @@ cd build
 
 cmake -G "Unix Makefiles" .. && make
 #&& python $HOTSPOTTER_DIR/hstpl/localize.py
+
+cp libhesaff* ../pyhesaff
