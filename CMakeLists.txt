@@ -10,6 +10,28 @@ cmake_minimum_required(VERSION 2.8)
 project(hesaff)
 set(CMAKE_BUILD_TYPE "Release")
 
+
+if (APPLE)
+    # Use clang2 on apple for openmp support
+    message('Apply System')
+    set(CMAKE_C_COMPILER "clang2")
+    set(CMAKE_CXX_COMPILER "${CMAKE_C_COMPILER}")
+
+    #MacPorts
+    include_directories(/opt/local/include)
+    link_directories(/opt/local/lib)
+
+    # Add flags to support clang2
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -stdlib=libstdc++")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++")
+    set(CMAKE_SHARED_LINKER_FLAGS "-lstdc++ -stdlib=libstdc++")
+    set(CMAKE_EXE_LINKER_FLAGS "-lstdc++ -stdlib=libstdc++")
+else()
+    #set(CMAKE_C_COMPILER "gcc")
+    #set(CMAKE_CXX_COMPILER "${CMAKE_C_COMPILER}")
+endif()
+
+
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 message(STATUS "Checking OpenMP")
 find_package(OpenMP)
