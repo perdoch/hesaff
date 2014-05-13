@@ -9,6 +9,8 @@ goto :exit
 set INSTALL32=C:\Program Files (x86)
 set HESAFF_INSTALL="%INSTALL32%\Hesaff"
 
+:: C:\Program Files\mingw-builds\x64-4.8.1-posix-seh-rev5\mingw64\bin
+
 :: go into hesaff directory
 :: cd %HOME%\code\hesaff
 mkdir build

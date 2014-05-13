@@ -10,10 +10,12 @@ cmake_minimum_required(VERSION 2.8)
 project(hesaff)
 set(CMAKE_BUILD_TYPE "Release")
 
+#set (CMAKE_FIND_ROOT_PATH "C:/MinGW/bin")
 
+#C:\Program Files\mingw-builds\x64-4.8.1-posix-seh-rev5\mingw64\bin
 if (APPLE)
     # Use clang2 on apple for openmp support
-    message('Apply System')
+    message('Apple System')
     set(CMAKE_C_COMPILER "clang2")
     set(CMAKE_CXX_COMPILER "${CMAKE_C_COMPILER}")
 
@@ -26,9 +28,16 @@ if (APPLE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++")
     set(CMAKE_SHARED_LINKER_FLAGS "-lstdc++ -stdlib=libstdc++")
     set(CMAKE_EXE_LINKER_FLAGS "-lstdc++ -stdlib=libstdc++")
-else()
-    #set(CMAKE_C_COMPILER "gcc")
-    #set(CMAKE_CXX_COMPILER "${CMAKE_C_COMPILER}")
+elseif(WIN32)
+    message('Win32 System')
+    # MinGW
+    #include_directories(C:/MinGW/include)
+    #link_directories(C:/MinGW/lib)
+    # Do something with -lgomp?
+    #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+    #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    #set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
+    #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
 endif()
 
 
@@ -36,11 +45,18 @@ endif()
 message(STATUS "Checking OpenMP")
 find_package(OpenMP)
 IF(OPENMP_FOUND)
+    message("Found OpenMP! ^_^")
 	# add flags for OpenMP
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}	${OpenMP_SHARED_LINKER_FLAGS}")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+    #message("CMAKE_C_FLAGS=${CMAKE_C_FLAGS}")
+    #message("CMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}")
+    #message("CMAKE_SHARED_LINKER_FLAGS=${CMAKE_SHARED_LINKER_FLAGS}")
+    #message("CMAKE_EXE_LINKER_FLAGS=${CMAKE_EXE_LINKER_FLAGS}")
+ELSE()
+    message("Missed OpenMP! x_x")
 ENDIF()
 
 
@@ -49,7 +65,7 @@ message(STATUS "Checking OpenCV")
 find_package( OpenCV REQUIRED )
 
 
-OPTION(BUILD_HESAFF_SHARED "Build the Foo libraries shared." On)
+OPTION(BUILD_HESAFF_SHARED "Build the Foo libraries shared." Off)
 
 IF(BUILD_HESAFF_SHARED)
   SET(HESAFF_LIBRARY_TYPE SHARED)
@@ -71,14 +87,24 @@ set(SOURCE_FILES
     src/affine.cpp 
     src/siftdesc.cpp)
 
-add_executable(hesaffexe ${SOURCE_FILES})
+#add_executable(hesaffexe ${SOURCE_FILES})
 
 message(STATUS "Defining hesaff library")
 #add_library(hesaff ${HESAFF_LIBRARY_TYPE} ${SOURCE_FILES})
 add_library(hesaff SHARED ${SOURCE_FILES})
 
+#set_target_properties(hesaff LINK_FLAGS  "${OpenMP_CXX_FLAGS}")
+#set_target_properties(hesaffexe LINK_FLAGS  "${OpenMP_CXX_FLAGS}")
+
+
+#message(STATUS "Specifing libraries to link to")
+#set(LINK_LIBS "${OpenCV_LIBS} ${OpenMP_CXX_FLAGS}")
+#message(STATUS "LINK:  ${LINK_LIBS}")
+#target_link_libraries(hesaff ${LINK_LIBS})
+#target_link_libraries(hesaffexe ${LINK_LIBS})
+
 
 message(STATUS "Specifing libraries to link to")
-target_link_libraries(hesaff ${OpenCV_LIBS})
-target_link_libraries(hesaffexe ${OpenCV_LIBS})
+target_link_libraries(hesaff ${OpenCV_LIBS} ${OpenMP_CXX_FLAGS})
+#target_link_libraries(hesaffexe ${OpenCV_LIBS})
 
