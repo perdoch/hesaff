@@ -10,9 +10,6 @@ cmake_minimum_required(VERSION 2.8)
 project(hesaff)
 set(CMAKE_BUILD_TYPE "Release")
 
-#set (CMAKE_FIND_ROOT_PATH "C:/MinGW/bin")
-
-#C:\Program Files\mingw-builds\x64-4.8.1-posix-seh-rev5\mingw64\bin
 if (APPLE)
     # Use clang2 on apple for openmp support
     message('Apple System')
@@ -30,14 +27,6 @@ if (APPLE)
     set(CMAKE_EXE_LINKER_FLAGS "-lstdc++ -stdlib=libstdc++")
 elseif(WIN32)
     message('Win32 System')
-    # MinGW
-    #include_directories(C:/MinGW/include)
-    #link_directories(C:/MinGW/lib)
-    # Do something with -lgomp?
-    #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
-    #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-    #set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
-    #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
 endif()
 
 
@@ -58,7 +47,6 @@ IF(OPENMP_FOUND)
 ELSE()
     message("Missed OpenMP! x_x")
 ENDIF()
-
 
 
 message(STATUS "Checking OpenCV")
@@ -87,24 +75,12 @@ set(SOURCE_FILES
     src/affine.cpp 
     src/siftdesc.cpp)
 
-#add_executable(hesaffexe ${SOURCE_FILES})
+add_executable(hesaffexe ${SOURCE_FILES})
 
 message(STATUS "Defining hesaff library")
 #add_library(hesaff ${HESAFF_LIBRARY_TYPE} ${SOURCE_FILES})
 add_library(hesaff SHARED ${SOURCE_FILES})
 
-#set_target_properties(hesaff LINK_FLAGS  "${OpenMP_CXX_FLAGS}")
-#set_target_properties(hesaffexe LINK_FLAGS  "${OpenMP_CXX_FLAGS}")
-
-
-#message(STATUS "Specifing libraries to link to")
-#set(LINK_LIBS "${OpenCV_LIBS} ${OpenMP_CXX_FLAGS}")
-#message(STATUS "LINK:  ${LINK_LIBS}")
-#target_link_libraries(hesaff ${LINK_LIBS})
-#target_link_libraries(hesaffexe ${LINK_LIBS})
-
-
 message(STATUS "Specifing libraries to link to")
 target_link_libraries(hesaff ${OpenCV_LIBS} ${OpenMP_CXX_FLAGS})
-#target_link_libraries(hesaffexe ${OpenCV_LIBS})
-
+target_link_libraries(hesaffexe ${OpenCV_LIBS} ${OpenMP_CXX_FLAGS})
