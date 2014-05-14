@@ -29,10 +29,9 @@ elseif(WIN32)
     message('Win32 System')
 endif()
 
-
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 message(STATUS "Checking OpenMP")
-find_package(OpenMP)
+find_package(OpenMP REQUIRED)
 IF(OPENMP_FOUND)
     message("Found OpenMP! ^_^")
 	# add flags for OpenMP
