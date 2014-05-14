@@ -38,9 +38,9 @@ RUN_TEST()
 
 }
 
-RUN_TEST tests/test_pyhesaff_simple_iterative.py
+RUN_TEST pyhesaff/tests/test_pyhesaff_simple_iterative.py
 
-RUN_TEST tests/test_pyhesaff_simple_parallel.py
+RUN_TEST pyhesaff/tests/test_pyhesaff_simple_parallel.py
 
 
 
