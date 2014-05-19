@@ -1,8 +1,10 @@
 hesaff
 build
+.DS_Store
 *.pyc
 *.egg-info
 dist
+*.dylib
 *.dll
 *.so
 *.a
