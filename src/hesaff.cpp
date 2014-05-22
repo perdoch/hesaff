@@ -1,3 +1,6 @@
+int global_nkpts = 0;
+int global_c1 = 0;
+int global_c2 = 0;
 /*
  * Copyright (C) 2008-12 Michal Perdoch
  * All rights reserved.
@@ -378,60 +381,57 @@ struct AffineHessianDetector : public HessianDetector, AffineShape, HessianKeypo
             if ((scale_min < 0 || scale >= scale_min) &&
                 (scale_max < 0 || scale <= scale_max))
             {
-                Keypoint k;
-                k.type = type;
-                k.response = response;
-                k.x = x; k.y = y; k.s = s;
-                k.a11 = a11; k.a12 = a12; k.a21 = a21; k.a22 = a22;
                 //printDBG("passed: " << scale)
                 //printDBG("scale_min: " << scale_min << "; scale_max: " << scale_max)
                 float ori;
+                // Enforce the gravity vector: convert shape into a up is up frame
+                rectifyAffineTransformationUpIsUp(a11, a12, a21, a22); // Helper
+                ori = R_GRAVITY_THETA;
                 if(hesPar.adapt_rotation)
                 {
-                    ori = findKeypointsDirection(blur, k);
+                    if(normalizeAffine(this->image, x, y, s, a11, a12, a21, a22, ori))
+                    {
+                        return; //normalizeAffine can fail if the keypoint is out of bounds (consider adding an exception-based mechanism to discard the keypoint?)
+                    }
+                    ori = findKeypointsDirection(blur, this->patch);
                 }
-                else
-                {
-                    // Enforce the gravity vector: convert shape into a up is up frame
-                    rectifyAffineTransformationUpIsUp(k.a11, k.a12, k.a21, k.a22); // Helper
-                    ori = R_GRAVITY_THETA;
-                }
+                global_nkpts++;
                 // now sample the patch (populates this->patch)
                 if (!normalizeAffine(this->image, x, y, s, a11, a12, a21, a22, ori)) // affine.cpp
                 {
+                    global_c1++;
                     // compute SIFT and append new keypoint and descriptor
                     //this->DBG_patch();
-                    /*this->keys.push_back(Keypoint());
+                    this->keys.push_back(Keypoint());
                     Keypoint &k = this->keys.back();
                     k.type = type;
                     k.response = response;
                     k.x = x; k.y = y; k.s = s;
-                    k.a11 = a11; k.a12 = a12; k.a21 = a21; k.a22 = a22;*/
+                    k.a11 = a11; k.a12 = a12; k.a21 = a21; k.a22 = a22;
                     #ifdef USE_ORI
                     k.ori = ori;
                     #endif
                     this->populateDescriptor(k.desc, 0);
-                    this->keys.push_back(k);
+                    //this->keys.push_back(k); 
                 }
+                else if (hesPar.adapt_rotation)
+                {
+                    this->keys.push_back(Keypoint());  // For debugging push back a fake keypoint
+                    Keypoint &k = this->keys.back();
+                    k.ori = -1;
+                }
+                //else std::cout << global_nkpts << std::endl;
             }
         }
         // END void onAffineShapeFound
         //------------------------------------------------------------
-        float findKeypointsDirection(const cv::Mat& img, const Keypoint& k)
+        float findKeypointsDirection(const cv::Mat& img, const cv::Mat& pat)
         {
-            // Input: image and a keypoin
+            global_c2++;
+            // Input: image and a keypoint
             // Returns: dominant gradient orientation
             // Warp elliptical keypoint region in image into a (cropped) unit circle
-            cv::Mat pat;
-            if(!normalizeAffine(this->image, k.x, k.y, k.s, k.a11, k.a12, k.a21, k.a22, k.ori))
-            {
-                //normalizeAffine does the job of ptool.get_warped_patch, but uses a class variable to store the output (messy)
-                pat = this->patch;  // TODO: Ensure that this does not copy data
-            }
-            else 
-            {
-                return 0.0; //normalizeAffine can fail if the keypoint is out of bounds (consider adding an exception-based mechanism to discard the keypoint?)
-            }
+            //normalizeAffine does the job of ptool.get_warped_patch, but uses a class variable to store the output (messy)
             // Compute gradients
             cv::Mat xgradient(pat.rows, pat.cols, pat.depth());
             cv::Mat ygradient(pat.rows, pat.cols, pat.depth());
@@ -441,9 +441,7 @@ struct AffineHessianDetector : public HessianDetector, AffineShape, HessianKeypo
             computeOrientation<float>(xgradient, ygradient, orientations);
             inplace_map(ensure_0toTau<float>, orientations.begin<float>(), orientations.end<float>());
             // Compute magnitude
-            cv::Mat magnitudes;
-            computeMagnitude<float>(xgradient, ygradient, magnitudes);
-            
+            cv::Mat magnitudes; computeMagnitude<float>(xgradient, ygradient, magnitudes); 
             // Compute orientation histogram, splitting votes using linear interpolation
             const int nbins = 8;
             Histogram<float> hist = computeHistogram<float>(orientations.begin<float>(), orientations.end<float>(), 
@@ -778,9 +776,13 @@ int main(int argc, char **argv)
         char* img_fpath = argv[1];
         int nKpts;
         AffineHessianDetector* detector = new_hesaff(img_fpath);
-        detector->hesPar.adapt_rotation = true;
+        detector->hesPar.adapt_rotation = (argc > 2) ? atoi(argv[2]) : true;
         nKpts = detect(detector);
         writeFeatures(detector, img_fpath);
+        std::cout << "nKpts: " << nKpts << std::endl;
+        std::cout << "global_nkpts: " << global_nkpts << std::endl;
+        std::cout << "global_c1: " << global_c1 << std::endl;
+        std::cout << "global_c2: " << global_c2 << std::endl;
     }
     else
     {
