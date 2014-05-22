@@ -1,5 +1,7 @@
 SET ORIGINAL=%CD%
 
+:: TODO: Find out why openmp doesn't work
+
 :: helper variables
 call :build_hesaff
 goto :exit

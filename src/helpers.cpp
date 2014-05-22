@@ -81,16 +81,32 @@ void solveLinear3x3(float *A, float *b)
     }
 
     // swap pivot row with first row
-    if (pr != A) { swap(pr, A); swap(pr+1, A+1); swap(pr+2, A+2); swap(b+i, b); }
+    if (pr != A)
+    {
+        swap(pr, A);
+        swap(pr+1, A+1);
+        swap(pr+2, A+2);
+        swap(b+i, b);
+    }
 
     // fixup elements 3,4,5,b[1]
-    vp = A[3] / A[0]; A[4] -= vp*A[1]; A[5] -= vp*A[2]; b[1] -= vp*b[0];
+    vp = A[3] / A[0];
+    A[4] -= vp*A[1];
+    A[5] -= vp*A[2];
+    b[1] -= vp*b[0];
 
     // fixup elements 6,7,8,b[2]]
-    vp = A[6] / A[0]; A[7] -= vp*A[1]; A[8] -= vp*A[2]; b[2] -= vp*b[0];
+    vp = A[6] / A[0];
+    A[7] -= vp*A[1];
+    A[8] -= vp*A[2];
+    b[2] -= vp*b[0];
 
     // find pivot in second column
-    if (abs(A[4]) < abs(A[7])) { swap(A+7, A+4); swap(A+8, A+5); swap(b+2, b+1); }
+    if (abs(A[4]) < abs(A[7])) {
+        swap(A+7, A+4);
+        swap(A+8, A+5);
+        swap(b+2, b+1);
+    }
 
     // fixup elements 7,8,b[2]
     vp = A[7] / A[4];
@@ -101,16 +117,6 @@ void solveLinear3x3(float *A, float *b)
     b[2] = (b[2]                    )/A[8];
     b[1] = (b[1]-A[5]*b[2]          )/A[4];
     b[0] = (b[0]-A[2]*b[2]-A[1]*b[1])/A[0];
-}
-
-
-void rectifyAffineTransformationUpIsUp(float &a11, float &a12, float &a21, float &a22)
-{
-    double a = a11, b = a12, c = a21, d = a22;
-    double det = sqrt(abs(a*d-b*c));
-    double b2a2 = sqrt(b*b + a*a);
-    a11 = b2a2/det;             a12 = 0;
-    a21 = (d*b+c*a)/(b2a2*det); a22 = det/b2a2;
 }
 
 
@@ -131,6 +137,17 @@ void rotateAffineTransformation(float &a11, float &a12, float &a21, float &a22, 
 }
 
 
+void rectifyAffineTransformationUpIsUp(float &a11, float &a12, float &a21, float &a22)
+{
+    // Rotates a matrix into its lower triangular form
+    double a = a11, b = a12, c = a21, d = a22;
+    double det = sqrt(abs(a*d-b*c));
+    double b2a2 = sqrt(b*b + a*a);
+    a11 = b2a2/det;             a12 = 0;
+    a21 = (d*b+c*a)/(b2a2*det); a22 = det/b2a2;
+}
+
+
 void rectifyAffineTransformationUpIsUp(float *U)
 {
     rectifyAffineTransformationUpIsUp(U[0], U[1], U[2], U[3]);
@@ -139,28 +156,45 @@ void rectifyAffineTransformationUpIsUp(float *U)
 
 void computeGaussMask(Mat &mask)
 {
+    // Input: blank matrix, populates matrix with values of a 2D gaussian
+    // http://en.wikipedia.org/wiki/Gaussian_function
+    // (has magic constants)
     int size = mask.cols;
     int halfSize = size >> 1;
+
     // fit 3*sigma into half_size
-    float scale = float(halfSize)/3.0f;
+    float scale  = float(halfSize) / 3.0f;  // ~33.3% of radius is relevant
+    float scale2 = -2.0f * scale * scale;  // negate and divide by two for gauss exponent
 
-    float scale2 = -2.0f * scale * scale;
-    float *tmp = new float[halfSize+1];
-    for (int i = 0; i<= halfSize; i++)
-        tmp[i] = exp((float(i*i)/scale2));
-
-    int endSize = int(ceil(scale*5.0f)-halfSize);
-    for (int i = 1; i< endSize; i++)
-        tmp[halfSize-i] += exp((float((i+halfSize)*(i+halfSize))/scale2));
-
-    for (int i=0; i<=halfSize; i++)
+    // Compute gaussian equation in one dimension: populate tmp
+    // the mean (mu) is 0
+    // the standard devation (sigma) is scale2
+    float *tmp = new float[halfSize + 1];
+    for (int i = 0; i <= halfSize; i++)
     {
-        for (int j=0; j<=halfSize; j++)
+        tmp[i] = exp((float(i * i) / scale2));
+    }
+    // I'm not exactely sure what this is, but this adds a small bump to the tail
+    // Gaussians are closed under convolution and multiplication, but probably not addition
+    // so this must be some sort of hack
+    // (maybe this is just to upweight the tails a little bit)
+    int endSize = int(ceil(scale * 5.0f) - halfSize);
+    for (int i = 1; i < endSize; i++)
+    {
+        tmp[halfSize - i] += exp((float((i + halfSize) * (i + halfSize)) / scale2));
+    }
+
+    // Gaussian mask is symmetric \in isometric, walks over the first quadrent only
+    // and sets all 4 mirrored quadrents
+    for (int i=0; i <= halfSize; i++)
+    {
+        for (int j=0; j <= halfSize; j++)
         {
-            mask.at<float>   ( i+halfSize,-j+halfSize) =
-                mask.at<float>(-i+halfSize, j+halfSize) =
-                mask.at<float>( i+halfSize, j+halfSize) =
-                mask.at<float>(-i+halfSize,-j+halfSize) = tmp[i]*tmp[j];
+            float gauss_weight = tmp[i] * tmp[j];
+            mask.at<float>( i + halfSize, -j + halfSize) = gauss_weight;
+            mask.at<float>(-i + halfSize,  j + halfSize) = gauss_weight;
+            mask.at<float>( i + halfSize,  j + halfSize) = gauss_weight;
+            mask.at<float>(-i + halfSize, -j + halfSize) = gauss_weight;
         }
     }
     delete [] tmp;
@@ -171,43 +205,65 @@ void computeCircularGaussMask(Mat &mask)
 {
     int size = mask.cols;
     int halfSize = size >> 1;
-    float r2 = float(halfSize * halfSize);
-    float sigma2 = 0.9f*r2;
-    // float sigma  = float(halfSize)/3.0f;
-    // float sigma2 = 2*sigma*sigma;
+    float r2 = float(halfSize * halfSize);  // radius squared
+    float sigma2 = 0.9f * r2;  // ~95% of radius is relevant
     float disq;
     float *mp = mask.ptr<float>(0);
     for(int i=0;i<mask.rows;i++)
         for(int j=0;j<mask.cols;j++)
         {
-            disq = float((i-halfSize)*(i-halfSize)+(j-halfSize)*(j-halfSize));
-            *mp++ = (disq < r2) ? exp(- disq / sigma2) : 0;
+            // The mask is populated with Gaussian values
+            // as the function of the radius
+            disq = float((i-halfSize) * (i-halfSize) + (j-halfSize) * (j-halfSize));
+            *mp++ = (disq < r2) ? exp(-disq / sigma2) : 0;
         }
 }
 
 
 void invSqrt(float &a, float &b, float &c, float &l1, float &l2)
 {
+    // Inverse matrix square root
+    // if Z = V.dot(V)
+    // Given matrix Z
+    // find matrix inv(V), which is the inverse square root of Z
     double t, r;
     if (b != 0)
     {
         r = double(c-a)/(2*b);
-        if (r>=0) t = 1.0/(r+::sqrt(1+r*r)); else t = -1.0/(-r+::sqrt(1+r*r));
+        if (r>=0)
+        {
+            t = 1.0 / (r+::sqrt(1+r*r));
+        }
+        else
+        {
+            t = -1.0 / (-r+::sqrt(1+r*r));
+        }
         r = 1.0/::sqrt(1+t*t); /* c */
         t = t*r;               /* s */
-    } else {
+    }
+    else
+    {
         r = 1;
         t = 0;
     }
     double x,z,d;
 
-    x = 1.0/sqrt(r*r*a-2*r*t*b+t*t*c);
-    z = 1.0/sqrt(t*t*a+2*r*t*b+r*r*c);
+    x = 1.0 / sqrt(r*r*a-2*r*t*b+t*t*c);
+    z = 1.0 / sqrt(t*t*a+2*r*t*b+r*r*c);
 
     d = sqrt(x*z);
     x /= d; z /= d;
     // let l1 be the greater eigenvalue
-    if (x < z) { l1 = float(z); l2 = float(x); } else { l1 = float(x); l2 = float(z); }
+    if (x < z)
+    {
+        l1 = float(z);
+        l2 = float(x);
+    }
+    else
+    {
+        l1 = float(x);
+        l2 = float(z);
+    }
     // output square root
     a = float( r*r*x+t*t*z);
     b = float(-r*t*x+t*r*z);
@@ -217,14 +273,14 @@ void invSqrt(float &a, float &b, float &c, float &l1, float &l2)
 
 bool getEigenvalues(float a, float b, float c, float d, float &l1, float &l2)
 {
-    float trace = a+d;
-    float delta1 = (trace*trace-4*(a*d-b*c));
+    float trace = a + d;
+    float delta1 = (trace*trace - 4*(a*d-b*c));
     if (delta1 < 0)
         return false;
     float delta = sqrt(delta1);
 
-    l1 = (trace+delta)/2.0f;
-    l2 = (trace-delta)/2.0f;
+    l1 = (trace + delta) / 2.0f;
+    l2 = (trace - delta) / 2.0f;
     return true;
 }
 
@@ -233,7 +289,8 @@ bool getEigenvalues(float a, float b, float c, float d, float &l1, float &l2)
 bool interpolateCheckBorders(const Mat &im, float ofsx, float ofsy,
         float a11, float a12, float a21, float a22, const Mat &res)
 {
-    const int width = im.cols-2;
+    // does not do interpolation, just checks if we can
+    const int width  = im.cols-2;
     const int height = im.rows-2;
     const int halfWidth  = res.cols >> 1;
     const int halfHeight = res.rows >> 1;
@@ -253,6 +310,10 @@ bool interpolateCheckBorders(const Mat &im, float ofsx, float ofsy,
 bool interpolate(const Mat &im, float ofsx, float ofsy,
         float a11, float a12, float a21, float a22, Mat &res)
     {
+        // extracts a patch from im, corresponding to the keypoint
+        // (ofsx, ofsy, a11, a12, a21, a22)
+        // outputs the value in res
+        //
         bool ret = false;
         // input size (-1 for the safe bilinear interpolation)
         const int width = im.cols-1;
@@ -290,40 +351,59 @@ bool interpolate(const Mat &im, float ofsx, float ofsy,
 
 
 void photometricallyNormalize(Mat &image, const Mat &binaryMask,
-        float &sum, float &var)
+        float &mean, float &var)
 {
+    // magic? Attempts to normalize extreme lighting conditions
     const int width = image.cols;
     const int height = image.rows;
-    sum=0;
-    float gsum=0;
-
-    for (int j=0; j < height; j++)
-        for (int i=0; i < width; i++)
-            if (binaryMask.at<float>(j,i)>0)
-            {
-                sum += image.at<float>(j,i);
-                gsum ++;
-            }
-    sum = sum / gsum;
-
-    var=0;
-    for (int j=0; j < height; j++)
-        for (int i=0; i < width; i++)
-            if (binaryMask.at<float>(j,i)>0)
-                var += (sum - image.at<float>(j,i))*(sum - image.at<float>(j,i));
-
-    var = ::sqrt(var / gsum);
-    if (var < 0.0001)
-        // if variance is too low, don't do anything
-        return;
-
-    float fac = 50.0f/var;
+    float sum = 0;  // sum of nonmasked pixels
+    float gsum=0;  // number of nonmasked pixels
+    // Compute average of nonmasked pixels
     for (int j=0; j < height; j++)
         for (int i=0; i < width; i++)
         {
-            image.at<float>(j,i) = 128 + fac * (image.at<float>(j,i) - sum);
-            if (image.at<float>(j,i) > 255) image.at<float>(j,i)=255;
-            if (image.at<float>(j,i) < 0)   image.at<float>(j,i)=0;
+            if (binaryMask.at<float>(j, i) > 0)
+            {
+                sum += image.at<float>(j, i);
+                gsum ++;
+            }
+        }
+
+
+    mean = sum / gsum;
+    // Compute variance of nonmasked pixels
+    var=0;
+    for (int j=0; j < height; j++)
+        for (int i=0; i < width; i++)
+        {
+            if (binaryMask.at<float>(j,i) > 0)
+            {
+                var += (mean - image.at<float>(j,i)) * (mean - image.at<float>(j,i));
+            }
+        }
+
+    var = ::sqrt(var / gsum);
+    // if variance is too low, don't do anything
+    if (var < 0.0001)
+    {
+        return;
+    }
+    // Normalize the mean to be 128, and repopulate the patch
+    // keeping the same relative variations
+    float fac = 50.0f / var;
+    for (int j=0; j < height; j++)
+        for (int i=0; i < width; i++)
+        {
+            image.at<float>(j,i) = 128 + fac * (image.at<float>(j,i) - mean);
+            // Clamp to byte range
+            if (image.at<float>(j, i) > 255)
+            {
+                image.at<float>(j, i) = 255;
+            }
+            if (image.at<float>(j, i) < 0)
+            {
+                image.at<float>(j, i) = 0;
+            }
         }
 }
 
