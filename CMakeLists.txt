@@ -10,6 +10,10 @@ cmake_minimum_required(VERSION 2.8)
 project(hesaff)
 set(CMAKE_BUILD_TYPE "Release")
 
+# generate debug info for gdb
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ggdb")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb")
+
 if (APPLE)
     # Use clang2 on apple for openmp support
     message('Apple System')

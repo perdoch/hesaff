@@ -72,7 +72,7 @@ typedef unsigned char uint8;
 struct Keypoint
 {
     float x, y, s;
-    float a11,a12,a21,a22;
+    float a11, a12, a21, a22;
     #ifdef USE_ORI
     float ori;
     #endif
@@ -105,10 +105,10 @@ void invE_to_invA(cv::Mat& invE, float &a11, float &a12, float &a21, float &a22)
     diagE[1] = 1.0f / sqrt(diagE[1]);
     // build new invA
     cv::Mat invA_ = svd_invE.u * cv::Mat::diag(svd_invE.w);
-    a11 = invA_.at<float>(0,0);
-    a12 = invA_.at<float>(0,1);
-    a21 = invA_.at<float>(1,0);
-    a22 = invA_.at<float>(1,1);
+    a11 = invA_.at<float>(0, 0);
+    a12 = invA_.at<float>(0, 1);
+    a21 = invA_.at<float>(1, 0);
+    a22 = invA_.at<float>(1, 1);
     // Rectify it (maintain scale)
     rotate_downwards(a11, a12, a21, a22);
 }
@@ -117,7 +117,7 @@ void invE_to_invA(cv::Mat& invE, float &a11, float &a12, float &a21, float &a22)
 cv::Mat invA_to_invE(float &a11, float &a12, float &a21, float &a22, float& s, float& desc_factor)
 {
     float sc = desc_factor * s;
-    cv::Mat invA = (cv::Mat_<float>(2,2) << a11, a12, a21, a22);
+    cv::Mat invA = (cv::Mat_<float>(2, 2) << a11, a12, a21, a22);
 
     //-----------------------
     // Convert invA to invE format
@@ -129,7 +129,7 @@ cv::Mat invA_to_invE(float &a11, float &a12, float &a21, float &a22, float& s, f
     return invE;
 }
 
-
+extern void computeGradient(const cv::Mat &img, cv::Mat &gradx, cv::Mat &grady); //from affine.cpp
 
 struct AffineHessianDetector : public HessianDetector, AffineShape, HessianKeypointCallback, AffineShapeCallback
 {
@@ -138,14 +138,15 @@ struct AffineHessianDetector : public HessianDetector, AffineShape, HessianKeypo
         const cv::Mat image;
         SIFTDescriptor sift;
         std::vector<Keypoint> keys;
-
+        HesaffParams hesPar;
     public:
         // Constructor
         AffineHessianDetector(const cv::Mat &image,
                 const PyramidParams &par,
                 const AffineShapeParams &ap,
-                const SIFTDescriptorParams &sp):
-            HessianDetector(par), AffineShape(ap), image(image), sift(sp)
+                const SIFTDescriptorParams &sp,
+                const HesaffParams& hesParams):
+            HessianDetector(par), AffineShape(ap), image(image), sift(sp), hesPar(hesParams)
             {
                 this->setHessianKeypointCallback(this); //Inherits from pyramid.h HessianDetector
                 this->setAffineShapeCallback(this); // Inherits from affine.h AffineShape
@@ -235,7 +236,7 @@ struct AffineHessianDetector : public HessianDetector, AffineShape, HessianKeypo
                 Keypoint &k = keys[i];
                 float sc = AffineShape::par.mrSize * k.s;
                 // Grav invA keypoints
-                cv::Mat invA = (cv::Mat_<float>(2,2) << k.a11, k.a12, k.a21, k.a22);
+                cv::Mat invA = (cv::Mat_<float>(2, 2) << k.a11, k.a12, k.a21, k.a22);
                 // Integrate the scale via signular value decomposition
                 // Remember
                 // A     = U *  S  * V.T   // SVD Step
@@ -259,9 +260,9 @@ struct AffineHessianDetector : public HessianDetector, AffineShape, HessianKeypo
                 // invE = (V * 1/S * U.T) * (U * 1/S * V.T)
                 cv::Mat invE = svd_invA.u * cv::Mat::diag(svd_invA.w) * svd_invA.u.t();
                 // Write inv(E) to out stream
-                float e11 = invE.at<float>(0,0);
-                float e12 = invE.at<float>(0,1); // also e12 because of E symetry
-                float e22 = invE.at<float>(1,1);
+                float e11 = invE.at<float>(0, 0);
+                float e12 = invE.at<float>(0, 1); // also e12 because of E symetry
+                float e22 = invE.at<float>(1, 1);
                 #ifdef USE_ORI
                 float ori = k.ori;
                 out << k.x << " " << k.y << " "
@@ -370,44 +371,100 @@ struct AffineHessianDetector : public HessianDetector, AffineShape, HessianKeypo
             //HESSIAN_SADDLE = 2,
 
             // check if detected keypoint is within scale thresholds
-            float scale_min = AffineShape::par.scale_min;
-            float scale_max = AffineShape::par.scale_max;
+            float scale_min = hesPar.scale_min;
+            float scale_max = hesPar.scale_max;
             float scale = AffineShape::par.mrSize * s;
             // negative thresholds turn the threshold test off
             if ((scale_min < 0 || scale >= scale_min) &&
                 (scale_max < 0 || scale <= scale_max))
             {
+                Keypoint k;
+                k.type = type;
+                k.response = response;
+                k.x = x; k.y = y; k.s = s;
+                k.a11 = a11; k.a12 = a12; k.a21 = a21; k.a22 = a22;
                 //printDBG("passed: " << scale)
                 //printDBG("scale_min: " << scale_min << "; scale_max: " << scale_max)
-                //
-                // Enforce the gravity vector: convert shape into a up is up frame
-                rectifyAffineTransformationUpIsUp(a11, a12, a21, a22); // Helper
-                float ori = R_GRAVITY_THETA;
+                float ori;
+                if(hesPar.adapt_rotation)
+                {
+                    ori = findKeypointsDirection(blur, k);
+                }
+                else
+                {
+                    // Enforce the gravity vector: convert shape into a up is up frame
+                    rectifyAffineTransformationUpIsUp(k.a11, k.a12, k.a21, k.a22); // Helper
+                    ori = R_GRAVITY_THETA;
+                }
                 // now sample the patch (populates this->patch)
                 if (!normalizeAffine(this->image, x, y, s, a11, a12, a21, a22, ori)) // affine.cpp
                 {
                     // compute SIFT and append new keypoint and descriptor
                     //this->DBG_patch();
-                    this->keys.push_back(Keypoint());
+                    /*this->keys.push_back(Keypoint());
                     Keypoint &k = this->keys.back();
                     k.type = type;
                     k.response = response;
                     k.x = x; k.y = y; k.s = s;
-                    k.a11 = a11; k.a12 = a12; k.a21 = a21; k.a22 = a22;
+                    k.a11 = a11; k.a12 = a12; k.a21 = a21; k.a22 = a22;*/
                     #ifdef USE_ORI
                     k.ori = ori;
                     #endif
                     this->populateDescriptor(k.desc, 0);
+                    this->keys.push_back(k);
                 }
             }
         }
         // END void onAffineShapeFound
         //------------------------------------------------------------
-        void computeDominantRotation(float x, float y, float s, float a11, float a12, float a21, float a22)
+        float findKeypointsDirection(const cv::Mat& img, const Keypoint& k)
         {
-            // TODO: Write code to extract the dominant gradient direction in C++
-            //float rotation_invariance = AffineShape::par.rotation_invariance;
+            // Input: image and a keypoin
+            // Returns: dominant gradient orientation
+            std::cout << "In findKeypointsDirection()" << std::endl;
+            // Warp elliptical keypoint region in image into a (cropped) unit circle
+            cv::Mat pat;
+            if(!normalizeAffine(this->image, k.x, k.y, k.s, k.a11, k.a12, k.a21, k.a22, k.ori))
+            {
+                //normalizeAffine does the job of ptool.get_warped_patch, but uses a class variable to store the output (messy)
+                pat = this->patch;  // TODO: Ensure that this does not copy data
+            }
+            else 
+            {
+                return 0.0; //normalizeAffine can fail if the keypoint is out of bounds (consider adding an exception-based mechanism to discard the keypoint?)
+            }
+            // Compute gradients
+            cv::Mat xgradient(pat.rows, pat.cols, pat.depth());
+            cv::Mat ygradient(pat.rows, pat.cols, pat.depth());
+            computeGradient(pat, xgradient, ygradient);
+            // Compute orientation
+            cv::Mat orientations;
+            computeOrientation<float>(xgradient, ygradient, orientations);
+            inplace_map(ensure_0toTau<float>, orientations.begin<float>(), orientations.end<float>());
+            // Compute magnitude
+            cv::Mat magnitudes;
+            computeMagnitude<float>(xgradient, ygradient, magnitudes);
+            
+            // Compute orientation histogram, splitting votes using linear interpolation
+            const int nbins = 8;
+            //std::cout << "ori: " << orientations << "\nmag: " << magnitudes << std::endl;
+            Histogram<float> hist = computeHistogram<float>(orientations.begin<float>(), orientations.end<float>(), 
+                                                            magnitudes.begin<float>(), magnitudes.end<float>(),
+                                                            nbins);
+            // wrap histogram (because orientations are circular)
+            Histogram<float> wrapped_hist = htool::wrap_histogram(hist);
+            htool::hist_edges_to_centers(wrapped_hist); // inplace modification
+            std::cout << wrapped_hist << std::endl;
+            // Compute orientation as maxima of wrapped histogram
+            float submaxima_x, submaxima_y;
+            htool::hist_interpolated_submaxima(wrapped_hist, submaxima_x, submaxima_y);
+            std::cout << "(" << submaxima_x << ", " << submaxima_y << ")\n";
+            float submax_ori = submaxima_x; //will change if multiple submaxima are returned
+            submax_ori -= M_GRAVITY_THETA; // adjust for 0 being downward
+            std::cout << "Output: " << submax_ori << std::endl;
+            return submax_ori;
         }
+        
 
         void populateDescriptor(uint8* desc, size_t offst)
         {
@@ -438,7 +495,7 @@ struct AffineHessianDetector : public HessianDetector, AffineShape, HessianKeypo
             ori  = kpts[rowk + 5];
             printDBG("+---");
             printDBG("|   xy = (" <<  x << ", " <<  y << ") ");
-            printDBG("| invV = [(" << iv11 << ", " << iv12 << "),");
+            printDBG("| invV = [(" << iv11 << ", " << iv12 << "), ");
             printDBG("|         (" << iv21 << ", " << iv22 << ")] ");
             printDBG("|  ori = " << ori);
             printDBG("L___");
@@ -463,8 +520,8 @@ extern "C" {
 #define PYHESAFF extern HESAFF_EXPORT
 
     typedef void*(*allocer_t)(int, int*);
-	
-	
+    
+    
 
     PYHESAFF int detect(AffineHessianDetector* detector)
     {
@@ -528,6 +585,7 @@ extern "C" {
                 SIFTDescriptorParams siftParams;
                 PyramidParams pyrParams;
                 AffineShapeParams affShapeParams;
+                HesaffParams hesParams;
 
                 // Copy Pyramid params
                 pyrParams.numberOfScales            = numberOfScales;
@@ -551,9 +609,11 @@ extern "C" {
                 siftParams.patchSize                = patchSize;
 
                 // Copy my params
-                affShapeParams.scale_min            = scale_min;
-                affShapeParams.scale_max            = scale_max;
-                affShapeParams.rotation_invariance  = rotation_invariance;
+                hesParams.scale_min            = scale_min;
+                hesParams.scale_max            = scale_max;
+                hesParams.rotation_invariance  = rotation_invariance;
+                hesParams.adapt_rotation       = rotation_invariance;
+
                 //printDBG("pyrParams.numberOfScales      = " << pyrParams.numberOfScales);
                 //printDBG("pyrParams.threshold           = " << pyrParams.threshold);
                 //printDBG("pyrParams.edgeEigenValueRatio = " << pyrParams.edgeEigenValueRatio);
@@ -573,7 +633,7 @@ extern "C" {
                 printDBG("affShapeParams.scale_max            = " << scale_max);
                 printDBG("affShapeParams.rotation_invariance  = " << rotation_invariance);
                 // Create detector
-                AffineHessianDetector* detector = new AffineHessianDetector(image, pyrParams, affShapeParams, siftParams);
+                AffineHessianDetector* detector = new AffineHessianDetector(image, pyrParams, affShapeParams, siftParams, hesParams);
                 return detector;
             }
 
@@ -665,13 +725,13 @@ extern "C" {
                 float scale_max,
                 bool rotation_invariance)
     {
-    	AffineHessianDetector* detector = new_hesaff_from_params(image_filename, numberOfScales, threshold, edgeEigenValueRatio, border, maxIterations, convergenceThreshold, smmWindowSize, mrSize, spatialBins, orientationBins, maxBinValue, initialSigma, patchSize, scale_min, scale_max, rotation_invariance);
-    	*length = detector->detect();
-    	*keypoints = new float[(*length)*KPTS_DIM];
-    	*descriptors = new uint8[(*length)*DESC_DIM];
-    	detector->exportArrays((*length),*keypoints,*descriptors);
-    	//may need to add support for "use_adaptive_scale" and "nogravity_hack" here (needs translation from Python to C++ first)
-    	delete detector;
+        AffineHessianDetector* detector = new_hesaff_from_params(image_filename, numberOfScales, threshold, edgeEigenValueRatio, border, maxIterations, convergenceThreshold, smmWindowSize, mrSize, spatialBins, orientationBins, maxBinValue, initialSigma, patchSize, scale_min, scale_max, rotation_invariance);
+        *length = detector->detect();
+        *keypoints = new float[(*length)*KPTS_DIM];
+        *descriptors = new uint8[(*length)*DESC_DIM];
+        detector->exportArrays((*length), *keypoints, *descriptors);
+        //may need to add support for "use_adaptive_scale" and "nogravity_hack" here (needs translation from Python to C++ first)
+        delete detector;
     }
 
     PYHESAFF void detectKeypointsList(int num_filenames, char** image_filename_list, float** keypoints_array, uint8** descriptors_array, int* length_array,
@@ -698,12 +758,13 @@ extern "C" {
                                       float scale_max,
                                       bool rotation_invariance)
     {
-    	int index;
-    	#pragma omp parallel for
-    	for(index=0;index < num_filenames;++index)
-    	{
-    		detectKeypoints(image_filename_list[index],&(keypoints_array[index]),&(descriptors_array[index]), &(length_array[index]), numberOfScales, threshold, edgeEigenValueRatio, border, maxIterations, convergenceThreshold, smmWindowSize, mrSize, spatialBins, orientationBins, maxBinValue, initialSigma, patchSize, scale_min, scale_max, rotation_invariance);
-    	}
+        int index;
+        std::cout << "detectKeypointsList.rotation_invariance" << rotation_invariance << std::endl;
+        //#pragma omp parallel for
+        for(index=0;index < num_filenames;++index)
+        {
+            detectKeypoints(image_filename_list[index], &(keypoints_array[index]), &(descriptors_array[index]), &(length_array[index]), numberOfScales, threshold, edgeEigenValueRatio, border, maxIterations, convergenceThreshold, smmWindowSize, mrSize, spatialBins, orientationBins, maxBinValue, initialSigma, patchSize, scale_min, scale_max, rotation_invariance);
+        }
     }
 #ifdef __cplusplus
 }
@@ -723,6 +784,7 @@ int main(int argc, char **argv)
         char* img_fpath = argv[1];
         int nKpts;
         AffineHessianDetector* detector = new_hesaff(img_fpath);
+        detector->hesPar.adapt_rotation = true;
         nKpts = detect(detector);
         writeFeatures(detector, img_fpath);
     }

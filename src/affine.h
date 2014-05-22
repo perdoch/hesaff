@@ -26,9 +26,6 @@ struct AffineShapeParams
     int patchSize;       // width and height of the patch
     float initialSigma;  // amount of smoothing applied to the initial level of first octave
     float mrSize;        // size of the measurement region (as multiple of the feature scale)
-    float scale_min;     // minimum scale threshold
-    float scale_max;     // maximum scale threshold
-    bool rotation_invariance;  // are we assuming the gravity vector?
 
     AffineShapeParams()
     {
@@ -38,9 +35,6 @@ struct AffineShapeParams
         patchSize = 41;
         smmWindowSize = 19;
         mrSize = 3.0f*sqrt(3.0f);
-        scale_min = -1;
-        scale_max = -1;
-        rotation_invariance = false;
     }
 };
 

@@ -18,6 +18,8 @@
 //#include <opencv2/imgproc.hpp>
 //#include <opencv2/imgproc/imgproc.hpp>
 
+#include "helpers.h"
+
 using namespace cv;
 using namespace std;
 
@@ -393,3 +395,33 @@ bool almost_eq(float f1, float f2)
     float thresh = 1E-10;
     return fabs(f1 - f2) < thresh;
 }
+
+void computeGradient(const cv::Mat &img, cv::Mat &gradx, cv::Mat &grady)
+{
+    const int width = img.cols;
+    const int height = img.rows;
+    // For each pixel in the image
+    for (int r = 0; r < height; ++r)
+        for (int c = 0; c < width; ++c)
+            {
+            float xgrad, ygrad;
+            if (c == 0) xgrad = img.at<float>(r,c+1) - img.at<float>(r,c); else
+                if (c == width-1) xgrad = img.at<float>(r,c) - img.at<float>(r,c-1); else
+                    xgrad = img.at<float>(r,c+1) - img.at<float>(r,c-1);
+
+            if (r == 0) ygrad = img.at<float>(r+1,c) - img.at<float>(r,c); else
+                if (r == height-1) ygrad = img.at<float>(r,c) - img.at<float>(r-1,c); else
+                    ygrad = img.at<float>(r+1,c) - img.at<float>(r-1,c);
+
+            gradx.at<float>(r,c) = xgrad;
+            grady.at<float>(r,c) = ygrad;
+            }
+}
+
+/*void htool::makeCvHistFromHistogram(Histogram<float>& hist, CvHistogram& cvHist)
+{
+    int size = hist.data.size();
+    float* data = &(hist.data[0]);
+    float* rangeArr = &(hist.edges[0]);
+    cvMakeHistHeaderForArray(1,&size,&cvHist,data,&rangeArr,0);
+}*/
