@@ -421,7 +421,6 @@ struct AffineHessianDetector : public HessianDetector, AffineShape, HessianKeypo
         {
             // Input: image and a keypoin
             // Returns: dominant gradient orientation
-            std::cout << "In findKeypointsDirection()" << std::endl;
             // Warp elliptical keypoint region in image into a (cropped) unit circle
             cv::Mat pat;
             if(!normalizeAffine(this->image, k.x, k.y, k.s, k.a11, k.a12, k.a21, k.a22, k.ori))
@@ -447,21 +446,17 @@ struct AffineHessianDetector : public HessianDetector, AffineShape, HessianKeypo
             
             // Compute orientation histogram, splitting votes using linear interpolation
             const int nbins = 8;
-            //std::cout << "ori: " << orientations << "\nmag: " << magnitudes << std::endl;
             Histogram<float> hist = computeHistogram<float>(orientations.begin<float>(), orientations.end<float>(), 
                                                             magnitudes.begin<float>(), magnitudes.end<float>(),
                                                             nbins);
             // wrap histogram (because orientations are circular)
             Histogram<float> wrapped_hist = htool::wrap_histogram(hist);
             htool::hist_edges_to_centers(wrapped_hist); // inplace modification
-            std::cout << wrapped_hist << std::endl;
             // Compute orientation as maxima of wrapped histogram
             float submaxima_x, submaxima_y;
             htool::hist_interpolated_submaxima(wrapped_hist, submaxima_x, submaxima_y);
-            std::cout << "(" << submaxima_x << ", " << submaxima_y << ")\n";
             float submax_ori = submaxima_x; //will change if multiple submaxima are returned
             submax_ori -= M_GRAVITY_THETA; // adjust for 0 being downward
-            std::cout << "Output: " << submax_ori << std::endl;
             return submax_ori;
         }
         
@@ -759,8 +754,7 @@ extern "C" {
                                       bool rotation_invariance)
     {
         int index;
-        std::cout << "detectKeypointsList.rotation_invariance" << rotation_invariance << std::endl;
-        //#pragma omp parallel for
+        #pragma omp parallel for
         for(index=0;index < num_filenames;++index)
         {
             detectKeypoints(image_filename_list[index], &(keypoints_array[index]), &(descriptors_array[index]), &(length_array[index]), numberOfScales, threshold, edgeEigenValueRatio, border, maxIterations, convergenceThreshold, smmWindowSize, mrSize, spatialBins, orientationBins, maxBinValue, initialSigma, patchSize, scale_min, scale_max, rotation_invariance);

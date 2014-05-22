@@ -196,8 +196,6 @@ template <class T, class Iterator> Histogram<T> computeHistogram(Iterator ori_be
         // Linear Interpolation of gradient magnitude votes over orientation bins (maybe do quadratic)
         hist.data[intPart]     += mag * (1 - alpha);
         hist.data[intPart + 1] += mag * (alpha);
-//        std::cout << "in computeHistogram: (" << fracBinIndex << ", " << intPart << ", " << alpha << "), (";
-//        std::cout << hist.data[intPart] << ", " << hist.data[intPart+1] << ")\n";
     }
     return hist;
 }
@@ -252,7 +250,6 @@ template <class T> Histogram<T> wrap_histogram(const Histogram<T>& input)
 {
     std::vector<int> tmp;
     tmp.resize(input.edges.size());
-    std::cout << input << std::endl;
     std::adjacent_difference(input.edges.begin(), input.edges.end(), tmp.begin());
     int low = tmp[0], high = tmp[tmp.size()-1];
     Histogram<T> output;
@@ -264,7 +261,6 @@ template <class T> Histogram<T> wrap_histogram(const Histogram<T>& input)
     output.edges.push_back(input.edges[0]-low);
     for(typename std::vector<T>::const_iterator iter = input.edges.begin(); iter != input.edges.end(); ++iter) { output.edges.push_back(*iter); }
     output.edges.push_back(input.edges[input.edges.size()-1]+high);
-    std::cout << output << std::endl;
     return output;
 }
 
@@ -296,21 +292,16 @@ template <class T> void hist_argmaxima(Histogram<T> hist, T& maxima_x, T& maxima
     float* data = &(hist.data[1]);
     // Pack our histogram structure into an opencv histogram
     cv::Mat cvhist(1, &size, cv::DataType<T>::type, data);
-    std::cout << "cvhist: " << cvhist << std::endl;
     cv::Point argmax2d;
     // Find index of the maxima ONLY
     cv::minMaxLoc(cvhist, NULL, NULL, NULL, &argmax2d);
     argmaxima = argmax2d.y + 1;
     maxima_x = hist.edges[argmaxima];
     maxima_y = hist.data[argmaxima];;
-    std::cout << "maxima_x: " << maxima_x << std::endl;
-    std::cout << "maxima_y: " << maxima_y << std::endl;
-    std::cout << "argmax2d: " << argmax2d << std::endl;
 }
 
 template <class T> void maxima_neighbors(int argmaxima, const Histogram<T>& hist, std::vector<cv::Point_<T> >& points)
 {
-    std::cout << "argmaxima: " << argmaxima << std::endl;
     for(int i = -1; i <= 1; i++)
     {
         int j = argmaxima+i;
@@ -324,7 +315,6 @@ template <class T> void interpolate_submaxima(int argmaxima, const Histogram<T>&
 {
     std::vector<cv::Point_<T> > points;
     maxima_neighbors(argmaxima, hist, points);
-    std::cout << "points: " << points << std::endl;
     T x1, y1, x2, y2, x3, y3;
     x1 = points[0].x; y1 = points[0].y;
     x2 = points[1].x; y2 = points[1].y;
