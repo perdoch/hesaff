@@ -1,23 +1,18 @@
 from __future__ import absolute_import, print_function, division
-import __sysreq__  # NOQA
 # Standard
 import sys
-from os.path import realpath, join
+from os.path import realpath, join, split
 from vtool.tests import grabdata
 # Scientific
 import numpy as np
 import cv2
 # TPL
 import pyhesaff
+import utool
+utool.inject_colored_exceptions()
 
 
-def load_test_data(short=False, n=0, **kwargs):
-    if not 'short' in vars():
-        short = False
-    # Read Image
-    #ellipse.rrr()
-    nScales = 4
-    nSamples = 16
+def get_test_image():
     img_fname = 'zebra.jpg'
     if '--zebra.png' in sys.argv:
         img_fname = 'zebra.jpg'
@@ -27,6 +22,17 @@ def load_test_data(short=False, n=0, **kwargs):
         img_fname = 'jeff.png'
     imgdir = grabdata.get_testdata_dir()
     img_fpath = realpath(join(imgdir, img_fname))
+    return img_fpath
+
+
+def load_test_data(short=False, n=0, use_cpp=False, **kwargs):
+    if 'short' not in vars():
+        short = False
+    # Read Image
+    #ellipse.rrr()
+    nScales = 4
+    nSamples = 16
+    img_fpath = get_test_image()
     imgBGR = cv2.imread(img_fpath)
     imgLAB = cv2.cvtColor(imgBGR, cv2.COLOR_BGR2LAB)
     imgL = imgLAB[:, :, 0]
@@ -35,10 +41,15 @@ def load_test_data(short=False, n=0, **kwargs):
         'scale_max': 100
     }
     detect_kwargs.update(kwargs)
-    kpts, desc = pyhesaff.detect_kpts(img_fpath, **detect_kwargs)
+    if not use_cpp:
+        kpts, desc = pyhesaff.detect_kpts(img_fpath, **detect_kwargs)
+    else:
+        # Try the new C++ code
+        [kpts], [desc] = pyhesaff.detect_kpts_list([img_fpath], **detect_kwargs)
+
     if short and n > 0:
         extra_fxs = []
-        if img_fname == 'zebra.png':
+        if split(img_fpath)[1] == 'zebra.png':
             extra_fxs = [374, 520, 880][0:1]
         fxs = np.array(spaced_elements2(kpts, n).tolist() + extra_fxs)
         kpts = kpts[fxs]

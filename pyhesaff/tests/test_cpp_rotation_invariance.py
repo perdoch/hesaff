@@ -2,7 +2,7 @@
 from __future__ import absolute_import, division, print_function
 import numpy as np
 # Hesaff
-import pyhestest
+from pyhesaff.tests import pyhestest
 import pyhesaff
 # Tools
 import utool
@@ -26,13 +26,12 @@ def TEST_ptool_find_kpts_direction(imgBGR, kpts):
     return kpts2
 
 
-def TEST_figure1(wpatch, gradx, grady, gmag, gori, hist, centers):
+def TEST_figure1(wpatch, gradx, grady, gmag, gori, hist, centers, fnum=1):
     print('[rotinvar] 4) Draw histogram with interpolation annotations')
-    fnum = 1
     gorimag = plottool.color_orimag(gori, gmag)
     nRow, nCol = (2, 7)
 
-    df2.figure(fnum=1, pnum=(nRow, 1, nRow), doclf=True, docla=True)
+    df2.figure(fnum=fnum, pnum=(nRow, 1, nRow), doclf=True, docla=True)
     plottool.draw_hist_subbin_maxima(hist, centers)
     df2.set_xlabel('grad orientation (radians)')
     df2.set_ylabel('grad magnitude')
@@ -67,7 +66,7 @@ def TEST_figure2(imgBGR, kpts, desc, sel, fnum=2):
     draw_feat_row(imgBGR, sel, kpts[sel], sift, fnum=fnum, nRows=2, nCols=3, px=3)
 
 
-def TEST_keypoint(imgBGR, img_fpath, kpts, desc, sel):
+def TEST_keypoint(imgBGR, img_fpath, kpts, desc, sel, fnum=1):
     #----------------------#
     # --- Extract Data --- #
     #----------------------#
@@ -83,19 +82,15 @@ def TEST_keypoint(imgBGR, img_fpath, kpts, desc, sel):
     print('[rotinvar] 2) Get orientation histogram')
     hist, centers = ptool.get_orientation_histogram(gori)
 
-    # Get dominant direction in radians
-    kpts2 = TEST_ptool_find_kpts_direction(imgBGR, kpts)
-    kpts2, desc2 = pyhesaff.adapt_rotation(img_fpath, kpts)
-
     #----------------------#
     # --- Draw Results --- #
     #----------------------#
-    f1_loc = TEST_figure1(wpatch, gradx, grady, gmag, gori, hist, centers)
+    f1_loc = TEST_figure1(wpatch, gradx, grady, gmag, gori, hist, centers, fnum=fnum)
     df2.set_figtitle('Dominant Orienation Extraction')
 
-    TEST_figure2(imgBGR, kpts, desc, sel, fnum=2)
+    TEST_figure2(imgBGR, kpts, desc, sel, fnum=fnum + 1)
     df2.set_figtitle('Gravity Vector')
-    TEST_figure2(imgBGR, kpts2, desc2, sel, fnum=3)
+    TEST_figure2(imgBGR, kpts2, desc2, sel, fnum=fnum + 2)
     df2.set_figtitle('Rotation Invariant')
 
     #df2.draw_keypoint_gradient_orientations(imgBGR, kp=kpts2[sel],
@@ -110,16 +105,33 @@ def TEST_keypoint(imgBGR, img_fpath, kpts, desc, sel):
 if __name__ == '__main__':
     # Read data
     print('[rotinvar] loading test data')
-    test_data = pyhestest.load_test_data(short=True, n=3)
-    img_fpath = test_data['img_fpath']
-    kpts = test_data['kpts']
-    desc = test_data['desc']
-    imgBGR = test_data['imgBGR']
-    sel = min(len(kpts) - 1, 3)
+    img_fpath = pyhestest.get_test_image()
+    [kpts1], [desc1] = pyhesaff.detect_kpts_list([img_fpath], rotation_invariance=False)
+    [kpts2], [desc2] = pyhesaff.detect_kpts_list([img_fpath], rotation_invariance=True)
 
-    locals_ = TEST_keypoint(imgBGR, img_fpath, kpts, desc, sel)
-    exec(utool.execstr_dict(locals_, 'locals_'))
-    exec(utool.execstr_dict(f1_loc, 'f1_loc'))  # NOQA
+    clip = min(len(kpts1), 5)
+    fxs = np.array(pyhestest.spaced_elements2(kpts2, 5).tolist())
+    kpts1 = kpts1[fxs]
+    kpts2 = kpts2[fxs]
+    desc1 = desc1[fxs]
+    desc2 = desc2[fxs]
+    np.set_printoptions(threshold=5000, linewidth=5000, precision=5)
+
+    print('kpts1.shape = %r' % (kpts1.shape,))
+    print('kpts2.shape = %r' % (kpts2.shape,))
+
+    print('desc1.shape = %r' % (desc1.shape,))
+    print('desc2.shape = %r' % (desc2.shape,))
+
+    imgBGR = pyhestest.cv2.imread(img_fpath)
+    sel = min(len(kpts1) - 1, 3)
+
+    TEST_keypoint(imgBGR, img_fpath, kpts1, desc1, sel, fnum=1)
+    TEST_keypoint(imgBGR, img_fpath, kpts2, desc2, sel, fnum=9001)
+
+    #locals_ = TEST_keypoint(imgBGR, img_fpath, kpts1, desc1, sel)
+    #exec(utool.execstr_dict(locals_, 'locals_'))
+    #exec(utool.execstr_dict(f1_loc, 'f1_loc'))  # NOQA
 
     #pinteract.interact_keypoints(imgBGR, kpts2, desc, arrow=True, rect=True)
     exec(df2.present())
