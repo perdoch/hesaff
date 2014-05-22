@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from __future__ import absolute_import, division, print_function
 from utool.util_setup import setuptools_setup
+from utool.util_cplat import get_dynamic_lib_globstrs
 import sys
 import subprocess
 import pyhesaff
@@ -30,5 +31,5 @@ if __name__ == '__main__':
         author_email='erotemic@gmail.com',
         packages=['build', 'pyhesaff'],
         py_modules=['pyhesaff'],
-        package_data={'build': ['*.so']},
+        package_data={'build': get_dynamic_lib_globstrs()},
     )

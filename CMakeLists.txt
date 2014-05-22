@@ -2,15 +2,15 @@ cmake_minimum_required(VERSION 2.8)
 
 # Clang2 = Clang + OpenMP built for OSX Mavericks
 # http://goo.gl/1Tg0Zj
-SET(CLANG2 Off)
 
 #######################################
 if (APPLE AND CLANG2)
+    SET(CLANG2 Off)
     message('Apple System')
     set(CMAKE_C_COMPILER "clang2")
     set(CMAKE_CXX_COMPILER "${CMAKE_C_COMPILER}")
 else()
-    message('Win32 System')
+    SET(CLANG2 On)
 endif()
 
 if (APPLE)
