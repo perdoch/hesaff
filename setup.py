@@ -26,7 +26,7 @@ if __name__ == '__main__':
 
     setup_dict = {
         'setup_fpath':      __file__,
-        'project_name':     'pyhesaff',
+        'name':             'pyhesaff',
         'version':          '1.1.0.dev1',
         'build_command':    build_command,
         'description':      'Routines for computation of hessian affine keypoints in images.',
