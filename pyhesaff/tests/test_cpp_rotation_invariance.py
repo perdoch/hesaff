@@ -66,7 +66,7 @@ def TEST_figure2(imgBGR, kpts, desc, sel, fnum=2):
     draw_feat_row(imgBGR, sel, kpts[sel], sift, fnum=fnum, nRows=2, nCols=3, px=3)
 
 
-def TEST_keypoint(imgBGR, img_fpath, kpts, desc, sel, fnum=1):
+def TEST_keypoint(imgBGR, img_fpath, kpts, desc, sel, fnum=1, figtitle=''):
     #----------------------#
     # --- Extract Data --- #
     #----------------------#
@@ -86,12 +86,12 @@ def TEST_keypoint(imgBGR, img_fpath, kpts, desc, sel, fnum=1):
     # --- Draw Results --- #
     #----------------------#
     f1_loc = TEST_figure1(wpatch, gradx, grady, gmag, gori, hist, centers, fnum=fnum)
-    df2.set_figtitle('Dominant Orienation Extraction')
+    df2.set_figtitle(figtitle + 'Dominant Orienation Extraction')
 
     TEST_figure2(imgBGR, kpts, desc, sel, fnum=fnum + 1)
-    df2.set_figtitle('Gravity Vector')
-    TEST_figure2(imgBGR, kpts2, desc2, sel, fnum=fnum + 2)
-    df2.set_figtitle('Rotation Invariant')
+    df2.set_figtitle(figtitle)
+#    TEST_figure2(imgBGR, kpts2, Desc2, sel, fnum=fnum + 2)
+#    df2.set_figtitle('Rotation Invariant')
 
     #df2.draw_keypoint_gradient_orientations(imgBGR, kp=kpts2[sel],
     #                                        sift=desc[sel], mode='vec',
@@ -108,14 +108,7 @@ if __name__ == '__main__':
     img_fpath = pyhestest.get_test_image()
     [kpts1], [desc1] = pyhesaff.detect_kpts_list([img_fpath], rotation_invariance=False)
     [kpts2], [desc2] = pyhesaff.detect_kpts_list([img_fpath], rotation_invariance=True)
-
-    clip = min(len(kpts1), 5)
-    fxs = np.array(pyhestest.spaced_elements2(kpts2, 5).tolist())
-    kpts1 = kpts1[fxs]
-    kpts2 = kpts2[fxs]
-    desc1 = desc1[fxs]
-    desc2 = desc2[fxs]
-    np.set_printoptions(threshold=5000, linewidth=5000, precision=5)
+    np.set_printoptions(threshold=5000, linewidth=5000, precision=8, suppress=True)
 
     print('kpts1.shape = %r' % (kpts1.shape,))
     print('kpts2.shape = %r' % (kpts2.shape,))
@@ -123,11 +116,24 @@ if __name__ == '__main__':
     print('desc1.shape = %r' % (desc1.shape,))
     print('desc2.shape = %r' % (desc2.shape,))
 
+    print('\n----\n'.join([str(k1) + '\n' + str(k2) for k1, k2 in zip(kpts1[0:10], kpts2[0:10])]))
+
+    n = 4
+    clip = min(len(kpts1), n)
+    fxs = np.array(pyhestest.spaced_elements2(kpts2, n).tolist())
+    print('fxs=%r' % fxs)
+    kpts1 = kpts1[fxs]
+    kpts2 = kpts2[fxs]
+    desc1 = desc1[fxs]
+    desc2 = desc2[fxs]
+
+    print('\n----\n'.join([str(k1) + '\n' + str(k2) for k1, k2 in zip(kpts1, kpts2)]))
+
     imgBGR = pyhestest.cv2.imread(img_fpath)
     sel = min(len(kpts1) - 1, 3)
 
-    TEST_keypoint(imgBGR, img_fpath, kpts1, desc1, sel, fnum=1)
-    TEST_keypoint(imgBGR, img_fpath, kpts2, desc2, sel, fnum=9001)
+    TEST_keypoint(imgBGR, img_fpath, kpts1, desc1, sel, fnum=1, figtitle='Downward Rotation')
+    TEST_keypoint(imgBGR, img_fpath, kpts2, desc2, sel, fnum=9001, figtitle='Adapted Rotation')
 
     #locals_ = TEST_keypoint(imgBGR, img_fpath, kpts1, desc1, sel)
     #exec(utool.execstr_dict(locals_, 'locals_'))

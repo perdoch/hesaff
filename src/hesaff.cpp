@@ -418,6 +418,10 @@ struct AffineHessianDetector : public HessianDetector, AffineShape, HessianKeypo
                 {
                     this->keys.push_back(Keypoint());  // For debugging push back a fake keypoint
                     Keypoint &k = this->keys.back();
+                    k.type = type;
+                    k.response = response;
+                    k.x = x; k.y = y; k.s = s;
+                    k.a11 = a11; k.a12 = a12; k.a21 = a21; k.a22 = a22;
                     k.ori = -1;
                 }
                 //else std::cout << global_nkpts << std::endl;
@@ -455,7 +459,7 @@ struct AffineHessianDetector : public HessianDetector, AffineShape, HessianKeypo
             htool::hist_interpolated_submaxima(wrapped_hist, submaxima_x, submaxima_y);
             float submax_ori = submaxima_x; //will change if multiple submaxima are returned
             submax_ori -= M_GRAVITY_THETA; // adjust for 0 being downward
-            return submax_ori;
+            return ensure_0toTau<float>(submax_ori);
         }
         
 
