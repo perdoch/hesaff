@@ -79,9 +79,9 @@ hesaff_param_types = [type_ for (type_, key, val) in hesaff_typed_params]
 
 
 def load_hesaff_clib():
-    '''
+    """
     Specificially loads the hesaff lib and defines its functions
-    '''
+    """
     # Get the root directory which should have the dynamic library in it
     #root_dir = realpath(dirname(__file__)) if '__file__' in vars() else realpath(os.getcwd())
 
@@ -144,7 +144,7 @@ def _make_hesaff_cpp_params(**kwargs):
 
 
 def _new_hesaff(img_fpath, **kwargs):
-    'Creates new detector object which reads the image'
+    """ Creates new detector object which reads the image """
     hesaff_params = hesaff_param_dict.copy()
     hesaff_params.update(kwargs)
     if __DEBUG__:
@@ -170,11 +170,11 @@ def extract_desc(img_fpath, kpts, **kwargs):
 def detect_kpts(img_fpath,
                 use_adaptive_scale=False, nogravity_hack=False,
                 **kwargs):
-    '''
+    """
     main driver function for detecting hessian affine keypoints.
     extra parameters can be passed to the hessian affine detector by using
-    kwargs. Valid keyword arguments are:
-    ''' + str(hesaff_param_dict.keys())
+    kwargs.  """
+    #Valid keyword arguments are: + str(hesaff_param_dict.keys())
     if __DEBUG__:
         print('[hes] Detecting Keypoints')
         print('[hes] use_adaptive_scale=%r' % (use_adaptive_scale,))

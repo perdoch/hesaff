@@ -7,9 +7,9 @@ from utool import util_cplat
 def build_command():
     """ Build command run by utool.util_setup """
     if util_cplat.WIN32:
-        util_cplat.shell('./mingw_hesaff_build.bat')
+        util_cplat.shell('./mingw_build.bat')
     else:
-        util_cplat.shell('./unix_hesaff_build.sh')
+        util_cplat.shell('./unix_build.sh')
 
 
 URL_LIST = [
@@ -25,9 +25,7 @@ INSTALL_REQUIRES = [
 if __name__ == '__main__':
 
     setup_dict = {
-        'setup_fpath':      __file__,
         'name':             'pyhesaff',
-        'version':          '1.1.0.dev1',
         'build_command':    build_command,
         'description':      'Routines for computation of hessian affine keypoints in images.',
         'url':              'https://github.com/Erotemic/hesaff',
@@ -36,5 +34,6 @@ if __name__ == '__main__':
         'packages':         ['build', 'pyhesaff'],
         'install_requires': INSTALL_REQUIRES,
         'package_data':     {'build': util_cplat.get_dynamic_lib_globstrs()},
+        'setup_fpath':      __file__,
     }
     setuptools_setup(**setup_dict)
