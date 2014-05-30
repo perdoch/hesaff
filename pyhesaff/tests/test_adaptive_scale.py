@@ -15,7 +15,7 @@ import vtool.ellipse as etool
 
 
 def test_hesaff_kpts(img_fpath, **kwargs):
-    if not 'kwargs' in vars():
+    if 'kwargs' not in vars():
         kwargs = {}
     # Make detector and read image
     hesaff_ptr = pyhesaff.new_hesaff(img_fpath, **kwargs)
@@ -37,11 +37,11 @@ def test_hesaff_kpts(img_fpath, **kwargs):
 
 def test_adaptive_scale():
     # Get relevant test data
-    '''
+    """
     __name__ = 'IPython'
     exec(open('test_pyhesaff.py').read())
     exec(open('etool.py').read())
-    '''
+    """
     print('test_adaptive_scale()')
     test_data = pyhestest.load_test_data(short=True, n=4)
     img_fpath = test_data['img_fpath']

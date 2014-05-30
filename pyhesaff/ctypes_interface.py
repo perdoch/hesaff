@@ -13,10 +13,10 @@ __DEBUG_CLIB__ = '--debug' in sys.argv or '--debug-clib' in sys.argv
 
 
 def get_lib_fname_list(libname):
-    '''
+    """
     input <libname>: library name (e.g. 'hesaff', not 'libhesaff')
     returns <libnames>: list of plausible library file names
-    '''
+    """
     if sys.platform == 'win32':
         libnames = ['lib' + libname + '.dll', libname + '.dll']
     elif sys.platform == 'darwin':
@@ -29,10 +29,10 @@ def get_lib_fname_list(libname):
 
 
 def get_lib_dpath_list(root_dir):
-    '''
+    """
     input <root_dir>: deepest directory to look for a library (dll, so, dylib)
     returns <libnames>: list of plausible directories to look.
-    '''
+    """
     'returns possible lib locations'
     get_lib_dpath_list = [root_dir,
                           join(root_dir, 'lib'),
@@ -76,7 +76,7 @@ def find_lib_fpath(libname, root_dir, recurse_down=True, verbose=False):
 
 
 def load_clib(libname, root_dir):
-    '''
+    """
     Does the work.
     Args:
         libname:  library name (e.g. 'hesaff', not 'libhesaff')
@@ -85,7 +85,7 @@ def load_clib(libname, root_dir):
                   library file (dll, dylib, or so).
     Returns:
         clib: a ctypes object used to interface with the library
-    '''
+    """
     lib_fpath = find_lib_fpath(libname, root_dir)
     try:
         clib = C.cdll[lib_fpath]
