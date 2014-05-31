@@ -6,8 +6,9 @@ from utool import util_cplat
 
 def build_command():
     """ Build command run by utool.util_setup """
+    print('Running custom build')
     if util_cplat.WIN32:
-        util_cplat.shell('./mingw_build.bat')
+        util_cplat.shell('mingw_build.bat')
     else:
         util_cplat.shell('./unix_build.sh')
 
