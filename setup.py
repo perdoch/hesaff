@@ -24,7 +24,6 @@ INSTALL_REQUIRES = [
 ]
 
 if __name__ == '__main__':
-
     setup_dict = {
         'name':             'pyhesaff',
         'build_command':    build_command,
