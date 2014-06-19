@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 from __future__ import absolute_import, division, print_function
 import __sysreq__  # NOQA
 from plottool import draw_func2 as df2

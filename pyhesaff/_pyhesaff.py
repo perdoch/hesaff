@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 'the python hessian affine keypoint module'
 # TODO: it would be nice to be able to pass around an image
 # already in memory instead of having to pass around its path

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 from __future__ import absolute_import, division, print_function
 from utool.util_setup import setuptools_setup
 from utool import util_cplat
