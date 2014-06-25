@@ -28,8 +28,8 @@ project(hesaff)
 set(CMAKE_BUILD_TYPE "Release")
 
 # generate debug info for gdb
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ggdb")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb")
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ggdb")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb")
 
 #######################################
 message(STATUS "Checking OpenCV")
