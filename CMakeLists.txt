@@ -4,6 +4,10 @@ cmake_minimum_required(VERSION 2.8)
 # http://goo.gl/1Tg0Zj
 
 #######################################
+project(hesaff)
+set(CMAKE_BUILD_TYPE "Release")
+
+#######################################
 if (APPLE)
     message('Detected APPLE system')
     SET(CLANG2 On)
@@ -18,14 +22,10 @@ endif()
 
 if (APPLE)
     #MacPorts
-    message('USING MACPORTS')
+    message("USING MACPORTS")
     include_directories(/opt/local/include)
     link_directories(/opt/local/lib)
 endif()
-
-#######################################
-project(hesaff)
-set(CMAKE_BUILD_TYPE "Release")
 
 # generate debug info for gdb
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ggdb")
