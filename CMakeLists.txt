@@ -10,7 +10,7 @@ if (APPLE)
 endif()
 
 if (APPLE AND CLANG2)
-	message('Using clang2')
+	message("Using clang2")
     set(CMAKE_C_COMPILER "clang2")
     set(CMAKE_CXX_COMPILER "clang2++")
     #"${CMAKE_C_COMPILER}")
