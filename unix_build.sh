@@ -6,5 +6,6 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     cmake -DCMAKE_OSX_ARCHITECTURES=x86_64 -G "Unix Makefiles" .. && make
 else
     cmake -G "Unix Makefiles" .. && make
+fi
 
 cp libhesaff* ../pyhesaff
