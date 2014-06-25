@@ -9,7 +9,7 @@ set(CMAKE_BUILD_TYPE "Release")
 
 #######################################
 if (APPLE)
-    message('Detected APPLE system')
+    message("Detected APPLE system")
     SET(CLANG2 On)
 endif()
 
@@ -25,6 +25,17 @@ if (APPLE)
     message("USING MACPORTS")
     include_directories(/opt/local/include)
     link_directories(/opt/local/lib)
+endif()
+
+
+#######################################
+if(APPLE AND CLANG2)    
+    # Add flags to support clang2
+    message("APPLE + CLANG2: Adding stdlib flags for clang")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -stdlib=libstdc++")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lstdc++ -stdlib=libstdc++")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lstdc++ -stdlib=libstdc++")
 endif()
 
 # generate debug info for gdb
@@ -49,16 +60,6 @@ IF(OPENMP_FOUND)
 ELSE()
     message("Missed OpenMP! x_x")
 ENDIF()
-
-#######################################
-if(APPLE AND CLANG2)    
-    # Add flags to support clang2
-    message("APPLE + CLANG2: Adding stdlib flags for clang")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -stdlib=libstdc++")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++")
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lstdc++ -stdlib=libstdc++")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lstdc++ -stdlib=libstdc++")
-endif()
 
 #######################################
 set(SOURCE_FILES 
