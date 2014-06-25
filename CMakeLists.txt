@@ -4,17 +4,20 @@ cmake_minimum_required(VERSION 2.8)
 # http://goo.gl/1Tg0Zj
 
 #######################################
+if (APPLE)
+    message('Detected APPLE system')
+    SET(CLANG2 On)
+endif()
+
 if (APPLE AND CLANG2)
-    SET(CLANG2 Off)
-	message('Apple System')
+	message('Using clang2')
     set(CMAKE_C_COMPILER "clang2")
     set(CMAKE_CXX_COMPILER "${CMAKE_C_COMPILER}")
-else()
-    SET(CLANG2 On)
 endif()
 
 if (APPLE)
     #MacPorts
+    message('USING MACPORTS')
     include_directories(/opt/local/include)
     link_directories(/opt/local/lib)
 endif()
@@ -34,7 +37,7 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 
 #######################################
 message(STATUS "Checking OpenMP")
-find_package(OpenMP REQUIRED)
+find_package(OpenMP)
 IF(OPENMP_FOUND)
     message("Found OpenMP! ^_^")
     # add flags for OpenMP
