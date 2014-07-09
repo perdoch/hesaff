@@ -95,6 +95,7 @@ def load_clib(libname, root_dir):
             cfunc = getattr(clib, func_name)
             cfunc.restype = return_type
             cfunc.argtypes = arg_type_list
+        clib.__LIB_FPATH__ = lib_fpath
         return clib, def_cfunc, lib_fpath
     except OSError as ex:
         print('[C!] Caught OSError:\n%s' % ex)
