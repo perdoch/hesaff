@@ -42,7 +42,7 @@ def get_lib_dpath_list(root_dir):
 
 
 def find_lib_fpath(libname, root_dir, recurse_down=True, verbose=False):
-    'Search for the library'
+    """ Search for the library """
     lib_fname_list = get_lib_fname_list(libname)
     tried_fpaths = []
     while root_dir is not None:
@@ -95,7 +95,7 @@ def load_clib(libname, root_dir):
             cfunc = getattr(clib, func_name)
             cfunc.restype = return_type
             cfunc.argtypes = arg_type_list
-        return clib, def_cfunc
+        return clib, def_cfunc, lib_fpath
     except OSError as ex:
         print('[C!] Caught OSError:\n%s' % ex)
         errsuffix = 'Is there a missing dependency?'

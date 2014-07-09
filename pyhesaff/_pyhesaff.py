@@ -94,8 +94,8 @@ def load_hesaff_clib():
     #    root_dir = realpath(dirname(__file__))
     root_dir = realpath(dirname(__file__))
     libname = 'hesaff'
-    hesaff_clib, def_cfunc = ctypes_interface.load_clib(libname, root_dir)
-    # Expose extern C Functions
+    (clib, def_cfunc, lib_fpath) = ctypes_interface.load_clib(libname, root_dir)
+    # Expose extern C Functions to hesaff's clib
     def_cfunc(int_t, 'detect',                 [obj_t])
     def_cfunc(int_t, 'get_kpts_dim',           [])
     def_cfunc(None,  'exportArrays',           [obj_t, int_t, kpts_t, desc_t])
@@ -105,10 +105,10 @@ def load_hesaff_clib():
     def_cfunc(None,  'detectKeypointsList',    [int_t, str_list_t, kpts_array_t,
                                                 desc_array_t, int_array_t] +
                                                 hesaff_param_types)
-    return hesaff_clib
+    return clib, lib_fpath
 
 # Create a global interface to the hesaff lib
-HESAFF_CLIB = load_hesaff_clib()
+HESAFF_CLIB, __LIB_FPATH__ = load_hesaff_clib()
 KPTS_DIM = HESAFF_CLIB.get_kpts_dim()
 DESC_DIM = HESAFF_CLIB.get_desc_dim()
 
