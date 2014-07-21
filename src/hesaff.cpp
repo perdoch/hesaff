@@ -412,7 +412,7 @@ struct AffineHessianDetector : public HessianDetector, AffineShape, HessianKeypo
                     k.ori = ori;
                     #endif
                     this->populateDescriptor(k.desc, 0);
-                    //this->keys.push_back(k); 
+                    //this->keys.push_back(k);
                 }
                 else if (hesPar.adapt_rotation)
                 {
@@ -445,10 +445,10 @@ struct AffineHessianDetector : public HessianDetector, AffineShape, HessianKeypo
             computeOrientation<float>(xgradient, ygradient, orientations);
             inplace_map(ensure_0toTau<float>, orientations.begin<float>(), orientations.end<float>());
             // Compute magnitude
-            cv::Mat magnitudes; computeMagnitude<float>(xgradient, ygradient, magnitudes); 
+            cv::Mat magnitudes; computeMagnitude<float>(xgradient, ygradient, magnitudes);
             // Compute orientation histogram, splitting votes using linear interpolation
             const int nbins = 8;
-            Histogram<float> hist = computeHistogram<float>(orientations.begin<float>(), orientations.end<float>(), 
+            Histogram<float> hist = computeHistogram<float>(orientations.begin<float>(), orientations.end<float>(),
                                                             magnitudes.begin<float>(), magnitudes.end<float>(),
                                                             nbins);
             // wrap histogram (because orientations are circular)
@@ -461,7 +461,7 @@ struct AffineHessianDetector : public HessianDetector, AffineShape, HessianKeypo
             submax_ori -= M_GRAVITY_THETA; // adjust for 0 being downward
             return ensure_0toTau<float>(submax_ori);
         }
-        
+
 
         void populateDescriptor(uint8* desc, size_t offst)
         {
@@ -517,8 +517,7 @@ extern "C" {
 #define PYHESAFF extern HESAFF_EXPORT
 
     typedef void*(*allocer_t)(int, int*);
-    
-    
+
 
     PYHESAFF int detect(AffineHessianDetector* detector)
     {
@@ -731,7 +730,11 @@ extern "C" {
         delete detector;
     }
 
-    PYHESAFF void detectKeypointsList(int num_filenames, char** image_filename_list, float** keypoints_array, uint8** descriptors_array, int* length_array,
+    PYHESAFF void detectKeypointsList(int num_filenames,
+            char** image_filename_list,
+            float** keypoints_array,
+            uint8** descriptors_array,
+            int* length_array,
                                       // Pyramid Params
                                       int   numberOfScales,
                                       float threshold,
@@ -759,7 +762,13 @@ extern "C" {
         #pragma omp parallel for
         for(index=0;index < num_filenames;++index)
         {
-            detectKeypoints(image_filename_list[index], &(keypoints_array[index]), &(descriptors_array[index]), &(length_array[index]), numberOfScales, threshold, edgeEigenValueRatio, border, maxIterations, convergenceThreshold, smmWindowSize, mrSize, spatialBins, orientationBins, maxBinValue, initialSigma, patchSize, scale_min, scale_max, rotation_invariance);
+            detectKeypoints(image_filename_list[index],
+                    &(keypoints_array[index]), &(descriptors_array[index]),
+                    &(length_array[index]), numberOfScales, threshold,
+                    edgeEigenValueRatio, border, maxIterations,
+                    convergenceThreshold, smmWindowSize, mrSize, spatialBins,
+                    orientationBins, maxBinValue, initialSigma, patchSize,
+                    scale_min, scale_max, rotation_invariance);
         }
     }
 #ifdef __cplusplus

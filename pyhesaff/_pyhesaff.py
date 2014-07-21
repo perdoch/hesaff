@@ -228,6 +228,21 @@ def arrptr_to_np(c_arrptr, shape, arr_t, dtype):
     return np_arr
 
 
+def extract_2darr_list(size_list, ptr_list, arr_t, arr_dtype,
+                        arr_dim):
+    """
+    size_list - contains the size of each output 2d array
+    ptr_list  - an array of pointers to the head of each output 2d
+                array (which was allocated in C)
+    arr_t     - the C pointer type
+    arr_dtype - the numpy array type
+    arr_dim   - the number of columns in each output 2d array
+    """
+    arr_list = [arrptr_to_np(arr_ptr, (size, arr_dim), arr_t, arr_dtype)
+                    for (arr_ptr, size) in izip(ptr_list, size_list)]
+    return arr_list
+
+
 def detect_kpts_list(image_paths_list, **kwargs):
     """
     Input: A list of image paths
@@ -240,8 +255,8 @@ def detect_kpts_list(image_paths_list, **kwargs):
     c_strs = _cast_strlist_to_C(map(realpath, image_paths_list))
 
     # Allocate empty arrays for each image
-    kpts_array = np.empty(nImgs, kpts_t)  # array of float arrays
-    desc_array = np.empty(nImgs, desc_t)  # array of byte arrays
+    kpts_ptr_array = np.empty(nImgs, kpts_t)  # array of float arrays
+    desc_ptr_array = np.empty(nImgs, desc_t)  # array of byte arrays
     nDetect_array = np.empty(nImgs, int_t)  # array of detections per image
 
     # Get algorithm parameters
@@ -251,18 +266,20 @@ def detect_kpts_list(image_paths_list, **kwargs):
 
     # Detect keypoints in parallel
     HESAFF_CLIB.detectKeypointsList(nImgs, c_strs,
-                                    kpts_array, desc_array,
+                                    kpts_ptr_array, desc_ptr_array,
                                     nDetect_array, *hesaff_args)
 
     # Cast keypoint array to list of numpy keypoints
-    kpts_array2 = [arrptr_to_np(kpts_ptr, (len_, KPTS_DIM), kpts_t, kpts_dtype)
-                   for (kpts_ptr, len_) in izip(kpts_array, nDetect_array)]
-
+    kpts_list = extract_2darr_list(nDetect_array, kpts_ptr_array, kpts_t, kpts_dtype, KPTS_DIM)
     # Cast descriptor array to list of numpy descriptors
-    desc_array2 = [arrptr_to_np(desc_ptr, (len_, DESC_DIM), desc_t, desc_dtype)
-                   for (desc_ptr, len_) in izip(desc_array, nDetect_array)]
+    desc_list = extract_2darr_list(nDetect_array, desc_ptr_array, desc_t, desc_dtype, DESC_DIM)
 
-    return kpts_array2, desc_array2
+    #kpts_list = [arrptr_to_np(kpts_ptr, (len_, KPTS_DIM), kpts_t, kpts_dtype)
+    #             for (kpts_ptr, len_) in izip(kpts_ptr_array, nDetect_array)]
+    #desc_list = [arrptr_to_np(desc_ptr, (len_, DESC_DIM), desc_t, desc_dtype)
+    #             for (desc_ptr, len_) in izip(desc_ptr_array, nDetect_array)]
+
+    return kpts_list, desc_list
 
 
 def adapt_rotation(img_fpath, kpts):
