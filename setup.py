@@ -2,6 +2,7 @@
 from __future__ import absolute_import, division, print_function
 from utool.util_setup import setuptools_setup
 from utool import util_cplat
+from setuptools import setup
 
 
 def build_command():
@@ -36,4 +37,5 @@ if __name__ == '__main__':
         'package_data':     {'build': util_cplat.get_dynamic_lib_globstrs()},
         'setup_fpath':      __file__,
     }
-    setuptools_setup(**setup_dict)
+    kwargs = setuptools_setup(**setup_dict)
+    setup(**kwargs)
