@@ -7,7 +7,6 @@ import __builtin__
 # Standard
 import sys
 import six
-#from itertools import izip
 from six.moves import zip
 from os.path import realpath, dirname
 try:
