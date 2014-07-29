@@ -6,6 +6,9 @@ from __future__ import absolute_import, print_function, division
 import __builtin__
 # Standard
 import sys
+import six
+#from itertools import izip
+from six.moves import zip
 from os.path import realpath, dirname
 try:
     from . import ctypes_interface
@@ -13,7 +16,6 @@ except ValueError:
     import ctypes_interface
 import ctypes as C
 from collections import OrderedDict
-from itertools import izip
 # Scientific
 import numpy as np
 
@@ -136,7 +138,7 @@ def _allocate_kpts_and_desc(nKpts):
 
 def _make_hesaff_cpp_params(**kwargs):
     hesaff_params = hesaff_param_dict.copy()
-    for key, val in kwargs.iteritems():
+    for key, val in six.iteritems(kwargs):
         if key in hesaff_params:
             hesaff_params[key] = val
         else:
@@ -239,7 +241,7 @@ def extract_2darr_list(size_list, ptr_list, arr_t, arr_dtype,
     arr_dim   - the number of columns in each output 2d array
     """
     arr_list = [arrptr_to_np(arr_ptr, (size, arr_dim), arr_t, arr_dtype)
-                    for (arr_ptr, size) in izip(ptr_list, size_list)]
+                    for (arr_ptr, size) in zip(ptr_list, size_list)]
     return arr_list
 
 
@@ -275,9 +277,9 @@ def detect_kpts_list(image_paths_list, **kwargs):
     desc_list = extract_2darr_list(nDetect_array, desc_ptr_array, desc_t, desc_dtype, DESC_DIM)
 
     #kpts_list = [arrptr_to_np(kpts_ptr, (len_, KPTS_DIM), kpts_t, kpts_dtype)
-    #             for (kpts_ptr, len_) in izip(kpts_ptr_array, nDetect_array)]
+    #             for (kpts_ptr, len_) in zip(kpts_ptr_array, nDetect_array)]
     #desc_list = [arrptr_to_np(desc_ptr, (len_, DESC_DIM), desc_t, desc_dtype)
-    #             for (desc_ptr, len_) in izip(desc_ptr_array, nDetect_array)]
+    #             for (desc_ptr, len_) in zip(desc_ptr_array, nDetect_array)]
 
     return kpts_list, desc_list
 
