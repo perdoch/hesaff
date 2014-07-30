@@ -17,11 +17,11 @@ def get_lib_fname_list(libname):
     input <libname>: library name (e.g. 'hesaff', not 'libhesaff')
     returns <libnames>: list of plausible library file names
     """
-    if sys.platform == 'win32':
+    if sys.platform.startswith('win32'):
         libnames = ['lib' + libname + '.dll', libname + '.dll']
-    elif sys.platform == 'darwin':
+    elif sys.platform.startswith('darwin'):
         libnames = ['lib' + libname + '.dylib']
-    elif sys.platform == 'linux2':
+    elif sys.platform.startswith('linux'):
         libnames = ['lib' + libname + '.so']
     else:
         raise Exception('Unknown operating system: %s' % sys.platform)

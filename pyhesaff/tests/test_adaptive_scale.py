@@ -2,7 +2,7 @@
 from __future__ import absolute_import, division, print_function
 # Standard
 import multiprocessing
-from itertools import izip
+from six.moves import zip
 # Scientific
 import numpy as np
 # TPL
@@ -95,9 +95,9 @@ def test_adaptive_scale():
     plot_marks(peak_list[fx].T, 'rx', 'interpolated peaks')
 
     parabolas_list = []
-    for x_data, y_data in izip(x_data_list, y_data_list):
+    for x_data, y_data in zip(x_data_list, y_data_list):
         parabola_points = []
-        for (x1, x2, x3), (y1, y2, y3) in izip(x_data.T, y_data.T):
+        for (x1, x2, x3), (y1, y2, y3) in zip(x_data.T, y_data.T):
             coeff = np.polyfit((x1, x2, x3), (y1, y2, y3), 2)
             xpoints = np.linspace(x1, x3, 50)
             ypoints = np.polyval(coeff, xpoints)

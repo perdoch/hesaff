@@ -7,7 +7,7 @@ sys.path.append(os.getcwd())
 import pyhesaff
 import matplotlib as mpl
 import numpy as np
-from itertools import izip
+from six.moves import zip
 from matplotlib import pyplot as plt
 import time
 
@@ -38,7 +38,7 @@ if __name__ == '__main__':
     print('Parallel ran in %r seconds' % partime)
 
     itertime = 0
-    for (img_fpath, kpts, desc) in izip(img_fpaths,
+    for (img_fpath, kpts, desc) in zip(img_fpaths,
                                         kpts_array,
                                         desc_array):
         start = time.time()
@@ -51,9 +51,9 @@ if __name__ == '__main__':
 
     if '--show' in sys.argv:
         # Do not plot by default
-        for count, (img_fpath, kpts, desc) in enumerate(izip(img_fpaths,
-                                                             kpts_array,
-                                                             desc_array)):
+        for count, (img_fpath, kpts, desc) in enumerate(zip(img_fpaths,
+                                                            kpts_array,
+                                                            desc_array)):
             ax = fig.add_subplot(2, 2, count + 1)
             img = mpl.image.imread(img_fpath)
             plt.imshow(img)

@@ -3,11 +3,10 @@
 # TODO: it would be nice to be able to pass around an image
 # already in memory instead of having to pass around its path
 from __future__ import absolute_import, print_function, division
-import __builtin__
 # Standard
 import sys
 import six
-from six.moves import zip
+from six.moves import zip, builtins
 from os.path import realpath, dirname
 try:
     from . import ctypes_interface
@@ -19,7 +18,7 @@ from collections import OrderedDict
 import numpy as np
 
 try:
-    getattr(__builtin__, 'profile')
+    getattr(builtins, 'profile')
 except AttributeError:
     def profile(func):
         return func

@@ -4,7 +4,7 @@ from __future__ import absolute_import, division, print_function
 # Test Functions
 #----------------
 import pyhestest
-from itertools import izip
+from six.moves import zip, range
 import utool
 from plottool import draw_func2 as df2
 from plottool.viz_keypoints import show_keypoints
@@ -276,14 +276,14 @@ def in_depth_ellipse(kp):
     print('Approximate uniform points an inscribed polygon bondary')
 
     #def next_xy(x, y, d):
-        ## http://gamedev.stackexchange.com/questions/1692/what-is-a-simple-algorithm-for-calculating-evenly-distributed-points-on-an-ellip
-        #num = (b ** 2) * (x ** 2)
-        #den = ((a ** 2) * ((a ** 2) - (x ** 2)))
-        #dxdenom = np.sqrt(1 + (num / den))
-        #deltax = d / dxdenom
-        #x_ = x + deltax
-        #y_ = b * np.sqrt(1 - (x_ ** 2) / (a ** 2))
-        #return x_, y_
+    #    # http://gamedev.stackexchange.com/questions/1692/what-is-a-simple-algorithm-for-calculating-evenly-distributed-points-on-an-ellip
+    #    num = (b ** 2) * (x ** 2)
+    #    den = ((a ** 2) * ((a ** 2) - (x ** 2)))
+    #    dxdenom = np.sqrt(1 + (num / den))
+    #    deltax = d / dxdenom
+    #    x_ = x + deltax
+    #    y_ = b * np.sqrt(1 - (x_ ** 2) / (a ** 2))
+    #    return x_, y_
 
     def xy_fn(t):
         return np.array((a * np.cos(t), b * np.sin(t))).T
@@ -291,8 +291,8 @@ def in_depth_ellipse(kp):
     #nSamples = 16
     #(ix, iy, iv11, iv21, iv22), iv12 = kp, 0
     #invV = np.array([[iv11, iv12, ix],
-                     #[iv21, iv22, iy],
-                     #[   0,    0,  1]])
+    #                 [iv21, iv22, iy],
+    #                 [   0,    0,  1]])
     #theta_list = np.linspace(0, np.tau, nSamples)
     #cicrle_pts = np.array([(np.cos(t_), np.sin(t_), 1) for t_ in theta_list])
     uneven_points = invV.dot(cicrle_pts.T).T[:, 0:2]
@@ -314,7 +314,7 @@ def in_depth_ellipse(kp):
     offset_list = []
     dist_walked = 0
     total_dist = step_size
-    for count in xrange(len(dists)):
+    for count in range(len(dists)):
         segment_len = dists[count]
         # Find where your starting location is
         offset_list.append(total_dist - dist_walked)
@@ -331,7 +331,7 @@ def in_depth_ellipse(kp):
     # store the percent location at each line segment where
     # the cut will be made
     cut_list = []
-    for num, dist, offset in izip(num_steps_list, dists, offset_list):
+    for num, dist, offset in zip(num_steps_list, dists, offset_list):
         if num == 0:
             cut_list.append([])
             continue
@@ -389,11 +389,11 @@ def in_depth_ellipse(kp):
     # Initial point
     #x, y = xy_fn(.001)
     #uniform_points = []
-    #for count in xrange(nSamples):
-        #if np.isnan(x_) or np.isnan(y_):
-            #print('nan on count=%r' % count)
-            #break
-        #uniform_points.append((x_, y_))
+    #for count in range(nSamples):
+    #    if np.isnan(x_) or np.isnan(y_):
+    #        print('nan on count=%r' % count)
+    #        break
+    #    uniform_points.append((x_, y_))
     # The angle between the major axis and our x axis is:
     #-----------------------
     # DRAWING
@@ -402,7 +402,7 @@ def in_depth_ellipse(kp):
     # Draw the keypoint using the tried and true df2
     # Other things should subsiquently align
     #df2.draw_kpts2(np.array([kp]), ell_linewidth=4,
-                   #ell_color=df2.DEEP_PINK, ell_alpha=1, arrow=True, rect=True)
+    #               ell_color=df2.DEEP_PINK, ell_alpha=1, arrow=True, rect=True)
 
     # Plot ellipse points
     _plotpts(ellipse_pts1, 0, df2.PURPLE, label='invV.dot(cicrle_pts.T).T', marker='x-')

@@ -7,6 +7,7 @@ from plottool import mpl_sift  # NOQA
 import vtool.keypoint as ktool  # NOQA
 import numpy as np
 import matplotlib as mpl  # NOQA
+from six.moves import range
 from itertools import product as iprod
 import vtool  # NOQA
 import utool
@@ -117,7 +118,7 @@ MAX_Y = 2
 kp_list = []
 
 
-for row, col in iprod(xrange(nRows), xrange(nCols)):
+for row, col in iprod(range(nRows), range(nCols)):
     #print((row, col))
     alpha = col / (nCols)
     beta  = row / (nRows)
