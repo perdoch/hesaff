@@ -36,7 +36,10 @@ desc_dtype = np.uint8
 # scalar ctypes
 obj_t     = C.c_void_p
 str_t     = C.c_char_p
+#if six.PY2:
 int_t     = C.c_int
+#if six.PY3:
+#    int_t     = C.c_long
 bool_t    = C.c_bool
 float_t   = C.c_float
 byte_t    = C.c_char
@@ -151,7 +154,11 @@ def _new_hesaff(img_fpath, **kwargs):
         print('[hes] New Hesaff')
         print('[hes] hesaff_params=%r' % (hesaff_params,))
     hesaff_args = hesaff_params.values()  # pass all parameters to HESAFF_CLIB
-    hesaff_ptr = HESAFF_CLIB.new_hesaff_from_params(realpath(img_fpath),
+    img_realpath = realpath(img_fpath)
+    if six.PY3:
+        # convert out of unicode
+        img_realpath = img_realpath.encode('ascii')
+    hesaff_ptr = HESAFF_CLIB.new_hesaff_from_params(img_realpath,
                                                     *hesaff_args)
     return hesaff_ptr
 
@@ -252,7 +259,12 @@ def detect_kpts_list(image_paths_list, **kwargs):
     nImgs = len(image_paths_list)
 
     # Cast string list to C
-    c_strs = _cast_strlist_to_C(map(realpath, image_paths_list))
+    if six.PY2:
+        realpaths_list = list(map(realpath, image_paths_list))
+    if six.PY3:
+        realpaths_list = [realpath(path).encode('ascii') for path in image_paths_list]
+
+    c_strs = _cast_strlist_to_C(realpaths_list)
 
     # Allocate empty arrays for each image
     kpts_ptr_array = np.empty(nImgs, kpts_t)  # array of float arrays
