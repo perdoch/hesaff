@@ -28,8 +28,6 @@ if __name__ == '__main__':
     grace_fpath = mpl.cbook.get_sample_data('grace_hopper.jpg', False)
     ada_fpath   = mpl.cbook.get_sample_data('ada.png', False)
 
-    fig = plt.figure()
-
     img_fpaths = [lena_fpath, logo_fpath, grace_fpath, ada_fpath] * 2
 
     start = time.time()
@@ -80,6 +78,8 @@ if __name__ == '__main__':
 
     if '--show' in sys.argv:
         # Do not plot by default
+        fig = plt.figure()
+
         for count, (img_fpath, kpts, desc) in enumerate(zip(img_fpaths,
                                                             kpts_array,
                                                             desc_array)):
