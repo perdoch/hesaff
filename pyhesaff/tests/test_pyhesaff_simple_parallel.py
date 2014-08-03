@@ -43,8 +43,37 @@ if __name__ == '__main__':
                                         desc_array):
         start = time.time()
         kpts_, desc_ = pyhesaff.detect_kpts(img_fpath)
-        assert np.all(kpts_ == kpts), 'parallel computation inconsistent'
-        assert np.all(desc_ == desc), 'parallel computation inconsistent'
+        try:
+            assert np.all(kpts_ == kpts), 'parallel computation inconsistent'
+            assert np.all(desc_ == desc), 'parallel computation inconsistent'
+        except Exception as ex:
+            print('kpts.shape = %r' % (kpts.shape,))
+            print('kpts_.shape = %r' % (kpts_.shape,))
+            print('desc.shape = %r' % (desc.shape,))
+            print('desc_.shape = %r' % (desc_.shape,))
+            print(np.dtype(float).itemsize)
+            print(np.dtype(int).itemsize)
+            print(np.dtype(np.float32).itemsize)
+            print(np.dtype(np.float64).itemsize)
+            print('==========')
+            print('kpts_')
+            print(kpts_[0:2])
+            print('==========')
+            print('kpts')
+            print(kpts[0:2])
+            print('---')
+            print('==========')
+            print('desc_')
+            print(desc_[0:2])
+            print('==========')
+            print('desc')
+            print(desc[0:2])
+            print('---')
+            #print(kpts_)
+            #print(kpts)
+            import utool
+            utool.printex(ex)
+            raise
         itertime += time.time() - start
     print('Iterative ran in %r seconds' % itertime)
     print('Keypoints seem consistent')

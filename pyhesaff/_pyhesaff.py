@@ -173,6 +173,151 @@ def extract_desc(img_fpath, kpts, **kwargs):
     return desc
 
 
+def _cast_strlist_to_C(py_strlist):
+    """
+    Converts a python list of strings into a c array of strings
+    adapted from "http://stackoverflow.com/questions/3494598/passing-a-list-of
+    -strings-to-from-python-ctypes-to-c-function-expecting-char"
+    """
+    c_strarr = (str_t * len(py_strlist))()
+    c_strarr[:] = py_strlist
+    return c_strarr
+
+
+def arrptr_to_np(c_arrptr, shape, arr_t, dtype):
+    """
+    Casts an array pointer from C to numpy
+    Input:
+        c_arrpt - an array pointer returned from C
+        shape   - shape of that array pointer
+        arr_t   - the ctypes datatype of c_arrptr
+    """
+    try:
+        _byte_t = byte_t  # localize scope
+        itemsize_ = dtype().itemsize
+        ptr_t = _byte_t * itemsize_
+        if six.PY2:
+            arr_t_size = C.POINTER(ptr_t)  # size of each item
+            typed_c_arrptr = c_arrptr.astype(int)
+            c_arr = C.cast(typed_c_arrptr, arr_t_size)   # cast to ctypes
+            #raise Exception('fuuu. Why does 2.7 work? Why does 3.4 not!?!!!')
+        else:
+            #ptr_t = _byte_t * itemsize_
+            #ptr_t2 = C.c_char * (itemsize_ * 2)
+            arr_t_size = C.POINTER(ptr_t)  # size of each item
+            #arr_t_size = C.POINTER(C.c_int64)  # size of each item
+            #typed_c_arrptr = c_arrptr.astype(C.c_ssize_t)
+            #typed_c_arrptr = c_arrptr.astype(int)
+            #typed_c_arrptr = c_arrptr.astype(C.c_uint32)
+            #typed_c_arrptr = c_arrptr.astype(ptr_t)
+            #typed_c_arrptr = c_arrptr.astype(ptr_t2)
+            #typed_c_arrptr = c_arrptr.astype(C.c_uint8)
+            #typed_c_arrptr = c_arrptr.astype(C.c_void_p)
+            #typed_c_arrptr = c_arrptr.astype(C.c_int)
+            #typed_c_arrptr = c_arrptr.astype(C.c_char)  # WORKS BUT WRONG
+            #typed_c_arrptr = c_arrptr.astype(C.c_char)  # WORKS BUT WRONG
+            #typed_c_arrptr = c_arrptr.astype(bytes)  # WORKS BUT WRONG
+            #typed_c_arrptr = c_arrptr.astype(int)
+            #typed_c_arrptr = c_arrptr
+            #typed_c_arrptr = c_arrptr.astype(np.int64)
+            typed_c_arrptr = c_arrptr.astype(int)
+            c_arr = C.cast(typed_c_arrptr, arr_t_size)   # cast to ctypes
+        np_arr = np.ctypeslib.as_array(c_arr, shape)       # cast to numpy
+        np_arr.dtype = dtype                               # fix numpy dtype
+    except Exception as ex:
+        import utool
+        varnames = sorted(list(locals().keys()))
+        vartypes = [(type, name) for name in varnames]
+        spaces    = [None for name in varnames]
+        key_list = list(utool.roundrobin(varnames, vartypes, spaces))
+        print('itemsize(float) = %r' % np.dtype(float).itemsize)
+        print('itemsize(c_char) = %r' % np.dtype(C.c_char).itemsize)
+        print('itemsize(c_wchar) = %r' % np.dtype(C.c_wchar).itemsize)
+        print('itemsize(c_char_p) = %r' % np.dtype(C.c_char_p).itemsize)
+        print('itemsize(c_wchar_p) = %r' % np.dtype(C.c_wchar_p).itemsize)
+        print('itemsize(c_int) = %r' % np.dtype(C.c_int).itemsize)
+        print('itemsize(c_int32) = %r' % np.dtype(C.c_int32).itemsize)
+        print('itemsize(c_int64) = %r' % np.dtype(C.c_int64).itemsize)
+        print('itemsize(int) = %r' % np.dtype(int).itemsize)
+        print('itemsize(float32) = %r' % np.dtype(np.float32).itemsize)
+        print('itemsize(float64) = %r' % np.dtype(np.float64).itemsize)
+        utool.printex(ex, key_list=key_list)
+        raise
+    return np_arr
+
+
+def extract_2darr_list(size_list, ptr_list, arr_t, arr_dtype,
+                        arr_dim):
+    """
+    size_list - contains the size of each output 2d array
+    ptr_list  - an array of pointers to the head of each output 2d
+                array (which was allocated in C)
+    arr_t     - the C pointer type
+    arr_dtype - the numpy array type
+    arr_dim   - the number of columns in each output 2d array
+    """
+    iter_ = ((arr_ptr, (size, arr_dim))
+             for (arr_ptr, size) in zip(ptr_list, size_list))
+    arr_list = [arrptr_to_np(arr_ptr, shape, arr_t, arr_dtype)
+                for arr_ptr, shape in iter_]
+    return arr_list
+
+
+def detect_kpts_list(image_paths_list, **kwargs):
+    """
+    Input: A list of image paths
+    Output: A tuple of lists of keypoints and descriptors
+    """
+    # Get Num Images
+    nImgs = len(image_paths_list)
+
+    # Cast string list to C
+    if six.PY2:
+        realpaths_list = list(map(realpath, image_paths_list))
+    if six.PY3:
+        realpaths_list = [realpath(path).encode('ascii') for path in image_paths_list]
+
+    c_strs = _cast_strlist_to_C(realpaths_list)
+
+    # Allocate empty arrays for each image
+
+    #byte_t    = C.c_char
+    #int_t     = C.c_int
+    ## array ctypes
+    #FLAGS_RW = 'aligned, c_contiguous, writeable'
+    #kpts_t       = np.ctypeslib.ndpointer(dtype=kpts_dtype, ndim=2, flags=FLAGS_RW)
+    #desc_t       = np.ctypeslib.ndpointer(dtype=desc_dtype, ndim=2, flags=FLAGS_RW)
+    #kpts_array_t = np.ctypeslib.ndpointer(dtype=kpts_t, ndim=1, flags=FLAGS_RW)
+    #desc_array_t = np.ctypeslib.ndpointer(dtype=desc_t, ndim=1, flags=FLAGS_RW)
+    #int_array_t  = np.ctypeslib.ndpointer(dtype=int_t, ndim=1, flags=FLAGS_RW)
+
+    kpts_ptr_array = np.empty(nImgs, dtype=kpts_t)  # array of float arrays
+    desc_ptr_array = np.empty(nImgs, dtype=desc_t)  # array of byte arrays
+    nDetect_array = np.empty(nImgs, dtype=int_t)  # array of detections per image
+
+    # Get algorithm parameters
+    hesaff_params = hesaff_param_dict.copy()
+    hesaff_params.update(kwargs)
+    hesaff_args = hesaff_params.values()  # pass all parameters to HESAFF_CLIB
+
+    # Detect keypoints in parallel
+    HESAFF_CLIB.detectKeypointsList(nImgs, c_strs,
+                                    kpts_ptr_array, desc_ptr_array,
+                                    nDetect_array, *hesaff_args)
+
+    # Cast keypoint array to list of numpy keypoints
+    kpts_list = extract_2darr_list(nDetect_array, kpts_ptr_array, kpts_t, kpts_dtype, KPTS_DIM)
+    # Cast descriptor array to list of numpy descriptors
+    desc_list = extract_2darr_list(nDetect_array, desc_ptr_array, desc_t, desc_dtype, DESC_DIM)
+
+    #kpts_list = [arrptr_to_np(kpts_ptr, (len_, KPTS_DIM), kpts_t, kpts_dtype)
+    #             for (kpts_ptr, len_) in zip(kpts_ptr_array, nDetect_array)]
+    #desc_list = [arrptr_to_np(desc_ptr, (len_, DESC_DIM), desc_t, desc_dtype)
+    #             for (desc_ptr, len_) in zip(desc_ptr_array, nDetect_array)]
+
+    return kpts_list, desc_list
+
+
 @profile
 def detect_kpts(img_fpath,
                 use_adaptive_scale=False, nogravity_hack=False,
@@ -207,91 +352,6 @@ def detect_kpts(img_fpath,
             print('[hes] adapt_rotation')
         kpts, desc = adapt_rotation(img_fpath, kpts)
     return kpts, desc
-
-
-def _cast_strlist_to_C(py_strlist):
-    """
-    Converts a python list of strings into a c array of strings
-    adapted from "http://stackoverflow.com/questions/3494598/passing-a-list-of
-    -strings-to-from-python-ctypes-to-c-function-expecting-char"
-    """
-    c_strarr = (str_t * len(py_strlist))()
-    c_strarr[:] = py_strlist
-    return c_strarr
-
-
-def arrptr_to_np(c_arrptr, shape, arr_t, dtype):
-    """
-    Casts an array pointer from C to numpy
-    Input:
-        c_arrpt - an array pointer returned from C
-        shape   - shape of that array pointer
-        arr_t   - the ctypes datatype of c_arrptr
-    """
-    arr_t_size = C.POINTER(byte_t * dtype().itemsize)  # size of each item
-    c_arr = C.cast(c_arrptr.astype(int), arr_t_size)   # cast to ctypes
-    np_arr = np.ctypeslib.as_array(c_arr, shape)       # cast to numpy
-    np_arr.dtype = dtype                               # fix numpy dtype
-    return np_arr
-
-
-def extract_2darr_list(size_list, ptr_list, arr_t, arr_dtype,
-                        arr_dim):
-    """
-    size_list - contains the size of each output 2d array
-    ptr_list  - an array of pointers to the head of each output 2d
-                array (which was allocated in C)
-    arr_t     - the C pointer type
-    arr_dtype - the numpy array type
-    arr_dim   - the number of columns in each output 2d array
-    """
-    arr_list = [arrptr_to_np(arr_ptr, (size, arr_dim), arr_t, arr_dtype)
-                    for (arr_ptr, size) in zip(ptr_list, size_list)]
-    return arr_list
-
-
-def detect_kpts_list(image_paths_list, **kwargs):
-    """
-    Input: A list of image paths
-    Output: A tuple of lists of keypoints and descriptors
-    """
-    # Get Num Images
-    nImgs = len(image_paths_list)
-
-    # Cast string list to C
-    if six.PY2:
-        realpaths_list = list(map(realpath, image_paths_list))
-    if six.PY3:
-        realpaths_list = [realpath(path).encode('ascii') for path in image_paths_list]
-
-    c_strs = _cast_strlist_to_C(realpaths_list)
-
-    # Allocate empty arrays for each image
-    kpts_ptr_array = np.empty(nImgs, kpts_t)  # array of float arrays
-    desc_ptr_array = np.empty(nImgs, desc_t)  # array of byte arrays
-    nDetect_array = np.empty(nImgs, int_t)  # array of detections per image
-
-    # Get algorithm parameters
-    hesaff_params = hesaff_param_dict.copy()
-    hesaff_params.update(kwargs)
-    hesaff_args = hesaff_params.values()  # pass all parameters to HESAFF_CLIB
-
-    # Detect keypoints in parallel
-    HESAFF_CLIB.detectKeypointsList(nImgs, c_strs,
-                                    kpts_ptr_array, desc_ptr_array,
-                                    nDetect_array, *hesaff_args)
-
-    # Cast keypoint array to list of numpy keypoints
-    kpts_list = extract_2darr_list(nDetect_array, kpts_ptr_array, kpts_t, kpts_dtype, KPTS_DIM)
-    # Cast descriptor array to list of numpy descriptors
-    desc_list = extract_2darr_list(nDetect_array, desc_ptr_array, desc_t, desc_dtype, DESC_DIM)
-
-    #kpts_list = [arrptr_to_np(kpts_ptr, (len_, KPTS_DIM), kpts_t, kpts_dtype)
-    #             for (kpts_ptr, len_) in zip(kpts_ptr_array, nDetect_array)]
-    #desc_list = [arrptr_to_np(desc_ptr, (len_, DESC_DIM), desc_t, desc_dtype)
-    #             for (desc_ptr, len_) in zip(desc_ptr_array, nDetect_array)]
-
-    return kpts_list, desc_list
 
 
 def adapt_rotation(img_fpath, kpts):

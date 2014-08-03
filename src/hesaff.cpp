@@ -697,7 +697,10 @@ extern "C" {
         detector->write_features(img_fpath);
     }
 
-    void detectKeypoints(char* image_filename, float** keypoints, uint8** descriptors, int* length,
+    void detectKeypoints(char* image_filename,
+                float** keypoints,
+                uint8** descriptors,
+                int* length,
                 // Pyramid Params
                 int   numberOfScales,
                 float threshold,
@@ -721,7 +724,11 @@ extern "C" {
                 float scale_max,
                 bool rotation_invariance)
     {
-        AffineHessianDetector* detector = new_hesaff_from_params(image_filename, numberOfScales, threshold, edgeEigenValueRatio, border, maxIterations, convergenceThreshold, smmWindowSize, mrSize, spatialBins, orientationBins, maxBinValue, initialSigma, patchSize, scale_min, scale_max, rotation_invariance);
+        AffineHessianDetector* detector = new_hesaff_from_params(image_filename,
+                numberOfScales, threshold, edgeEigenValueRatio, border,
+                maxIterations, convergenceThreshold, smmWindowSize, mrSize,
+                spatialBins, orientationBins, maxBinValue, initialSigma,
+                patchSize, scale_min, scale_max, rotation_invariance);
         *length = detector->detect();
         *keypoints = new float[(*length)*KPTS_DIM];
         *descriptors = new uint8[(*length)*DESC_DIM];
@@ -731,10 +738,10 @@ extern "C" {
     }
 
     PYHESAFF void detectKeypointsList(int num_filenames,
-            char** image_filename_list,
-            float** keypoints_array,
-            uint8** descriptors_array,
-            int* length_array,
+                                      char** image_filename_list,
+                                      float** keypoints_array,
+                                      uint8** descriptors_array,
+                                      int* length_array,
                                       // Pyramid Params
                                       int   numberOfScales,
                                       float threshold,
@@ -763,8 +770,10 @@ extern "C" {
         for(index=0;index < num_filenames;++index)
         {
             detectKeypoints(image_filename_list[index],
-                    &(keypoints_array[index]), &(descriptors_array[index]),
-                    &(length_array[index]), numberOfScales, threshold,
+                    &(keypoints_array[index]),
+                    &(descriptors_array[index]),
+                    &(length_array[index]),
+                    numberOfScales, threshold,
                     edgeEigenValueRatio, border, maxIterations,
                     convergenceThreshold, smmWindowSize, mrSize, spatialBins,
                     orientationBins, maxBinValue, initialSigma, patchSize,
