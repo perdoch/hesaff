@@ -32,7 +32,7 @@ if __name__ == '__main__':
         'url':              'https://github.com/Erotemic/hesaff',
         'author':           'Krystian Mikolajczyk, Michal Perdoch, Jon Crall, Avi Weinstock',
         'author_email':     'erotemic@gmail.com',
-        'packages':         ['pyhesaff', 'build'],
+        'packages':         ['pyhesaff', 'build', 'pyhesaff.tests'],
         'install_requires': INSTALL_REQUIRES,
         'package_data':     {'build': util_cplat.get_dynamic_lib_globstrs()},
         'setup_fpath':      __file__,
