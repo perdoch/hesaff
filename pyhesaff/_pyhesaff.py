@@ -200,7 +200,7 @@ def arrptr_to_np(c_arrptr, shape, arr_t, dtype):
             arr_t_size = C.POINTER(ptr_t)  # size of each item
             typed_c_arrptr = c_arrptr.astype(int)
             c_arr = C.cast(typed_c_arrptr, arr_t_size)   # cast to ctypes
-            #raise Exception('fuuu. Why does 2.7 work? Why does 3.4 not!?!!!')
+            raise Exception('fuuu. Why does 2.7 work? Why does 3.4 not!?!!!')
         else:
             #ptr_t = _byte_t * itemsize_
             #ptr_t2 = C.c_char * (itemsize_ * 2)
@@ -279,18 +279,7 @@ def detect_kpts_list(image_paths_list, **kwargs):
 
     c_strs = _cast_strlist_to_C(realpaths_list)
 
-    # Allocate empty arrays for each image
-
-    #byte_t    = C.c_char
-    #int_t     = C.c_int
-    ## array ctypes
-    #FLAGS_RW = 'aligned, c_contiguous, writeable'
-    #kpts_t       = np.ctypeslib.ndpointer(dtype=kpts_dtype, ndim=2, flags=FLAGS_RW)
-    #desc_t       = np.ctypeslib.ndpointer(dtype=desc_dtype, ndim=2, flags=FLAGS_RW)
-    #kpts_array_t = np.ctypeslib.ndpointer(dtype=kpts_t, ndim=1, flags=FLAGS_RW)
-    #desc_array_t = np.ctypeslib.ndpointer(dtype=desc_t, ndim=1, flags=FLAGS_RW)
-    #int_array_t  = np.ctypeslib.ndpointer(dtype=int_t, ndim=1, flags=FLAGS_RW)
-
+    # Allocate empty array pointers for each image
     kpts_ptr_array = np.empty(nImgs, dtype=kpts_t)  # array of float arrays
     desc_ptr_array = np.empty(nImgs, dtype=desc_t)  # array of byte arrays
     nDetect_array = np.empty(nImgs, dtype=int_t)  # array of detections per image
