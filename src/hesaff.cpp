@@ -779,7 +779,9 @@ extern "C" {
                     orientationBins, maxBinValue, initialSigma, patchSize,
                     scale_min, scale_max, rotation_invariance);
         }
-        #define FORCE_CONSECUTIVE_ARRAY
+
+        // Try and force keypoint and descriptors to be in C contiguous arrays
+        //#define FORCE_CONSECUTIVE_ARRAY
         #ifdef FORCE_CONSECUTIVE_ARRAY
         // int total_length = std::accumulate(length_array, length_array + num_filenames, 0, std::plus<int>());
         int total_length = 1; for(index=0;index < num_filenames;++index) {total_length += length_array[index];};
