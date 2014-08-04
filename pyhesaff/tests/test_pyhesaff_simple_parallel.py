@@ -1,9 +1,9 @@
 #!/usr/bin/env python2.7
 from __future__ import absolute_import, division, print_function
-import os
+#import os
 import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-sys.path.append(os.getcwd())
+#sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+#sys.path.append(os.getcwd())
 import pyhesaff
 import matplotlib as mpl
 import numpy as np
@@ -41,18 +41,16 @@ if __name__ == '__main__':
                                         desc_array):
         start = time.time()
         kpts_, desc_ = pyhesaff.detect_kpts(img_fpath)
+        print('kpts.shape, kpts_.shape = %11r, %11r' % (kpts.shape, kpts_.shape))
+        print('desc.shape, desc_.shape = %11r, %11r' % (desc.shape, desc_.shape))
         try:
             assert np.all(kpts_ == kpts), 'parallel computation inconsistent'
             assert np.all(desc_ == desc), 'parallel computation inconsistent'
         except Exception as ex:
-            print('kpts.shape = %r' % (kpts.shape,))
-            print('kpts_.shape = %r' % (kpts_.shape,))
-            print('desc.shape = %r' % (desc.shape,))
-            print('desc_.shape = %r' % (desc_.shape,))
-            print(np.dtype(float).itemsize)
-            print(np.dtype(int).itemsize)
-            print(np.dtype(np.float32).itemsize)
-            print(np.dtype(np.float64).itemsize)
+            #print(np.dtype(float).itemsize)
+            #print(np.dtype(int).itemsize)
+            #print(np.dtype(np.float32).itemsize)
+            #print(np.dtype(np.float64).itemsize)
             print('==========')
             print('kpts_')
             print(kpts_[0:2])
