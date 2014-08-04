@@ -42,9 +42,10 @@ int_t     = C.c_int
 #    int_t     = C.c_long
 bool_t    = C.c_bool
 float_t   = C.c_float
-byte_t    = C.c_char
+#byte_t    = C.c_char
 # array ctypes
 FLAGS_RW = 'aligned, c_contiguous, writeable'
+#FLAGS_RW = 'aligned, writeable'
 kpts_t       = np.ctypeslib.ndpointer(dtype=kpts_dtype, ndim=2, flags=FLAGS_RW)
 desc_t       = np.ctypeslib.ndpointer(dtype=desc_dtype, ndim=2, flags=FLAGS_RW)
 kpts_array_t = np.ctypeslib.ndpointer(dtype=kpts_t, ndim=1, flags=FLAGS_RW)
@@ -193,39 +194,60 @@ def arrptr_to_np(c_arrptr, shape, arr_t, dtype):
         arr_t   - the ctypes datatype of c_arrptr
     """
     try:
-        _byte_t = byte_t  # localize scope
+        byte_t = C.c_char
         itemsize_ = dtype().itemsize
-        ptr_t = _byte_t * itemsize_
+        #import utool
+        #utool.printvar2('itemsize_')
+        ###---------
+        #dtype_t1 = C.c_voidp * itemsize_
+        #dtype_ptr_t1 = C.POINTER(dtype_t1)  # size of each item
+        #dtype_ptr_t = dtype_ptr_t1
+        ###---------
         if six.PY2:
-            arr_t_size = C.POINTER(ptr_t)  # size of each item
-            typed_c_arrptr = c_arrptr.astype(int)
-            c_arr = C.cast(typed_c_arrptr, arr_t_size)   # cast to ctypes
-            raise Exception('fuuu. Why does 2.7 work? Why does 3.4 not!?!!!')
-        else:
-            #ptr_t = _byte_t * itemsize_
-            #ptr_t2 = C.c_char * (itemsize_ * 2)
-            arr_t_size = C.POINTER(ptr_t)  # size of each item
-            #arr_t_size = C.POINTER(C.c_int64)  # size of each item
-            #typed_c_arrptr = c_arrptr.astype(C.c_ssize_t)
+            dtype_t = byte_t * itemsize_
+            dtype_ptr_t = C.POINTER(dtype_t)  # size of each item
             #typed_c_arrptr = c_arrptr.astype(int)
-            #typed_c_arrptr = c_arrptr.astype(C.c_uint32)
-            #typed_c_arrptr = c_arrptr.astype(ptr_t)
+            typed_c_arrptr = c_arrptr.astype(int)
+            c_arr = C.cast(typed_c_arrptr, dtype_ptr_t)   # cast to ctypes
+            #raise Exception('fuuu. Why does 2.7 work? Why does 3.4 not!?!!!')
+        else:
+            dtype_t = C.c_char * itemsize_
+            dtype_ptr_t = C.POINTER(dtype_t)  # size of each item
+            #typed_c_arrptr = c_arrptr.astype(int)
+            #typed_c_arrptr = c_arrptr.astype(C.c_size_t)
+            typed_c_arrptr = c_arrptr.astype(int)
+            #typed_c_arrptr = c_arrptr.astype(int)
+            #, order='C', casting='safe')
+            #utool.embed()
+            #typed_c_arrptr = c_arrptr.astype(dtype_t)
             #typed_c_arrptr = c_arrptr.astype(ptr_t2)
             #typed_c_arrptr = c_arrptr.astype(C.c_uint8)
             #typed_c_arrptr = c_arrptr.astype(C.c_void_p)
             #typed_c_arrptr = c_arrptr.astype(C.c_int)
             #typed_c_arrptr = c_arrptr.astype(C.c_char)  # WORKS BUT WRONG
-            #typed_c_arrptr = c_arrptr.astype(C.c_char)  # WORKS BUT WRONG
             #typed_c_arrptr = c_arrptr.astype(bytes)  # WORKS BUT WRONG
             #typed_c_arrptr = c_arrptr.astype(int)
             #typed_c_arrptr = c_arrptr
             #typed_c_arrptr = c_arrptr.astype(np.int64)
-            typed_c_arrptr = c_arrptr.astype(int)
-            c_arr = C.cast(typed_c_arrptr, arr_t_size)   # cast to ctypes
+            #typed_c_arrptr = c_arrptr.astype(int)
+
+            """
+            ctypes.cast(arg1, arg2)
+
+            Input:
+                arg1 - a ctypes object that is or can be converted to a pointer
+                       of some kind
+                arg2 - a ctypes pointer type.
+            Output:
+                 It returns an instance of the second argument, which references
+                 the same memory block as the first argument
+            """
+            c_arr = C.cast(typed_c_arrptr, dtype_ptr_t)   # cast to ctypes
         np_arr = np.ctypeslib.as_array(c_arr, shape)       # cast to numpy
         np_arr.dtype = dtype                               # fix numpy dtype
     except Exception as ex:
         import utool
+        #utool.embed()
         varnames = sorted(list(locals().keys()))
         vartypes = [(type, name) for name in varnames]
         spaces    = [None for name in varnames]
