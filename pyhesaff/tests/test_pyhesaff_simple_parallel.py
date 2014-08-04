@@ -46,6 +46,7 @@ if __name__ == '__main__':
         try:
             assert np.all(kpts_ == kpts), 'parallel computation inconsistent'
             assert np.all(desc_ == desc), 'parallel computation inconsistent'
+            #assert False, 'deliberate triggering to see printouts'
         except Exception as ex:
             #print(np.dtype(float).itemsize)
             #print(np.dtype(int).itemsize)
@@ -67,6 +68,17 @@ if __name__ == '__main__':
             print('---')
             #print(kpts_)
             #print(kpts)
+            #for i, (k1, k2) in enumerate(zip(kpts, kpts_)):
+            #    print(i)
+            #    print(k1)
+            #    print(k2)
+            #    print('-----')
+            #print('dashdashdash')
+            #for i, (d1, d2) in enumerate(zip(desc, desc_)):
+            #    print(i)
+            #    print(d1)
+            #    print(d2)
+            #    print('-----')
             import utool
             utool.printex(ex)
             raise

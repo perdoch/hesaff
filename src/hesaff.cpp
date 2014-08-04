@@ -40,8 +40,8 @@ int global_c2 = 0;
 //#define MYDEBUG
 
 #ifdef MYDEBUG
-#define printDBG(msg) std::cout << "[hesaff.c] " << msg << std::endl;
-#define write(msg) std::cout << msg;
+#define printDBG(msg) std::cerr << "[hesaff.c] " << msg << std::endl;
+#define write(msg) std::cerr << msg;
 #else
 #define printDBG(msg);
 #endif
@@ -192,9 +192,9 @@ struct AffineHessianDetector : public HessianDetector, AffineShape, HessianKeypo
                 #endif
 
                 #ifdef MYDEBUG
-                if(fx == 0 || fx == nKpts - 1){
-                    DBG_keypoint(kpts, rowk);
-                }
+                //if(fx == 0 || fx == nKpts - 1){
+                //    DBG_keypoint(kpts, rowk);
+                //}
                 #endif
 
                 // Assign Descriptor Output
@@ -779,6 +779,39 @@ extern "C" {
                     orientationBins, maxBinValue, initialSigma, patchSize,
                     scale_min, scale_max, rotation_invariance);
         }
+        #define FORCE_CONSECUTIVE_ARRAY
+        #ifdef FORCE_CONSECUTIVE_ARRAY
+        // int total_length = std::accumulate(length_array, length_array + num_filenames, 0, std::plus<int>());
+        int total_length = 1; for(index=0;index < num_filenames;++index) {total_length += length_array[index];};
+        //std::cout << "total length: " << total_length << std::endl;
+        float* k_backing = new float[total_length * KPTS_DIM];
+        uint8* d_backing = new uint8[total_length * DESC_DIM];
+        //std::cout << "k_backing size: " << sizeof(float) * total_length * KPTS_DIM << std::endl;
+        //std::cout << "d_backing size: " << sizeof(uint8) * total_length * DESC_DIM << std::endl;
+        int running_length = 0;
+        for(index=0;index < num_filenames;++index)
+        {
+            //std::cout << "index: " << index << std::endl;
+            //std::cout << "running_length: " << running_length << std::endl;
+            int current_length = length_array[index];
+            //std::cout << "current_length: " << current_length << std::endl;
+            int keypoints_bytes = sizeof(float) * current_length * KPTS_DIM;
+            int descriptor_bytes = sizeof(uint8) * current_length * DESC_DIM;
+            int k_bytes_index = running_length * KPTS_DIM;
+            int d_bytes_index = running_length * DESC_DIM;
+            //std::cout << "keypoints_bytes: " << keypoints_bytes << std::endl;
+            //std::cout << "descriptor_bytes: " << descriptor_bytes << std::endl;
+            //std::cout << "k_bytes_index: " << k_bytes_index << std::endl;
+            //std::cout << "d_bytes_index: " << d_bytes_index << std::endl;
+            memcpy(&k_backing[k_bytes_index], keypoints_array[index], keypoints_bytes);
+            memcpy(&d_backing[d_bytes_index], descriptors_array[index], descriptor_bytes);
+            delete [] keypoints_array[index];
+            delete [] descriptors_array[index];
+            keypoints_array[index] = &k_backing[k_bytes_index];
+            descriptors_array[index] = &d_backing[d_bytes_index];
+            running_length += current_length;
+        }
+        #endif
     }
 #ifdef __cplusplus
 }
