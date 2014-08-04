@@ -41,7 +41,7 @@ if __name__ == '__main__':
                                         desc_array):
         start = time.time()
         kpts_, desc_ = pyhesaff.detect_kpts(img_fpath)
-        print('shape(kpts, kpts_, desc, desc_) = %11r, %11r, %11r, %11r' %
+        print('shape(kpts, kpts_, desc, desc_) = %9r, %9r, %11r, %11r' %
               (kpts.shape, kpts_.shape, desc.shape, desc_.shape))
         try:
             assert np.all(kpts_ == kpts), 'parallel computation inconsistent'
