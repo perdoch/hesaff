@@ -106,6 +106,6 @@ def load_clib(libname, root_dir):
     print('[C!] cwd=%r' % os.getcwd())
     print('[C!] load_clib(libname=%r root_dir=%r)' % (libname, root_dir))
     print('[C!] lib_fpath = %r' % lib_fpath)
-    errmsg = '[C] Cannot LOAD dynamic library. ' + errsuffix
+    errmsg = '[C] Cannot LOAD %r dynamic library. ' % (libname,) + errsuffix
     print(errmsg)
     raise ImportError(errmsg)
