@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 from __future__ import absolute_import, division, print_function
-from utool.util_setup import setuptools_setup
 from utool import util_cplat
+from utool import util_setup
 from setuptools import setup
 
 
@@ -25,17 +25,21 @@ INSTALL_REQUIRES = [
 ]
 
 if __name__ == '__main__':
-    setup_dict = {
-        'name':             'pyhesaff',
-        'build_command':    build_command,
-        'description':      'Routines for computation of hessian affine keypoints in images.',
-        'url':              'https://github.com/Erotemic/hesaff',
-        'author':           'Krystian Mikolajczyk, Michal Perdoch, Jon Crall, Avi Weinstock',
-        'author_email':     'erotemic@gmail.com',
-        'packages':         ['pyhesaff', 'build', 'pyhesaff.tests'],
-        'install_requires': INSTALL_REQUIRES,
-        'package_data':     {'build': util_cplat.get_dynamic_lib_globstrs()},
-        'setup_fpath':      __file__,
-    }
-    kwargs = setuptools_setup(**setup_dict)
+    setup_dict = dict(
+        name='pyhesaff',
+        #packages=util_setup.find_packages(),
+        packages=['pyhesaff', 'build', 'pyhesaff.tests'],
+        version=util_setup.parse_package_for_version('pyhesaff'),
+        licence=util_setup.read_license('LICENSE'),
+        long_description=util_setup.parse_readme('README.md'),
+        description='Routines for computation of hessian affine keypoints in images.',
+        url='https://github.com/Erotemic/hesaff',
+        author='Krystian Mikolajczyk, Michal Perdoch, Jon Crall, Avi Weinstock',
+        author_email='erotemic@gmail.com',
+        install_requires=INSTALL_REQUIRES,
+        package_data={'build': util_cplat.get_dynamic_lib_globstrs()},
+        build_command=build_command,
+        setup_fpath=__file__,
+    )
+    kwargs = util_setup.setuptools_setup(**setup_dict)
     setup(**kwargs)
