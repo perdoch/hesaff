@@ -737,6 +737,7 @@ extern "C" {
         delete detector;
     }
 
+
     PYHESAFF void detectKeypointsList(int num_filenames,
                                       char** image_filename_list,
                                       float** keypoints_array,
@@ -765,9 +766,59 @@ extern "C" {
                                       float scale_max,
                                       bool rotation_invariance)
     {
+        // Maybe use this implimentation instead to be more similar to the way
+        // pyhesaff calls this library?
         int index;
-        #pragma omp parallel for
-        for(index=0;index < num_filenames;++index)
+        #pragma omp parallel for private(index)
+        for(index=0; index < num_filenames; ++index)
+        {
+            char* image_filename = image_filename_list[index];
+            AffineHessianDetector* detector =
+                new_hesaff_from_params(image_filename, numberOfScales,
+                        threshold, edgeEigenValueRatio, border, maxIterations,
+                        convergenceThreshold, smmWindowSize, mrSize,
+                        spatialBins, orientationBins, maxBinValue, initialSigma,
+                        patchSize, scale_min, scale_max, rotation_invariance);
+            int length = detector->detect();
+            length_array[index] = length;
+            keypoints_array[index] = new float[length * KPTS_DIM];
+            descriptors_array[index] = new uint8[length * DESC_DIM];
+            exportArrays(detector, length, keypoints_array[index], descriptors_array[index]);
+            delete detector;
+        }
+    }
+
+    PYHESAFF void detectKeypointsList1(int num_filenames,
+                                      char** image_filename_list,
+                                      float** keypoints_array,
+                                      uint8** descriptors_array,
+                                      int* length_array,
+                                      // Pyramid Params
+                                      int   numberOfScales,
+                                      float threshold,
+                                      float edgeEigenValueRatio,
+                                      int   border,
+                                      // Affine Params Shape
+                                      int   maxIterations,
+                                      float convergenceThreshold,
+                                      int   smmWindowSize,
+                                      float mrSize,
+                                      // SIFT params
+                                      int spatialBins,
+                                      int orientationBins,
+                                      float maxBinValue,
+                                      // Shared Pyramid + Affine
+                                      float initialSigma,
+                                      // Shared SIFT + Affine
+                                      int patchSize,
+                                      // My Params
+                                      float scale_min,
+                                      float scale_max,
+                                      bool rotation_invariance)
+    {
+        int index;
+        #pragma omp parallel for private(index)
+        for(index=0; index < num_filenames; ++index)
         {
             detectKeypoints(image_filename_list[index],
                     &(keypoints_array[index]),

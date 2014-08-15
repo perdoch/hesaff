@@ -1,4 +1,7 @@
 #cd ~/code/hesaff
+echo "removing old build"
+rm -rf build
+
 mkdir build
 cd build
 
@@ -11,5 +14,5 @@ fi
 export NCPUS=$(grep -c ^processor /proc/cpuinfo)
 make -j$NCPUS || { echo "FAILED MAKE" ; exit 1; }
 
-cp libhesaff* ../pyhesaff
+cp libhesaff* ../pyhesaff --verbose
 cd ..
