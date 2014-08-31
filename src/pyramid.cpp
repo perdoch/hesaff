@@ -45,24 +45,24 @@ int getHessianPointType(float *ptr, float value)
 bool isMax(float val, const Mat &pix, int row, int col)
 {
     for (int r = row - 1; r <= row + 1; r++)
-        {
+    {
         const float *row = pix.ptr<float>(r);
         for (int c = col - 1; c <= col + 1; c++)
             if (row[c] > val)
                 return false;
-        }
+    }
     return true;
 }
 
 bool isMin(float val, const Mat &pix, int row, int col)
 {
     for (int r = row - 1; r <= row + 1; r++)
-        {
+    {
         const float *row = pix.ptr<float>(r);
         for (int c = col - 1; c <= col + 1; c++)
             if (row[c] < val)
                 return false;
-        }
+    }
     return true;
 }
 
@@ -90,16 +90,19 @@ Mat HessianDetector::hessianResponse(const Mat &inputImage, float norm)
 
     /* move 3x3 window and convolve */
     for (int r = 1; r < rows - 1; ++r)
-        {
+    {
         float v11, v12, v21, v22, v31, v32;
         /* fill in shift registers at the beginning of the row */
-        v11 = in[-stride]; v12 = in[1 - stride];
-        v21 = in[      0]; v22 = in[1         ];
-        v31 = in[+stride]; v32 = in[1 + stride];
+        v11 = in[-stride];
+        v12 = in[1 - stride];
+        v21 = in[      0];
+        v22 = in[1         ];
+        v31 = in[+stride];
+        v32 = in[1 + stride];
         /* move input pointer to (1,2) of the 3x3 square */
         in += 2;
         for (int c = 1; c < cols - 1; ++c)
-            {
+        {
             /* fetch remaining values (last column) */
             const float v13 = in[-stride];
             const float v23 = *in;
@@ -114,15 +117,19 @@ Mat HessianDetector::hessianResponse(const Mat &inputImage, float norm)
             *out = (Lxx * Lyy - Lxy * Lxy)*norm2;
 
             /* move window */
-            v11=v12; v12=v13;
-            v21=v22; v22=v23;
-            v31=v32; v32=v33;
+            v11=v12;
+            v12=v13;
+            v21=v22;
+            v22=v23;
+            v31=v32;
+            v32=v33;
 
             /* move input/output pointers */
-            in++; out++;
-            }
-        out += 2;
+            in++;
+            out++;
         }
+        out += 2;
+    }
     return outputImage;
 }
 
@@ -148,9 +155,10 @@ void HessianDetector::localizeKeypoint(int r, int c, float curScale, float pixel
     int nr = r, nc = c;
 
     for (int iter=0; iter<5; iter++)
-        {
+    {
         // take current position
-        r = nr; c = nc;
+        r = nr;
+        c = nc;
 
         float dxx = cur.at<float>(r,c-1) - 2.0f * cur.at<float>(r,c) + cur.at<float>(r,c+1);
         float dyy = cur.at<float>(r-1,c) - 2.0f * cur.at<float>(r,c) + cur.at<float>(r+1,c);
@@ -159,25 +167,33 @@ void HessianDetector::localizeKeypoint(int r, int c, float curScale, float pixel
         float dxy = 0.25f*(cur.at<float>(r+1,c+1) - cur.at<float>(r+1,c-1) - cur.at<float>(r-1,c+1) + cur.at<float>(r-1,c-1));
         // check edge like shape of the response function in first iteration
         if (0 == iter)
-            {
+        {
             float edgeScore = (dxx + dyy)*(dxx + dyy)/(dxx * dyy - dxy * dxy);
             if (edgeScore >= edgeScoreThreshold || edgeScore < 0)
                 // local neighbourhood looks like an edge
                 return;
-            }
+        }
         float dxs = 0.25f*(high.at<float>(r  ,c+1) - high.at<float>(r  ,c-1) - low.at<float>(r  ,c+1) + low.at<float>(r  ,c-1));
         float dys = 0.25f*(high.at<float>(r+1,c  ) - high.at<float>(r-1,c  ) - low.at<float>(r+1,c  ) + low.at<float>(r-1,c  ));
 
         float A[9];
-        A[0] = dxx; A[1] = dxy; A[2] = dxs;
-        A[3] = dxy; A[4] = dyy; A[5] = dys;
-        A[6] = dxs; A[7] = dys; A[8] = dss;
+        A[0] = dxx;
+        A[1] = dxy;
+        A[2] = dxs;
+        A[3] = dxy;
+        A[4] = dyy;
+        A[5] = dys;
+        A[6] = dxs;
+        A[7] = dys;
+        A[8] = dss;
 
         float dx = 0.5f*(cur.at<float>(r,c+1) - cur.at<float>(r,c-1));
         float dy = 0.5f*(cur.at<float>(r+1,c) - cur.at<float>(r-1,c));
         float ds = 0.5f*(high.at<float>(r,c)  - low.at<float>(r,c));
 
-        b[0] = - dx; b[1] = - dy; b[2] = - ds;
+        b[0] = - dx;
+        b[1] = - dy;
+        b[2] = - ds;
 
         solveLinear3x3(A, b);
 
@@ -189,19 +205,31 @@ void HessianDetector::localizeKeypoint(int r, int c, float curScale, float pixel
         val = cur.at<float>(r,c) + 0.5f * (dx*b[0] + dy*b[1] + ds*b[2]);
 
         // if we are off by more than MAX_SUBPIXEL_SHIFT, update the position and iterate again
-        if (b[0] >  MAX_SUBPIXEL_SHIFT) { if (c < cols - POINT_SAFETY_BORDER) nc++; else return; }
-        if (b[1] >  MAX_SUBPIXEL_SHIFT) { if (r < rows - POINT_SAFETY_BORDER) nr++; else return; }
-        if (b[0] < -MAX_SUBPIXEL_SHIFT) { if (c >        POINT_SAFETY_BORDER) nc--; else return; }
-        if (b[1] < -MAX_SUBPIXEL_SHIFT) { if (r >        POINT_SAFETY_BORDER) nr--; else return; }
+        if (b[0] >  MAX_SUBPIXEL_SHIFT) {
+            if (c < cols - POINT_SAFETY_BORDER) nc++;
+            else return;
+        }
+        if (b[1] >  MAX_SUBPIXEL_SHIFT) {
+            if (r < rows - POINT_SAFETY_BORDER) nr++;
+            else return;
+        }
+        if (b[0] < -MAX_SUBPIXEL_SHIFT) {
+            if (c >        POINT_SAFETY_BORDER) nc--;
+            else return;
+        }
+        if (b[1] < -MAX_SUBPIXEL_SHIFT) {
+            if (r >        POINT_SAFETY_BORDER) nr--;
+            else return;
+        }
 
         if (nr == r && nc == c)
-            {
+        {
             // converged, displacement is sufficiently small, terminate here
             // TODO: decide if we want only converged local extrema...
             converged = true;
             break;
-            }
         }
+    }
 
     // if spatial localization was all right and the scale is close enough...
     if (fabs(b[0]) > 1.5 || fabs(b[1]) > 1.5 || fabs(b[2]) > 1.5 || fabs(val) < finalThreshold || octaveMap.at<unsigned char>(r,c) > 0)
@@ -240,17 +268,17 @@ void HessianDetector::findLevelKeypoints(float curScale, float pixelDistance)
     const int rows = cur.rows;
     const int cols = cur.cols;
     for (int r = par.border; r < (rows - par.border); r++)
-        {
+    {
         for (int c = par.border; c < (cols - par.border); c++)
-            {
+        {
             const float val = cur.at<float>(r,c);
             //If current val is an extreme point in (x,y,sigma)
             if ( (val > positiveThreshold && (isMax(val, cur, r, c) && isMax(val, low, r, c) && isMax(val, high, r, c))) ||
                     (val < negativeThreshold && (isMin(val, cur, r, c) && isMin(val, low, r, c) && isMin(val, high, r, c))) )
                 // either positive -> local max. or negative -> local min.
                 this->localizeKeypoint(r, c, curScale, pixelDistance); // Call Step 2
-            }
         }
+    }
 }
 
 //Step1: Called from:
@@ -269,7 +297,7 @@ void HessianDetector::detectOctaveKeypoints(const Mat &firstLevel, float pixelDi
     int numLevels = 1;
 
     for (int i = 1; i < par.numberOfScales+2; i++)
-        {
+    {
         // compute the increase necessary for the next level and compute the next level
         float sigma = curSigma * sqrt(sigmaStep * sigmaStep - 1.0f);
         // DO BLURING
@@ -281,11 +309,11 @@ void HessianDetector::detectOctaveKeypoints(const Mat &firstLevel, float pixelDi
         numLevels ++;
         // if we have three consecutive responses
         if (numLevels == 3)
-            {
+        {
             // find keypoints in this part of octave for curLevel
             this->findLevelKeypoints(curSigma, pixelDistance); //Call Step 1.2
             numLevels--;
-            }
+        }
         if (i == par.numberOfScales)
             // downsample the right level for the next octave
             nextOctaveFirstLevel = halfImage(nextBlur); // Helper Function
@@ -295,7 +323,7 @@ void HessianDetector::detectOctaveKeypoints(const Mat &firstLevel, float pixelDi
         low = cur;
         cur = high;
         curSigma *= sigmaStep;
-        }
+    }
 }
 
 // Entry point of image. Step 0
@@ -314,11 +342,11 @@ void HessianDetector::detectPyramidKeypoints(const Mat &image)
     // Given the param initialSigma, make
     // sure we are on that level of scalespace
     if (par.initialSigma > curSigma)
-        {
+    {
         //Calculate sigma to get to initial sigma
         float sigma = sqrt(par.initialSigma * par.initialSigma - curSigma * curSigma);
         gaussianBlurInplace(firstLevel, sigma);
-        }
+    }
 
     // detect keypoints at scales of increasing sigma
     // until there is the image is too small.
@@ -329,12 +357,12 @@ void HessianDetector::detectPyramidKeypoints(const Mat &image)
     int minSize = 2 * par.border + 2;
     int num_blurs = 0;
     while (firstLevel.rows > minSize && firstLevel.cols > minSize)
-        {
+    {
         Mat nextOctaveFirstLevel; //Outvar
         detectOctaveKeypoints(firstLevel, pixelDistance, nextOctaveFirstLevel); //Call Step 1
         pixelDistance *= 2.0; // Artificially increase sigma by varying the pixel step size
         // Overwrite firstlevel with the next level blur
         firstLevel = nextOctaveFirstLevel; // Overwrite firstLevel in place
         //cout << "num blurs: " << ++num_blurs << std::endl;
-        }
+    }
 }

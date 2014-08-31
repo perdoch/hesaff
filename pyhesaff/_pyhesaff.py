@@ -1,5 +1,11 @@
 #!/usr/bin/env python2.7
-'the python hessian affine keypoint module'
+"""
+the python hessian affine keypoint module
+
+idea: dropout several pixels?
+
+TODO: redo in cyth
+"""
 # TODO: it would be nice to be able to pass around an image
 # already in memory instead of having to pass around its path
 from __future__ import absolute_import, print_function, division

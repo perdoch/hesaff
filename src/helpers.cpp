@@ -55,7 +55,9 @@ double getTime()
 template <typename ValueType>
 void swap(ValueType *a, ValueType *b)
 {
-    ValueType tmp = *a; *a = *b; *b = tmp;
+    ValueType tmp = *a;
+    *a = *b;
+    *b = tmp;
 }
 
 
@@ -143,8 +145,10 @@ void rectifyAffineTransformationUpIsUp(float &a11, float &a12, float &a21, float
     double a = a11, b = a12, c = a21, d = a22;
     double det = sqrt(abs(a*d-b*c));
     double b2a2 = sqrt(b*b + a*a);
-    a11 = b2a2/det;             a12 = 0;
-    a21 = (d*b+c*a)/(b2a2*det); a22 = det/b2a2;
+    a11 = b2a2/det;
+    a12 = 0;
+    a21 = (d*b+c*a)/(b2a2*det);
+    a22 = det/b2a2;
 }
 
 
@@ -209,8 +213,8 @@ void computeCircularGaussMask(Mat &mask)
     float sigma2 = 0.9f * r2;  // ~95% of radius is relevant
     float disq;
     float *mp = mask.ptr<float>(0);
-    for(int i=0;i<mask.rows;i++)
-        for(int j=0;j<mask.cols;j++)
+    for(int i=0; i<mask.rows; i++)
+        for(int j=0; j<mask.cols; j++)
         {
             // The mask is populated with Gaussian values
             // as the function of the radius
@@ -252,7 +256,8 @@ void invSqrt(float &a, float &b, float &c, float &l1, float &l2)
     z = 1.0 / sqrt(t*t*a+2*r*t*b+r*r*c);
 
     d = sqrt(x*z);
-    x /= d; z /= d;
+    x /= d;
+    z /= d;
     // let l1 be the greater eigenvalue
     if (x < z)
     {
@@ -287,15 +292,23 @@ bool getEigenvalues(float a, float b, float c, float d, float &l1, float &l2)
 
 // check if we are not too close to boundary of the image/
 bool interpolateCheckBorders(const Mat &im, float ofsx, float ofsy,
-        float a11, float a12, float a21, float a22, const Mat &res)
+                             float a11, float a12, float a21, float a22, const Mat &res)
 {
     // does not do interpolation, just checks if we can
     const int width  = im.cols-2;
     const int height = im.rows-2;
     const int halfWidth  = res.cols >> 1;
     const int halfHeight = res.rows >> 1;
-    float x[4]; x[0] = -halfWidth;  x[1] = -halfWidth;  x[2] = +halfWidth;  x[3] = +halfWidth;
-    float y[4]; y[0] = -halfHeight; y[1] = +halfHeight; y[2] = -halfHeight; y[3] = +halfHeight;
+    float x[4];
+    x[0] = -halfWidth;
+    x[1] = -halfWidth;
+    x[2] = +halfWidth;
+    x[3] = +halfWidth;
+    float y[4];
+    y[0] = -halfHeight;
+    y[1] = +halfHeight;
+    y[2] = -halfHeight;
+    y[3] = +halfHeight;
     for (int i=0; i<4; i++)
     {
         float imx = ofsx + x[i]*a11 + y[i]*a12;
@@ -308,50 +321,51 @@ bool interpolateCheckBorders(const Mat &im, float ofsx, float ofsy,
 
 
 bool interpolate(const Mat &im, float ofsx, float ofsy,
-        float a11, float a12, float a21, float a22, Mat &res)
+                 float a11, float a12, float a21, float a22, Mat &res)
+{
+    // extracts a patch from im, corresponding to the keypoint
+    // (ofsx, ofsy, a11, a12, a21, a22)
+    // outputs the value in res
+    //
+    bool ret = false;
+    // input size (-1 for the safe bilinear interpolation)
+    const int width = im.cols-1;
+    const int height = im.rows-1;
+    // output size
+    const int halfWidth  = res.cols >> 1;
+    const int halfHeight = res.rows >> 1;
+    float *out = res.ptr<float>(0);
+    for (int j=-halfHeight; j<=halfHeight; ++j)
     {
-        // extracts a patch from im, corresponding to the keypoint
-        // (ofsx, ofsy, a11, a12, a21, a22)
-        // outputs the value in res
-        //
-        bool ret = false;
-        // input size (-1 for the safe bilinear interpolation)
-        const int width = im.cols-1;
-        const int height = im.rows-1;
-        // output size
-        const int halfWidth  = res.cols >> 1;
-        const int halfHeight = res.rows >> 1;
-        float *out = res.ptr<float>(0);
-        for (int j=-halfHeight; j<=halfHeight; ++j)
+        const float rx = ofsx + j * a12;
+        const float ry = ofsy + j * a22;
+        for(int i=-halfWidth; i<=halfWidth; ++i)
         {
-            const float rx = ofsx + j * a12;
-            const float ry = ofsy + j * a22;
-            for(int i=-halfWidth; i<=halfWidth; ++i)
+            float wx = rx + i * a11;
+            float wy = ry + i * a21;
+            const int x = (int) floor(wx);
+            const int y = (int) floor(wy);
+            if (x >= 0 && y >= 0 && x < width && y < height)
             {
-                float wx = rx + i * a11;
-                float wy = ry + i * a21;
-                const int x = (int) floor(wx);
-                const int y = (int) floor(wy);
-                if (x >= 0 && y >= 0 && x < width && y < height)
-                {
-                    // compute weights
-                    wx -= x; wy -= y;
-                    // bilinear interpolation
-                    *out++ =
-                        (1.0f - wy) * ((1.0f - wx) * im.at<float>(y,x)   + wx * im.at<float>(y,x+1)) +
-                        (       wy) * ((1.0f - wx) * im.at<float>(y+1,x) + wx * im.at<float>(y+1,x+1));
-                } else {
-                    *out++ = 0;
-                    ret =  true; // touching boundary of the input
-                }
+                // compute weights
+                wx -= x;
+                wy -= y;
+                // bilinear interpolation
+                *out++ =
+                    (1.0f - wy) * ((1.0f - wx) * im.at<float>(y,x)   + wx * im.at<float>(y,x+1)) +
+                    (       wy) * ((1.0f - wx) * im.at<float>(y+1,x) + wx * im.at<float>(y+1,x+1));
+            } else {
+                *out++ = 0;
+                ret =  true; // touching boundary of the input
             }
         }
-        return ret;
     }
+    return ret;
+}
 
 
 void photometricallyNormalize(Mat &image, const Mat &binaryMask,
-        float &mean, float &var)
+                              float &mean, float &var)
 {
     // magic? Attempts to normalize extreme lighting conditions
     const int width = image.cols;
@@ -411,7 +425,8 @@ void photometricallyNormalize(Mat &image, const Mat &binaryMask,
 Mat gaussianBlur(const Mat input, float sigma)
 {
     Mat ret(input.rows, input.cols, input.type());
-    int size = (int)(2.0 * 3.0 * sigma + 1.0); if (size % 2 == 0) size++;
+    int size = (int)(2.0 * 3.0 * sigma + 1.0);
+    if (size % 2 == 0) size++;
     GaussianBlur(input, ret, Size(size, size), sigma, sigma, BORDER_REPLICATE); //opencv cv::GaussianBlur
     return ret;
 }
@@ -419,7 +434,8 @@ Mat gaussianBlur(const Mat input, float sigma)
 
 void gaussianBlurInplace(Mat &inplace, float sigma)
 {
-    int size = (int)(2.0 * 3.0 * sigma + 1.0); if (size % 2 == 0) size++;
+    int size = (int)(2.0 * 3.0 * sigma + 1.0);
+    if (size % 2 == 0) size++;
     GaussianBlur(inplace, inplace, Size(size, size), sigma, sigma, BORDER_REPLICATE);
 }
 
@@ -483,19 +499,21 @@ void computeGradient(const cv::Mat &img, cv::Mat &gradx, cv::Mat &grady)
     // For each pixel in the image
     for (int r = 0; r < height; ++r)
         for (int c = 0; c < width; ++c)
-            {
+        {
             float xgrad, ygrad;
-            if (c == 0) xgrad = img.at<float>(r,c+1) - img.at<float>(r,c); else
-                if (c == width-1) xgrad = img.at<float>(r,c) - img.at<float>(r,c-1); else
-                    xgrad = img.at<float>(r,c+1) - img.at<float>(r,c-1);
+            if (c == 0) xgrad = img.at<float>(r,c+1) - img.at<float>(r,c);
+            else if (c == width-1) xgrad = img.at<float>(r,c) - img.at<float>(r,c-1);
+            else
+                xgrad = img.at<float>(r,c+1) - img.at<float>(r,c-1);
 
-            if (r == 0) ygrad = img.at<float>(r+1,c) - img.at<float>(r,c); else
-                if (r == height-1) ygrad = img.at<float>(r,c) - img.at<float>(r-1,c); else
-                    ygrad = img.at<float>(r+1,c) - img.at<float>(r-1,c);
+            if (r == 0) ygrad = img.at<float>(r+1,c) - img.at<float>(r,c);
+            else if (r == height-1) ygrad = img.at<float>(r,c) - img.at<float>(r-1,c);
+            else
+                ygrad = img.at<float>(r+1,c) - img.at<float>(r-1,c);
 
             gradx.at<float>(r,c) = xgrad;
             grady.at<float>(r,c) = ygrad;
-            }
+        }
 }
 
 /*void htool::makeCvHistFromHistogram(Histogram<float>& hist, CvHistogram& cvHist)

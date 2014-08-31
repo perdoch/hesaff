@@ -47,9 +47,9 @@ void computeGradient(const cv::Mat &img, cv::Mat &gradx, cv::Mat &grady);
 template<class T> cv::Mat get3x3Translation(T x, T y)
 {
     cv::Mat t = (cv::Mat_<T>(3, 3) <<
-    1, 0, x,
-    0, 1, y,
-    0, 0, 1);
+                 1, 0, x,
+                 0, 1, y,
+                 0, 0, 1);
     return t;
 }
 template<class T> cv::Mat get3x3Rotation(T theta)
@@ -57,17 +57,17 @@ template<class T> cv::Mat get3x3Rotation(T theta)
     T c = cos(theta);
     T s = sin(theta);
     cv::Mat m = (cv::Mat_<T>(3, 3) <<
-    c, -s, 0,
-    s,  c, 0,
-    0,  0, 1);
+                 c, -s, 0,
+                 s,  c, 0,
+                 0,  0, 1);
     return m;
 }
 template<class T> cv::Mat get3x3Scale(T sx, T sy)
 {
     cv::Mat s = (cv::Mat_<T>(3, 3) <<
-    sx,  0, 0,
-     0, sy, 0,
-     0,  0, 1);
+                 sx,  0, 0,
+                 0, sy, 0,
+                 0,  0, 1);
     return s;
 }
 
@@ -81,21 +81,21 @@ template <class T, class BinaryFn> void matrix_map_2to1(BinaryFn fn, cv::InputAr
     cv::Mat out_m = out.getMat();
     for(int r = 0; r < height; ++r)
         for(int c = 0; c < width; ++c)
-            {
-                out_m.at<T>(r, c) = fn(in1_m.at<T>(r, c), in2_m.at<T>(r, c));
-            }
+        {
+            out_m.at<T>(r, c) = fn(in1_m.at<T>(r, c), in2_m.at<T>(r, c));
+        }
 }
 
 namespace computeOrientationMagnitude_lambdas
 {
-    template <class T> T xatan2(T x, T y)
-    {
-        return atan2(y, x);
-    }
-    template <class T> T distance(T x, T y)
-    {
-        return sqrt((x*x)+(y*y));
-    }
+template <class T> T xatan2(T x, T y)
+{
+    return atan2(y, x);
+}
+template <class T> T distance(T x, T y)
+{
+    return sqrt((x*x)+(y*y));
+}
 }
 
 template <class T> void computeOrientation(cv::InputArray xgradient, cv::InputArray ygradient, cv::OutputArray orientations)
@@ -181,7 +181,7 @@ template <class T, class Iterator> Histogram<T> computeHistogram(Iterator ori_be
     const T step = (M_TAU) / nbins;
     Histogram<T> hist;  // structure of bins and edges
     hist.data.resize(nbins);  // Allocate space for bins
-    for(int i = 0; i <= nbins; ++i) 
+    for(int i = 0; i <= nbins; ++i)
     {
         hist.edges.push_back(T(i) * M_TAU / T(nbins));
     }
@@ -217,8 +217,9 @@ template <class T, class ContainerT, class... Rest> void vector_concat(std::vect
 template <class T, class BinaryFunction> void pairwise_accumulate(std::vector<T>& out, const std::vector<T>& in, BinaryFunction fn)
 {
     typename std::vector<T>::const_iterator iter = in.begin();
-    T prev = *iter; ++iter;
-    for(;iter != in.end(); ++iter)
+    T prev = *iter;
+    ++iter;
+    for(; iter != in.end(); ++iter)
     {
         out.push_back(fn(prev, *iter));
         prev = *iter;
@@ -255,11 +256,15 @@ template <class T> Histogram<T> wrap_histogram(const Histogram<T>& input)
     Histogram<T> output;
     //vector_concat(output.data, input.data[input.data.size()-1], input.data, input.data[0]);
     output.data.push_back(input.data[input.data.size()-1]);
-    for(typename std::vector<T>::const_iterator iter = input.data.begin(); iter != input.data.end(); ++iter) { output.data.push_back(*iter); }
+    for(typename std::vector<T>::const_iterator iter = input.data.begin(); iter != input.data.end(); ++iter) {
+        output.data.push_back(*iter);
+    }
     output.data.push_back(input.data[0]);
     //vector_concat(output.edges, input.edges[0]-low, input.edges, input.edges[input.edges.size()-1]+high);
     output.edges.push_back(input.edges[0]-low);
-    for(typename std::vector<T>::const_iterator iter = input.edges.begin(); iter != input.edges.end(); ++iter) { output.edges.push_back(*iter); }
+    for(typename std::vector<T>::const_iterator iter = input.edges.begin(); iter != input.edges.end(); ++iter) {
+        output.edges.push_back(*iter);
+    }
     output.edges.push_back(input.edges[input.edges.size()-1]+high);
     return output;
 }
@@ -268,10 +273,10 @@ template <class T> Histogram<T> wrap_histogram(const Histogram<T>& input)
 
 namespace hist_edges_to_centers_lambdas
 {
-    template <class T> T average(T a, T b)
-    {
-        return (a+b)/2;
-    }
+template <class T> T average(T a, T b)
+{
+    return (a+b)/2;
+}
 }
 
 template <class T> void hist_edges_to_centers(Histogram<T>& hist)
@@ -316,9 +321,12 @@ template <class T> void interpolate_submaxima(int argmaxima, const Histogram<T>&
     std::vector<cv::Point_<T> > points;
     maxima_neighbors(argmaxima, hist, points);
     T x1, y1, x2, y2, x3, y3;
-    x1 = points[0].x; y1 = points[0].y;
-    x2 = points[1].x; y2 = points[1].y;
-    x3 = points[2].x; y3 = points[2].y;
+    x1 = points[0].x;
+    y1 = points[0].y;
+    x2 = points[1].x;
+    y2 = points[1].y;
+    x3 = points[2].x;
+    y3 = points[2].y;
     T denom = (x1 - x2) * (x1 - x3) * (x2 - x3);
     T A     = (x3 * (y2 - y1) + x2 * (y1 - y3) + x1 * (y3 - y2)) / denom;
     T B     = (x3 * x3 * (y1 - y2) + x2 * x2 * (y3 - y1) + x1 * x1 * (y2 - y3)) / denom;

@@ -45,13 +45,13 @@ struct AffineShapeParams
 struct AffineShapeCallback
 {
     virtual void onAffineShapeFound(
-            const cv::Mat &blur,     // corresponding scale level
-            float x, float y,     // subpixel, image coordinates
-            float s,              // scale
-            float pixelDistance,  // distance between pixels in provided blured image
-            float a11, float a12, // affine shape matrix
-            float a21, float a22,
-            int type, float response, int iters) = 0;
+        const cv::Mat &blur,     // corresponding scale level
+        float x, float y,     // subpixel, image coordinates
+        float s,              // scale
+        float pixelDistance,  // distance between pixels in provided blured image
+        float a11, float a12, // affine shape matrix
+        float a21, float a22,
+        int type, float response, int iters) = 0;
 };
 
 //----------------------
@@ -59,53 +59,53 @@ struct AffineShapeCallback
 //----------------------
 struct AffineShape
 {
-    public:
-        //---------------------
-        // Standard functions
-        //---------------------
-        AffineShape(const AffineShapeParams &par) :
-            patch(par.patchSize, par.patchSize, CV_32FC1),
-            mask(par.smmWindowSize, par.smmWindowSize, CV_32FC1),
-            img(par.smmWindowSize, par.smmWindowSize, CV_32FC1),
-            fx(par.smmWindowSize, par.smmWindowSize, CV_32FC1),
-            fy(par.smmWindowSize, par.smmWindowSize, CV_32FC1)
-            {
-                this->par = par;
-                computeGaussMask(mask);
-                affineShapeCallback = 0;
-                fx = cv::Scalar(0);
-                fy = cv::Scalar(0);
-            }
+public:
+    //---------------------
+    // Standard functions
+    //---------------------
+    AffineShape(const AffineShapeParams &par) :
+        patch(par.patchSize, par.patchSize, CV_32FC1),
+        mask(par.smmWindowSize, par.smmWindowSize, CV_32FC1),
+        img(par.smmWindowSize, par.smmWindowSize, CV_32FC1),
+        fx(par.smmWindowSize, par.smmWindowSize, CV_32FC1),
+        fy(par.smmWindowSize, par.smmWindowSize, CV_32FC1)
+    {
+        this->par = par;
+        computeGaussMask(mask);
+        affineShapeCallback = 0;
+        fx = cv::Scalar(0);
+        fy = cv::Scalar(0);
+    }
 
-        ~AffineShape() {}
+    ~AffineShape() {}
 
-        void setAffineShapeCallback(AffineShapeCallback *callback)
-        {
-            affineShapeCallback = callback;
-        }
+    void setAffineShapeCallback(AffineShapeCallback *callback)
+    {
+        affineShapeCallback = callback;
+    }
 
-        //---------------------
-        // Work functions
-        //---------------------
+    //---------------------
+    // Work functions
+    //---------------------
 
-        // computes affine shape
-        bool findAffineShape(const cv::Mat &blur, float x, float y, float s,
-                float pixelDistance, int type, float response);
+    // computes affine shape
+    bool findAffineShape(const cv::Mat &blur, float x, float y, float s,
+                         float pixelDistance, int type, float response);
 
-        // fills patch with affine normalized neighbourhood around point in the img, enlarged mrSize times
-        bool normalizeAffine(const cv::Mat &img, float x, float y, float s,
-                float a11, float a12, float a21, float a22, float theta);
+    // fills patch with affine normalized neighbourhood around point in the img, enlarged mrSize times
+    bool normalizeAffine(const cv::Mat &img, float x, float y, float s,
+                         float a11, float a12, float a21, float a22, float theta);
 
-    public:
-        cv::Mat patch;  // member var to store a computed patch in
+public:
+    cv::Mat patch;  // member var to store a computed patch in
 
-    protected:
-        AffineShapeParams par;
+protected:
+    AffineShapeParams par;
 
-    private:
-        AffineShapeCallback *affineShapeCallback;
-        std::vector<unsigned char> workspace;
-        cv::Mat mask, img, fx, fy;
+private:
+    AffineShapeCallback *affineShapeCallback;
+    std::vector<unsigned char> workspace;
+    cv::Mat mask, img, fx, fy;
 };
 
 #endif // __AFFINE_H__
