@@ -40,15 +40,15 @@ bool AffineShape::findAffineShape(const Mat &blur, float x, float y, float s, fl
 {
     float eigen_ratio_act = 0.0f, eigen_ratio_bef = 0.0f;
     float u11 = 1.0f, u12 = 0.0f, u21 = 0.0f, u22 = 1.0f, l1 = 1.0f, l2 = 1.0f;
-    float lx = x/pixelDistance, ly = y/pixelDistance;
-    float ratio = s/(par.initialSigma*pixelDistance);
+    float lx = x / pixelDistance, ly = y / pixelDistance;
+    float ratio = s / (par.initialSigma * pixelDistance);
     // kernel size...
     const int maskPixels = par.smmWindowSize * par.smmWindowSize;
 
-    for (int l = 0; l < par.maxIterations; l ++)
+    for(int l = 0; l < par.maxIterations; l ++)
     {
         // warp input according to current shape matrix
-        interpolate(blur, lx, ly, u11*ratio, u12*ratio, u21*ratio, u22*ratio, img); //Helper function
+        interpolate(blur, lx, ly, u11 * ratio, u12 * ratio, u21 * ratio, u22 * ratio, img); //Helper function
 
         // compute SMM on the warped patch
         float a = 0, b = 0, c = 0;
@@ -58,7 +58,7 @@ bool AffineShape::findAffineShape(const Mat &blur, float x, float y, float s, fl
         computeGradient(img, fx, fy); // Defined in this file
 
         // estimate SMM (second moment matrix)
-        for (int i = 0; i < maskPixels; ++i)
+        for(int i = 0; i < maskPixels; ++i)
         {
             const float v = (*maskptr);
             const float gxx = *pfx;
@@ -86,22 +86,26 @@ bool AffineShape::findAffineShape(const Mat &blur, float x, float y, float s, fl
         // accumulate the affine shape matrix
         float u11t = u11, u12t = u12;
 
-        u11 = a*u11t+b*u21;
-        u12 = a*u12t+b*u22;
-        u21 = b*u11t+c*u21;
-        u22 = b*u12t+c*u22;
+        u11 = a * u11t + b * u21;
+        u12 = a * u12t + b * u22;
+        u21 = b * u11t + c * u21;
+        u22 = b * u12t + c * u22;
 
         // compute the eigen values of the shape matrix
-        if (!getEigenvalues(u11, u12, u21, u22, l1, l2))
+        if(!getEigenvalues(u11, u12, u21, u22, l1, l2))
+        {
             break;
+        }
 
         // leave on too high anisotropy
-        if ((l1/l2>6) || (l2/l1>6))
-            break;
-
-        if (eigen_ratio_act < par.convergenceThreshold && eigen_ratio_bef < par.convergenceThreshold)
+        if((l1 / l2 > 6) || (l2 / l1 > 6))
         {
-            if (affineShapeCallback)
+            break;
+        }
+
+        if(eigen_ratio_act < par.convergenceThreshold && eigen_ratio_bef < par.convergenceThreshold)
+        {
+            if(affineShapeCallback)
             {
                 affineShapeCallback->onAffineShapeFound(blur, x, y, s, pixelDistance, u11, u12, u21, u22, type, response, l); // Call Step 4
             }
@@ -121,7 +125,7 @@ bool AffineShape::normalizeAffine(const Mat &img,
                                   float ori)
 {
     // img is passed from onAffineShapeFound as this->image
-    if (!almost_eq(ori, R_GRAVITY_THETA))
+    if(!almost_eq(ori, R_GRAVITY_THETA))
     {
         // rotate relative to the gravity vector
         float ori_offst = (ori - R_GRAVITY_THETA);
@@ -130,42 +134,44 @@ bool AffineShape::normalizeAffine(const Mat &img,
     }
 
     // determinant == 1 assumed (i.e. isotropic scaling should be separated in mrScale
-    assert( fabs(a11*a22-a12*a21 - 1.0f) < 0.01);
+    assert(fabs(a11 * a22 - a12 * a21 - 1.0f) < 0.01);
     // half patch size in pixels of image
     float mrScale = ceil(s * par.mrSize);
     // odd size
-    int   patchImageSize = 2*int(mrScale)+1;
+    int   patchImageSize = 2 * int(mrScale) + 1;
     // patch size in image / patch size -> amount of down/up sampling
     float imageToPatchScale = float(patchImageSize) / float(par.patchSize);
     // is patch touching boundary? if yes, ignore this feature
     // helper, this->patch is outvar
-    if (interpolateCheckBorders(img, x, y, a11*imageToPatchScale,
-                                a12*imageToPatchScale, a21*imageToPatchScale,
-                                a22*imageToPatchScale, this->patch))
+    if(interpolateCheckBorders(img, x, y, a11 * imageToPatchScale,
+                               a12 * imageToPatchScale, a21 * imageToPatchScale,
+                               a22 * imageToPatchScale, this->patch))
     {
         return true;
     }
 
-    if (imageToPatchScale > 0.4)
+    if(imageToPatchScale > 0.4)
     {
         // the pixels in the image are 0.4 apart + the affine deformation
         // leave +1 border for the bilinear interpolation
         patchImageSize += 2;
-        size_t wss = patchImageSize*patchImageSize*sizeof(float);
-        if (wss >= workspace.size())
+        size_t wss = patchImageSize * patchImageSize * sizeof(float);
+        if(wss >= workspace.size())
+        {
             workspace.resize(wss);
+        }
 
         Mat smoothed(patchImageSize, patchImageSize, CV_32FC1, (void *)&workspace.front());
         // img is this->image. smoothed is an outvar
         // interpolate with det == 1
-        if (!interpolate(img, x, y, a11, a12, a21, a22, smoothed))
+        if(!interpolate(img, x, y, a11, a12, a21, a22, smoothed))
         {
             // smooth accordingly
-            gaussianBlurInplace(smoothed, 1.5f*imageToPatchScale);
+            gaussianBlurInplace(smoothed, 1.5f * imageToPatchScale);
             // subsample with corresponding scale
             bool touchesBoundary = interpolate(smoothed,
-                                               (float)(patchImageSize>>1),
-                                               (float)(patchImageSize>>1),
+                                               (float)(patchImageSize >> 1),
+                                               (float)(patchImageSize >> 1),
                                                imageToPatchScale, 0, 0,
                                                imageToPatchScale, this->patch);
             assert(!touchesBoundary);
@@ -175,7 +181,8 @@ bool AffineShape::normalizeAffine(const Mat &img,
             return true;
         }
     }
-    else {
+    else
+    {
         // if imageToPatchScale is small (i.e. lot of oversampling), affine normalize without smoothing
         a11 *= imageToPatchScale;
         a12 *= imageToPatchScale;

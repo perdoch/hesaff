@@ -30,6 +30,7 @@ struct SIFTDescriptorParams
         orientationBins = 8;
         maxBinValue = 0.2f;
         patchSize = 41;
+        // TODO: mean vector? power law?
     }
 };
 

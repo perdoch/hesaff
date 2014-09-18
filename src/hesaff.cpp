@@ -165,7 +165,7 @@ public:
     void exportArrays(int nKpts, float *kpts, uint8 *desc)
     {
         // Exports keypoints and descriptors into preallocated numpy arrays
-        for (size_t fx=0; fx < nKpts; fx++)
+        for(size_t fx = 0; fx < nKpts; fx++)
         {
             Keypoint &k = keys[fx];
             float x, y, iv11, iv12, iv21, iv22, s, det;
@@ -198,7 +198,7 @@ public:
 #endif
 
             // Assign Descriptor Output
-            for (size_t ix = 0; ix < DESC_DIM; ix++)
+            for(size_t ix = 0; ix < DESC_DIM; ix++)
             {
                 desc[rowd + ix] = uint8(k.desc[ix]);
             }
@@ -209,14 +209,14 @@ public:
     {
         // Dump keypoints to disk in text format
         char suffix[] = ".hesaff.sift";
-        int len = strlen(img_fpath)+strlen(suffix)+1;
+        int len = strlen(img_fpath) + strlen(suffix) + 1;
 #ifdef WIN32
         char* out_fpath = new char[len];
 #else
         char out_fpath[len];
 #endif
         snprintf(out_fpath, len, "%s%s", img_fpath, suffix);
-        out_fpath[len-1]=0;
+        out_fpath[len - 1] = 0;
         std::ofstream out(out_fpath);
         this->exportKeypoints(out);
         // Clean Up
@@ -235,7 +235,7 @@ public:
         int nKpts = keys.size();
         printDBG("Writing " << nKpts << " keypoints");
         out << nKpts << std::endl;
-        for (size_t i=0; i<nKpts; i++)
+        for(size_t i = 0; i < nKpts; i++)
         {
             Keypoint &k = keys[i];
             float sc = AffineShape::par.mrSize * k.s;
@@ -257,8 +257,8 @@ public:
             SVD svd_invA(invA, SVD::FULL_UV);
             float *diag_invA = (float *)svd_invA.w.data;
             // Integrate scale into 1/S and take squared inverst to make 1/W
-            diag_invA[0] = 1.0f / (diag_invA[0]*diag_invA[0]*sc*sc);
-            diag_invA[1] = 1.0f / (diag_invA[1]*diag_invA[1]*sc*sc);
+            diag_invA[0] = 1.0f / (diag_invA[0] * diag_invA[0] * sc * sc);
+            diag_invA[1] = 1.0f / (diag_invA[1] * diag_invA[1] * sc * sc);
             // Build the matrix invE
             // (I dont understand why U here, but it preserves the rotation I guess)
             // invE = (V * 1/S * U.T) * (U * 1/S * V.T)
@@ -276,7 +276,7 @@ public:
             out << k.x << " " << k.y << " "
                 << e11 << " " << e12 << " " << e22 ;
 #endif
-            for (size_t i=0; i < DESC_DIM; i++)
+            for(size_t i = 0; i < DESC_DIM; i++)
             {
                 out << " " << int(k.desc[i]);
             }
@@ -299,7 +299,7 @@ public:
         float x, y, iv11, iv12, iv21, iv22;
         float sc;
         float a11, a12, a21, a22, s, ori;
-        for(int fx=0; fx < (nKpts); fx++)
+        for(int fx = 0; fx < (nKpts); fx++)
         {
             // 2D Array offsets
             size_t rowk = fx * KPTS_DIM;
@@ -326,7 +326,7 @@ public:
             a21 = iv21 / sc;
             a22 = iv22 / sc;
 #ifdef MYDEBUG
-            if (fx == 0)
+            if(fx == 0)
             {
                 //printDBG("    sc = "  << sc);
                 //printDBG(" iabcd = [" << ia << ", " << ib << ", " << ic << ", " << id << "] ");
@@ -337,7 +337,7 @@ public:
             }
 #endif
             // now sample the patch (populates this->patch)
-            if (!this->normalizeAffine(this->image, x, y, s, a11, a12, a21, a22, ori)) //affine.cpp
+            if(!this->normalizeAffine(this->image, x, y, s, a11, a12, a21, a22, ori))  //affine.cpp
             {
                 this->populateDescriptor(desc, (fx * DESC_DIM)); // populate numpy array
             }
@@ -379,7 +379,7 @@ public:
         float scale_max = hesPar.scale_max;
         float scale = AffineShape::par.mrSize * s;
         // negative thresholds turn the threshold test off
-        if ((scale_min < 0 || scale >= scale_min) &&
+        if((scale_min < 0 || scale >= scale_min) &&
                 (scale_max < 0 || scale <= scale_max))
         {
             //printDBG("passed: " << scale)
@@ -398,7 +398,7 @@ public:
             }
             global_nkpts++;
             // now sample the patch (populates this->patch)
-            if (!normalizeAffine(this->image, x, y, s, a11, a12, a21, a22, ori)) // affine.cpp
+            if(!normalizeAffine(this->image, x, y, s, a11, a12, a21, a22, ori))  // affine.cpp
             {
                 global_c1++;
                 // compute SIFT and append new keypoint and descriptor
@@ -420,7 +420,7 @@ public:
                 this->populateDescriptor(k.desc, 0);
                 //this->keys.push_back(k);
             }
-            else if (hesPar.adapt_rotation)
+            else if(hesPar.adapt_rotation)
             {
                 this->keys.push_back(Keypoint());  // For debugging push back a fake keypoint
                 Keypoint &k = this->keys.back();
@@ -478,7 +478,7 @@ public:
     void populateDescriptor(uint8* desc, size_t offst)
     {
         this->sift.computeSiftDescriptor(this->patch);
-        for (int ix=0; ix < DESC_DIM; ix++)
+        for(int ix = 0; ix < DESC_DIM; ix++)
         {
             desc[offst + ix] = (uint8) sift.vec[ix];  // populate outvar
         }
@@ -582,11 +582,11 @@ PYHESAFF AffineHessianDetector* new_hesaff_from_params(char* img_fpath,
     cv::Mat image(tmp.rows, tmp.cols, CV_32FC1, Scalar(0));
     float *imgout = image.ptr<float>(0);
     uint8 *imgin  = tmp.ptr<uint8>(0);
-    for (size_t i=tmp.rows*tmp.cols; i > 0; i--)
+    for(size_t i = tmp.rows * tmp.cols; i > 0; i--)
     {
         *imgout = (float(imgin[0]) + imgin[1] + imgin[2]) / 3.0f;
         imgout++;
-        imgin+=3;
+        imgin += 3;
     }
 
     // Define params
@@ -782,7 +782,7 @@ PYHESAFF void detectKeypointsList(int num_filenames,
     // pyhesaff calls this library?
     int index;
     #pragma omp parallel for private(index)
-    for(index=0; index < num_filenames; ++index)
+    for(index = 0; index < num_filenames; ++index)
     {
         char* image_filename = image_filename_list[index];
         AffineHessianDetector* detector =
@@ -830,7 +830,7 @@ PYHESAFF void detectKeypointsList1(int num_filenames,
 {
     int index;
     #pragma omp parallel for private(index)
-    for(index=0; index < num_filenames; ++index)
+    for(index = 0; index < num_filenames; ++index)
     {
         detectKeypoints(image_filename_list[index],
                         &(keypoints_array[index]),
@@ -842,44 +842,6 @@ PYHESAFF void detectKeypointsList1(int num_filenames,
                         orientationBins, maxBinValue, initialSigma, patchSize,
                         scale_min, scale_max, rotation_invariance);
     }
-
-    // Try and force keypoint and descriptors to be in C contiguous arrays
-    //#define FORCE_CONSECUTIVE_ARRAY
-#ifdef FORCE_CONSECUTIVE_ARRAY
-    // int total_length = std::accumulate(length_array, length_array + num_filenames, 0, std::plus<int>());
-    int total_length = 1;
-    for(index=0; index < num_filenames; ++index) {
-        total_length += length_array[index];
-    };
-    //std::cout << "total length: " << total_length << std::endl;
-    float* k_backing = new float[total_length * KPTS_DIM];
-    uint8* d_backing = new uint8[total_length * DESC_DIM];
-    //std::cout << "k_backing size: " << sizeof(float) * total_length * KPTS_DIM << std::endl;
-    //std::cout << "d_backing size: " << sizeof(uint8) * total_length * DESC_DIM << std::endl;
-    int running_length = 0;
-    for(index=0; index < num_filenames; ++index)
-    {
-        //std::cout << "index: " << index << std::endl;
-        //std::cout << "running_length: " << running_length << std::endl;
-        int current_length = length_array[index];
-        //std::cout << "current_length: " << current_length << std::endl;
-        int keypoints_bytes = sizeof(float) * current_length * KPTS_DIM;
-        int descriptor_bytes = sizeof(uint8) * current_length * DESC_DIM;
-        int k_bytes_index = running_length * KPTS_DIM;
-        int d_bytes_index = running_length * DESC_DIM;
-        //std::cout << "keypoints_bytes: " << keypoints_bytes << std::endl;
-        //std::cout << "descriptor_bytes: " << descriptor_bytes << std::endl;
-        //std::cout << "k_bytes_index: " << k_bytes_index << std::endl;
-        //std::cout << "d_bytes_index: " << d_bytes_index << std::endl;
-        memcpy(&k_backing[k_bytes_index], keypoints_array[index], keypoints_bytes);
-        memcpy(&d_backing[d_bytes_index], descriptors_array[index], descriptor_bytes);
-        delete [] keypoints_array[index];
-        delete [] descriptors_array[index];
-        keypoints_array[index] = &k_backing[k_bytes_index];
-        descriptors_array[index] = &d_backing[d_bytes_index];
-        running_length += current_length;
-    }
-#endif
 }
 #ifdef __cplusplus
 }
@@ -893,7 +855,7 @@ PYHESAFF void detectKeypointsList1(int num_filenames,
 // * program entry point for command line use if we build the executable
 int main(int argc, char **argv)
 {
-    if (argc>1)
+    if(argc > 1)
     {
         printDBG("main()");
         char* img_fpath = argv[1];
