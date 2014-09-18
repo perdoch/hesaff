@@ -157,7 +157,7 @@ void SIFTDescriptor::sample()
     // accumulate histograms
     this->samplePatch();
     // L2 normalization
-    normalize();
+    this->normalize();
     // check if there are some values above threshold
     bool changed = false;
     for(size_t i = 0; i < this->vec.size(); i++) 
@@ -171,7 +171,7 @@ void SIFTDescriptor::sample()
     // Do L2 normalization again
     if(changed)
     {
-        normalize();
+        this->normalize();
     }
     // Quantize into range 0-255
     for(size_t i = 0; i < this->vec.size(); i++)
