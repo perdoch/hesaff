@@ -12,7 +12,7 @@ from __future__ import absolute_import, print_function, division
 # Standard
 import sys
 import six
-from six.moves import zip, builtins
+#from six.moves import zip, builtins
 from os.path import realpath, dirname
 try:
     from . import ctypes_interface
@@ -23,11 +23,11 @@ from collections import OrderedDict
 # Scientific
 import numpy as np
 
-try:
-    getattr(builtins, 'profile')
-except AttributeError:
-    def profile(func):
-        return func
+#try:
+#    getattr(builtins, 'profile')
+#except AttributeError:
+#    def profile(func):
+#        return func
 
 
 __DEBUG__ = '--debug-pyhesaff' in sys.argv or '--debug' in sys.argv
@@ -335,7 +335,7 @@ def detect_kpts_list(image_paths_list, **kwargs):
     return kpts_list, desc_list
 
 
-@profile
+#@profile
 def detect_kpts(img_fpath,
                 use_adaptive_scale=False, nogravity_hack=False,
                 **kwargs):
@@ -380,7 +380,7 @@ def adapt_rotation(img_fpath, kpts):
     return kpts2, desc2
 
 
-@profile
+#@profile
 def adapt_scale(img_fpath, kpts):
     import vtool.ellipse as etool
     nScales = 16
