@@ -103,14 +103,14 @@ def pnum_(px=None):
         px = px_
     return (nRows, nCols, px)
 
-MIN_ORI = utool.get_arg('--min-ori', float, DOWN)
-MAX_ORI = utool.get_arg('--max-ori', float, DOWN + np.tau - .2)
+MIN_ORI = utool.get_argval('--min-ori', float, DOWN)
+MAX_ORI = utool.get_argval('--max-ori', float, DOWN + np.tau - .2)
 
 MIN_X = .5
 MAX_X = 2
 
-MIN_SWEW = utool.get_arg('--min-skew', float, 0)
-MAX_SKEW = utool.get_arg('--max-skew', float, 1)
+MIN_SWEW = utool.get_argval('--min-skew', float, 0)
+MAX_SKEW = utool.get_argval('--max-skew', float, 1)
 
 MIN_Y = .5
 MAX_Y = 2
