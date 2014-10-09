@@ -1,0 +1,37 @@
+pyhesaff package
+================
+
+Subpackages
+-----------
+
+.. toctree::
+
+    pyhesaff.tests
+
+Submodules
+----------
+
+pyhesaff._pyhesaff module
+-------------------------
+
+.. automodule:: pyhesaff._pyhesaff
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyhesaff.ctypes_interface module
+--------------------------------
+
+.. automodule:: pyhesaff.ctypes_interface
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: pyhesaff
+    :members:
+    :undoc-members:
+    :show-inheritance:

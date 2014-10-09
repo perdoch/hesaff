@@ -1,0 +1,94 @@
+pyhesaff.tests package
+======================
+
+Submodules
+----------
+
+pyhesaff.tests.pyhestest module
+-------------------------------
+
+.. automodule:: pyhesaff.tests.pyhestest
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyhesaff.tests.test_adaptive_scale module
+-----------------------------------------
+
+.. automodule:: pyhesaff.tests.test_adaptive_scale
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyhesaff.tests.test_cpp_rotation_invariance module
+--------------------------------------------------
+
+.. automodule:: pyhesaff.tests.test_cpp_rotation_invariance
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyhesaff.tests.test_draw_keypoint module
+----------------------------------------
+
+.. automodule:: pyhesaff.tests.test_draw_keypoint
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyhesaff.tests.test_ellipse module
+----------------------------------
+
+.. automodule:: pyhesaff.tests.test_ellipse
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyhesaff.tests.test_exhaustive_ori_extract module
+-------------------------------------------------
+
+.. automodule:: pyhesaff.tests.test_exhaustive_ori_extract
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyhesaff.tests.test_patch_orientation module
+--------------------------------------------
+
+.. automodule:: pyhesaff.tests.test_patch_orientation
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyhesaff.tests.test_pyhesaff module
+-----------------------------------
+
+.. automodule:: pyhesaff.tests.test_pyhesaff
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyhesaff.tests.test_pyhesaff_simple_iterative module
+----------------------------------------------------
+
+.. automodule:: pyhesaff.tests.test_pyhesaff_simple_iterative
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pyhesaff.tests.test_pyhesaff_simple_parallel module
+---------------------------------------------------
+
+.. automodule:: pyhesaff.tests.test_pyhesaff_simple_parallel
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: pyhesaff.tests
+    :members:
+    :undoc-members:
+    :show-inheritance:

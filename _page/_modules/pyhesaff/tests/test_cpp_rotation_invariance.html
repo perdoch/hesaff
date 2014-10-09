@@ -1,0 +1,235 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pyhesaff.tests.test_cpp_rotation_invariance &mdash; pyhesaff 1.1.0.dev1 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.1.0.dev1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="pyhesaff 1.1.0.dev1 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">pyhesaff 1.1.0.dev1 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for pyhesaff.tests.test_cpp_rotation_invariance</h1><div class="highlight"><pre>
+<span class="c">#!/usr/bin/env python2.7</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">print_function</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="c"># Hesaff</span>
+<span class="kn">from</span> <span class="nn">pyhesaff.tests</span> <span class="kn">import</span> <span class="n">pyhestest</span>
+<span class="kn">import</span> <span class="nn">pyhesaff</span>
+<span class="c"># Tools</span>
+<span class="kn">import</span> <span class="nn">utool</span>
+<span class="kn">from</span> <span class="nn">plottool</span> <span class="kn">import</span> <span class="n">draw_func2</span> <span class="k">as</span> <span class="n">df2</span>
+<span class="kn">from</span> <span class="nn">plottool.viz_keypoints</span> <span class="kn">import</span> <span class="n">_annotate_kpts</span><span class="p">,</span> <span class="n">show_keypoints</span>
+<span class="kn">from</span> <span class="nn">plottool.viz_featrow</span> <span class="kn">import</span> <span class="n">draw_feat_row</span>
+<span class="kn">import</span> <span class="nn">plottool</span>
+<span class="kn">import</span> <span class="nn">vtool.patch</span> <span class="kn">as</span> <span class="nn">ptool</span>
+
+
+<div class="viewcode-block" id="TEST_ptool_find_kpts_direction"><a class="viewcode-back" href="../../../pyhesaff.tests.html#pyhesaff.tests.test_cpp_rotation_invariance.TEST_ptool_find_kpts_direction">[docs]</a><span class="k">def</span> <span class="nf">TEST_ptool_find_kpts_direction</span><span class="p">(</span><span class="n">imgBGR</span><span class="p">,</span> <span class="n">kpts</span><span class="p">):</span>
+    <span class="n">hrint</span> <span class="o">=</span> <span class="n">utool</span><span class="o">.</span><span class="n">horiz_print</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">&#39;[rotinvar] +---&#39;</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">&#39;[rotinvar] | 3) Find dominant orientation in histogram&#39;</span><span class="p">)</span>
+    <span class="n">hrint</span><span class="p">(</span><span class="s">&#39;[rotinvar] |  * kpts.shape = &#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">kpts</span><span class="o">.</span><span class="n">shape</span><span class="p">,))</span>
+    <span class="n">hrint</span><span class="p">(</span><span class="s">&#39;[rotinvar] |  * kpts = &#39;</span><span class="p">,</span> <span class="n">kpts</span><span class="p">)</span>
+    <span class="n">kpts2</span> <span class="o">=</span> <span class="n">ptool</span><span class="o">.</span><span class="n">find_kpts_direction</span><span class="p">(</span><span class="n">imgBGR</span><span class="p">,</span> <span class="n">kpts</span><span class="p">)</span>
+    <span class="n">hrint</span><span class="p">(</span><span class="s">&#39;[rotinvar] |  * kpts2.shape = &#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">kpts</span><span class="o">.</span><span class="n">shape</span><span class="p">,))</span>
+    <span class="n">hrint</span><span class="p">(</span><span class="s">&#39;[rotinvar] |  * kpts2 = &#39;</span><span class="p">,</span> <span class="n">kpts2</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">&#39;[rotinvar] L___&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">kpts2</span>
+
+</div>
+<div class="viewcode-block" id="TEST_figure1"><a class="viewcode-back" href="../../../pyhesaff.tests.html#pyhesaff.tests.test_cpp_rotation_invariance.TEST_figure1">[docs]</a><span class="k">def</span> <span class="nf">TEST_figure1</span><span class="p">(</span><span class="n">wpatch</span><span class="p">,</span> <span class="n">gradx</span><span class="p">,</span> <span class="n">grady</span><span class="p">,</span> <span class="n">gmag</span><span class="p">,</span> <span class="n">gori</span><span class="p">,</span> <span class="n">hist</span><span class="p">,</span> <span class="n">centers</span><span class="p">,</span> <span class="n">fnum</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">&#39;[rotinvar] 4) Draw histogram with interpolation annotations&#39;</span><span class="p">)</span>
+    <span class="n">gorimag</span> <span class="o">=</span> <span class="n">plottool</span><span class="o">.</span><span class="n">color_orimag</span><span class="p">(</span><span class="n">gori</span><span class="p">,</span> <span class="n">gmag</span><span class="p">)</span>
+    <span class="n">nRow</span><span class="p">,</span> <span class="n">nCol</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">7</span><span class="p">)</span>
+
+    <span class="n">df2</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">fnum</span><span class="o">=</span><span class="n">fnum</span><span class="p">,</span> <span class="n">pnum</span><span class="o">=</span><span class="p">(</span><span class="n">nRow</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">nRow</span><span class="p">),</span> <span class="n">doclf</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">docla</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">plottool</span><span class="o">.</span><span class="n">draw_hist_subbin_maxima</span><span class="p">(</span><span class="n">hist</span><span class="p">,</span> <span class="n">centers</span><span class="p">)</span>
+    <span class="n">df2</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s">&#39;grad orientation (radians)&#39;</span><span class="p">)</span>
+    <span class="n">df2</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s">&#39;grad magnitude&#39;</span><span class="p">)</span>
+    <span class="n">df2</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s">&#39;dominant orientations&#39;</span><span class="p">)</span>
+
+    <span class="k">print</span><span class="p">(</span><span class="s">&#39;[rotinvar] 5) Show patch, gradients, magintude, and orientation&#39;</span><span class="p">)</span>
+    <span class="n">df2</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">wpatch</span><span class="p">,</span>    <span class="n">pnum</span><span class="o">=</span><span class="p">(</span><span class="n">nRow</span><span class="p">,</span> <span class="n">nCol</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">fnum</span><span class="o">=</span><span class="n">fnum</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s">&#39;patch&#39;</span><span class="p">)</span>
+    <span class="n">df2</span><span class="o">.</span><span class="n">draw_vector_field</span><span class="p">(</span><span class="n">gradx</span><span class="p">,</span> <span class="n">grady</span><span class="p">,</span> <span class="n">pnum</span><span class="o">=</span><span class="p">(</span><span class="n">nRow</span><span class="p">,</span> <span class="n">nCol</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">fnum</span><span class="o">=</span><span class="n">fnum</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s">&#39;gori (vec)&#39;</span><span class="p">)</span>
+    <span class="n">df2</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">gorimag</span><span class="p">,</span> <span class="n">pnum</span><span class="o">=</span><span class="p">(</span><span class="n">nRow</span><span class="p">,</span> <span class="n">nCol</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">fnum</span><span class="o">=</span><span class="n">fnum</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s">&#39;gori (col)&#39;</span><span class="p">)</span>
+    <span class="n">df2</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">gradx</span><span class="p">),</span>   <span class="n">pnum</span><span class="o">=</span><span class="p">(</span><span class="n">nRow</span><span class="p">,</span> <span class="n">nCol</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="n">fnum</span><span class="o">=</span><span class="n">fnum</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s">&#39;gradx&#39;</span><span class="p">)</span>
+    <span class="n">df2</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">grady</span><span class="p">),</span>   <span class="n">pnum</span><span class="o">=</span><span class="p">(</span><span class="n">nRow</span><span class="p">,</span> <span class="n">nCol</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="n">fnum</span><span class="o">=</span><span class="n">fnum</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s">&#39;grady&#39;</span><span class="p">)</span>
+    <span class="n">df2</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">gmag</span><span class="p">,</span>    <span class="n">pnum</span><span class="o">=</span><span class="p">(</span><span class="n">nRow</span><span class="p">,</span> <span class="n">nCol</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="n">fnum</span><span class="o">=</span><span class="n">fnum</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s">&#39;gmag&#39;</span><span class="p">)</span>
+
+    <span class="n">gpatch</span> <span class="o">=</span> <span class="n">ptool</span><span class="o">.</span><span class="n">gaussian_patch</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="n">gori</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">df2</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">gpatch</span> <span class="o">*</span> <span class="mi">255</span><span class="p">,</span> <span class="n">pnum</span><span class="o">=</span><span class="p">(</span><span class="n">nRow</span><span class="p">,</span> <span class="n">nCol</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span> <span class="n">fnum</span><span class="o">=</span><span class="n">fnum</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s">&#39;gauss weights&#39;</span><span class="p">,</span> <span class="n">cmap_</span><span class="o">=</span><span class="s">&#39;hot&#39;</span><span class="p">)</span>
+    <span class="c">#gpatch3 = np.dstack((gpatch, gpatch, gpatch))</span>
+    <span class="c">#df2.draw_vector_field(gradx * gpatch, grady * gpatch, pnum=(nRow, nCol, 8), fnum=fnum, title=&#39;gori (vec)&#39;)</span>
+    <span class="c">#df2.imshow(gorimag * gpatch3, pnum=(nRow, nCol, 9), fnum=fnum, title=&#39;gori (col)&#39;)</span>
+    <span class="c">#df2.imshow(gradx * gpatch,   pnum=(nRow, nCol, 10), fnum=fnum, title=&#39;gradx&#39;)</span>
+    <span class="c">#df2.imshow(grady * gpatch,   pnum=(nRow, nCol, 11), fnum=fnum, title=&#39;grady&#39;)</span>
+    <span class="c">#df2.imshow(gmag * gpatch,    pnum=(nRow, nCol, 12), fnum=fnum, title=&#39;gmag&#39;)</span>
+    <span class="k">return</span> <span class="nb">locals</span><span class="p">()</span>
+
+</div>
+<div class="viewcode-block" id="TEST_figure2"><a class="viewcode-back" href="../../../pyhesaff.tests.html#pyhesaff.tests.test_cpp_rotation_invariance.TEST_figure2">[docs]</a><span class="k">def</span> <span class="nf">TEST_figure2</span><span class="p">(</span><span class="n">imgBGR</span><span class="p">,</span> <span class="n">kpts</span><span class="p">,</span> <span class="n">desc</span><span class="p">,</span> <span class="n">sel</span><span class="p">,</span> <span class="n">fnum</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+    <span class="c">#df2.imshow(wpatch, fnum=2)</span>
+    <span class="n">sift</span> <span class="o">=</span> <span class="n">desc</span><span class="p">[</span><span class="n">sel</span><span class="p">]</span>
+    <span class="n">viz_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">ell</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">eig</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                      <span class="n">rect</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">ori_color</span><span class="o">=</span><span class="n">df2</span><span class="o">.</span><span class="n">DEEP_PINK</span><span class="p">,</span> <span class="n">ell_alpha</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">fnum</span><span class="o">=</span><span class="n">fnum</span><span class="p">,</span> <span class="n">pnum</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">show_keypoints</span><span class="p">(</span><span class="n">imgBGR</span><span class="p">,</span> <span class="n">kpts</span><span class="p">,</span> <span class="n">sifts</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">sel_fx</span><span class="o">=</span><span class="n">sel</span><span class="p">,</span> <span class="n">ori</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="o">**</span><span class="n">viz_kwargs</span><span class="p">)</span>
+    <span class="n">_annotate_kpts</span><span class="p">(</span><span class="n">kpts</span><span class="p">,</span> <span class="n">sel</span><span class="p">,</span> <span class="n">ori</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">viz_kwargs</span><span class="p">)</span>
+    <span class="n">draw_feat_row</span><span class="p">(</span><span class="n">imgBGR</span><span class="p">,</span> <span class="n">sel</span><span class="p">,</span> <span class="n">kpts</span><span class="p">[</span><span class="n">sel</span><span class="p">],</span> <span class="n">sift</span><span class="p">,</span> <span class="n">fnum</span><span class="o">=</span><span class="n">fnum</span><span class="p">,</span> <span class="n">nRows</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">nCols</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">px</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="TEST_keypoint"><a class="viewcode-back" href="../../../pyhesaff.tests.html#pyhesaff.tests.test_cpp_rotation_invariance.TEST_keypoint">[docs]</a><span class="k">def</span> <span class="nf">TEST_keypoint</span><span class="p">(</span><span class="n">imgBGR</span><span class="p">,</span> <span class="n">img_fpath</span><span class="p">,</span> <span class="n">kpts</span><span class="p">,</span> <span class="n">desc</span><span class="p">,</span> <span class="n">sel</span><span class="p">,</span> <span class="n">fnum</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">figtitle</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">):</span>
+    <span class="c">#----------------------#</span>
+    <span class="c"># --- Extract Data --- #</span>
+    <span class="c">#----------------------#</span>
+    <span class="n">kp</span> <span class="o">=</span> <span class="n">kpts</span><span class="p">[</span><span class="n">sel</span><span class="p">]</span>
+    <span class="c"># Extract patches, gradients, and orientations</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">&#39;[rotinvar] 1) Extract patch, gradients, and orientations&#39;</span><span class="p">)</span>
+    <span class="n">wpatch</span><span class="p">,</span> <span class="n">wkp</span>  <span class="o">=</span> <span class="n">ptool</span><span class="o">.</span><span class="n">get_warped_patch</span><span class="p">(</span><span class="n">imgBGR</span><span class="p">,</span> <span class="n">kp</span><span class="p">,</span> <span class="n">gray</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">gradx</span><span class="p">,</span> <span class="n">grady</span> <span class="o">=</span> <span class="n">ptool</span><span class="o">.</span><span class="n">patch_gradient</span><span class="p">(</span><span class="n">wpatch</span><span class="p">)</span>
+    <span class="n">gmag</span>         <span class="o">=</span> <span class="n">ptool</span><span class="o">.</span><span class="n">patch_mag</span><span class="p">(</span><span class="n">gradx</span><span class="p">,</span> <span class="n">grady</span><span class="p">)</span>
+    <span class="n">gori</span>         <span class="o">=</span> <span class="n">ptool</span><span class="o">.</span><span class="n">patch_ori</span><span class="p">(</span><span class="n">gradx</span><span class="p">,</span> <span class="n">grady</span><span class="p">)</span>
+
+    <span class="c"># Get orientation histogram</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">&#39;[rotinvar] 2) Get orientation histogram&#39;</span><span class="p">)</span>
+    <span class="n">hist</span><span class="p">,</span> <span class="n">centers</span> <span class="o">=</span> <span class="n">ptool</span><span class="o">.</span><span class="n">get_orientation_histogram</span><span class="p">(</span><span class="n">gori</span><span class="p">)</span>
+
+    <span class="c">#----------------------#</span>
+    <span class="c"># --- Draw Results --- #</span>
+    <span class="c">#----------------------#</span>
+    <span class="n">f1_loc</span> <span class="o">=</span> <span class="n">TEST_figure1</span><span class="p">(</span><span class="n">wpatch</span><span class="p">,</span> <span class="n">gradx</span><span class="p">,</span> <span class="n">grady</span><span class="p">,</span> <span class="n">gmag</span><span class="p">,</span> <span class="n">gori</span><span class="p">,</span> <span class="n">hist</span><span class="p">,</span> <span class="n">centers</span><span class="p">,</span> <span class="n">fnum</span><span class="o">=</span><span class="n">fnum</span><span class="p">)</span>
+    <span class="n">df2</span><span class="o">.</span><span class="n">set_figtitle</span><span class="p">(</span><span class="n">figtitle</span> <span class="o">+</span> <span class="s">&#39;Dominant Orienation Extraction&#39;</span><span class="p">)</span>
+
+    <span class="n">TEST_figure2</span><span class="p">(</span><span class="n">imgBGR</span><span class="p">,</span> <span class="n">kpts</span><span class="p">,</span> <span class="n">desc</span><span class="p">,</span> <span class="n">sel</span><span class="p">,</span> <span class="n">fnum</span><span class="o">=</span><span class="n">fnum</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">df2</span><span class="o">.</span><span class="n">set_figtitle</span><span class="p">(</span><span class="n">figtitle</span><span class="p">)</span>
+<span class="c">#    TEST_figure2(imgBGR, kpts2, Desc2, sel, fnum=fnum + 2)</span>
+<span class="c">#    df2.set_figtitle(&#39;Rotation Invariant&#39;)</span>
+
+    <span class="c">#df2.draw_keypoint_gradient_orientations(imgBGR, kp=kpts2[sel],</span>
+    <span class="c">#                                        sift=desc[sel], mode=&#39;vec&#39;,</span>
+    <span class="c">#                                        fnum=4)</span>
+
+    <span class="c">#df2.draw_vector_field(gradx, grady, pnum=(1, 1, 1), fnum=4)</span>
+    <span class="c">#df2.draw_kpts2(np.array([wkp]), sifts=desc[sel:sel + 1], ori=True)</span>
+    <span class="k">return</span> <span class="nb">locals</span><span class="p">()</span>
+
+</div>
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="c"># Read data</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">&#39;[rotinvar] loading test data&#39;</span><span class="p">)</span>
+    <span class="n">img_fpath</span> <span class="o">=</span> <span class="n">pyhestest</span><span class="o">.</span><span class="n">get_test_image</span><span class="p">()</span>
+    <span class="p">[</span><span class="n">kpts1</span><span class="p">],</span> <span class="p">[</span><span class="n">desc1</span><span class="p">]</span> <span class="o">=</span> <span class="n">pyhesaff</span><span class="o">.</span><span class="n">detect_kpts_list</span><span class="p">([</span><span class="n">img_fpath</span><span class="p">],</span> <span class="n">rotation_invariance</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="p">[</span><span class="n">kpts2</span><span class="p">],</span> <span class="p">[</span><span class="n">desc2</span><span class="p">]</span> <span class="o">=</span> <span class="n">pyhesaff</span><span class="o">.</span><span class="n">detect_kpts_list</span><span class="p">([</span><span class="n">img_fpath</span><span class="p">],</span> <span class="n">rotation_invariance</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">set_printoptions</span><span class="p">(</span><span class="n">threshold</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span> <span class="n">precision</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">suppress</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="k">print</span><span class="p">(</span><span class="s">&#39;kpts1.shape = </span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">kpts1</span><span class="o">.</span><span class="n">shape</span><span class="p">,))</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">&#39;kpts2.shape = </span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">kpts2</span><span class="o">.</span><span class="n">shape</span><span class="p">,))</span>
+
+    <span class="k">print</span><span class="p">(</span><span class="s">&#39;desc1.shape = </span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">desc1</span><span class="o">.</span><span class="n">shape</span><span class="p">,))</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">&#39;desc2.shape = </span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">desc2</span><span class="o">.</span><span class="n">shape</span><span class="p">,))</span>
+
+    <span class="k">print</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">----</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">k1</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">k2</span><span class="p">)</span> <span class="k">for</span> <span class="n">k1</span><span class="p">,</span> <span class="n">k2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">kpts1</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">10</span><span class="p">],</span> <span class="n">kpts2</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">10</span><span class="p">])]))</span>
+
+    <span class="n">n</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="n">clip</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">kpts1</span><span class="p">),</span> <span class="n">n</span><span class="p">)</span>
+    <span class="n">fxs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">pyhestest</span><span class="o">.</span><span class="n">spaced_elements2</span><span class="p">(</span><span class="n">kpts2</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">&#39;fxs=</span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">fxs</span><span class="p">)</span>
+    <span class="n">kpts1</span> <span class="o">=</span> <span class="n">kpts1</span><span class="p">[</span><span class="n">fxs</span><span class="p">]</span>
+    <span class="n">kpts2</span> <span class="o">=</span> <span class="n">kpts2</span><span class="p">[</span><span class="n">fxs</span><span class="p">]</span>
+    <span class="n">desc1</span> <span class="o">=</span> <span class="n">desc1</span><span class="p">[</span><span class="n">fxs</span><span class="p">]</span>
+    <span class="n">desc2</span> <span class="o">=</span> <span class="n">desc2</span><span class="p">[</span><span class="n">fxs</span><span class="p">]</span>
+
+    <span class="k">print</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">----</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">k1</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">k2</span><span class="p">)</span> <span class="k">for</span> <span class="n">k1</span><span class="p">,</span> <span class="n">k2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">kpts1</span><span class="p">,</span> <span class="n">kpts2</span><span class="p">)]))</span>
+
+    <span class="n">imgBGR</span> <span class="o">=</span> <span class="n">pyhestest</span><span class="o">.</span><span class="n">cv2</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">img_fpath</span><span class="p">)</span>
+    <span class="n">sel</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">kpts1</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+
+    <span class="n">TEST_keypoint</span><span class="p">(</span><span class="n">imgBGR</span><span class="p">,</span> <span class="n">img_fpath</span><span class="p">,</span> <span class="n">kpts1</span><span class="p">,</span> <span class="n">desc1</span><span class="p">,</span> <span class="n">sel</span><span class="p">,</span> <span class="n">fnum</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">figtitle</span><span class="o">=</span><span class="s">&#39;Downward Rotation&#39;</span><span class="p">)</span>
+    <span class="n">TEST_keypoint</span><span class="p">(</span><span class="n">imgBGR</span><span class="p">,</span> <span class="n">img_fpath</span><span class="p">,</span> <span class="n">kpts2</span><span class="p">,</span> <span class="n">desc2</span><span class="p">,</span> <span class="n">sel</span><span class="p">,</span> <span class="n">fnum</span><span class="o">=</span><span class="mi">9001</span><span class="p">,</span> <span class="n">figtitle</span><span class="o">=</span><span class="s">&#39;Adapted Rotation&#39;</span><span class="p">)</span>
+
+    <span class="c">#locals_ = TEST_keypoint(imgBGR, img_fpath, kpts1, desc1, sel)</span>
+    <span class="c">#exec(utool.execstr_dict(locals_, &#39;locals_&#39;))</span>
+    <span class="c">#exec(utool.execstr_dict(f1_loc, &#39;f1_loc&#39;))  # NOQA</span>
+
+    <span class="c">#pinteract.interact_keypoints(imgBGR, kpts2, desc, arrow=True, rect=True)</span>
+    <span class="k">exec</span><span class="p">(</span><span class="n">df2</span><span class="o">.</span><span class="n">present</span><span class="p">())</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">pyhesaff 1.1.0.dev1 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Jon Crall.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

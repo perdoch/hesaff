@@ -1,0 +1,484 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pyhesaff._pyhesaff &mdash; pyhesaff 1.1.0.dev1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.1.0.dev1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="pyhesaff 1.1.0.dev1 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">pyhesaff 1.1.0.dev1 documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for pyhesaff._pyhesaff</h1><div class="highlight"><pre>
+<span class="c">#!/usr/bin/env python2.7</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">the python hessian affine keypoint module</span>
+
+<span class="sd">idea: dropout several pixels?</span>
+
+<span class="sd">TODO: redo in cyth</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c"># TODO: it would be nice to be able to pass around an image</span>
+<span class="c"># already in memory instead of having to pass around its path</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span><span class="p">,</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">division</span>
+<span class="c"># Standard</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">six</span>
+<span class="c">#from six.moves import zip, builtins</span>
+<span class="kn">from</span> <span class="nn">os.path</span> <span class="kn">import</span> <span class="n">realpath</span><span class="p">,</span> <span class="n">dirname</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">ctypes_interface</span>
+<span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">ctypes_interface</span>
+<span class="kn">import</span> <span class="nn">ctypes</span> <span class="kn">as</span> <span class="nn">C</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
+<span class="c"># Scientific</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="c">#try:</span>
+<span class="c">#    getattr(builtins, &#39;profile&#39;)</span>
+<span class="c">#except AttributeError:</span>
+<span class="c">#    def profile(func):</span>
+<span class="c">#        return func</span>
+
+
+<span class="n">__DEBUG__</span> <span class="o">=</span> <span class="s">&#39;--debug-pyhesaff&#39;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span> <span class="ow">or</span> <span class="s">&#39;--debug&#39;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span>
+
+<span class="c">#============================</span>
+<span class="c"># hesaff ctypes interface</span>
+<span class="c">#============================</span>
+
+<span class="c"># numpy dtypes</span>
+<span class="n">kpts_dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span>
+<span class="n">desc_dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span>
+<span class="c"># scalar ctypes</span>
+<span class="n">obj_t</span>     <span class="o">=</span> <span class="n">C</span><span class="o">.</span><span class="n">c_void_p</span>
+<span class="n">str_t</span>     <span class="o">=</span> <span class="n">C</span><span class="o">.</span><span class="n">c_char_p</span>
+<span class="c">#if six.PY2:</span>
+<span class="n">int_t</span>     <span class="o">=</span> <span class="n">C</span><span class="o">.</span><span class="n">c_int</span>
+<span class="c">#if six.PY3:</span>
+<span class="c">#    int_t     = C.c_long</span>
+<span class="n">bool_t</span>    <span class="o">=</span> <span class="n">C</span><span class="o">.</span><span class="n">c_bool</span>
+<span class="n">float_t</span>   <span class="o">=</span> <span class="n">C</span><span class="o">.</span><span class="n">c_float</span>
+<span class="c">#byte_t    = C.c_char</span>
+<span class="c"># array ctypes</span>
+<span class="n">FLAGS_RW</span> <span class="o">=</span> <span class="s">&#39;aligned, c_contiguous, writeable&#39;</span>
+<span class="c">#FLAGS_RW = &#39;aligned, writeable&#39;</span>
+<span class="n">kpts_t</span>       <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ctypeslib</span><span class="o">.</span><span class="n">ndpointer</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">kpts_dtype</span><span class="p">,</span> <span class="n">ndim</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="n">FLAGS_RW</span><span class="p">)</span>
+<span class="n">desc_t</span>       <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ctypeslib</span><span class="o">.</span><span class="n">ndpointer</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">desc_dtype</span><span class="p">,</span> <span class="n">ndim</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="n">FLAGS_RW</span><span class="p">)</span>
+<span class="n">kpts_array_t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ctypeslib</span><span class="o">.</span><span class="n">ndpointer</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">kpts_t</span><span class="p">,</span> <span class="n">ndim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="n">FLAGS_RW</span><span class="p">)</span>
+<span class="n">desc_array_t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ctypeslib</span><span class="o">.</span><span class="n">ndpointer</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">desc_t</span><span class="p">,</span> <span class="n">ndim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="n">FLAGS_RW</span><span class="p">)</span>
+<span class="n">int_array_t</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ctypeslib</span><span class="o">.</span><span class="n">ndpointer</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">int_t</span><span class="p">,</span> <span class="n">ndim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">flags</span><span class="o">=</span><span class="n">FLAGS_RW</span><span class="p">)</span>
+<span class="n">str_list_t</span>   <span class="o">=</span> <span class="n">C</span><span class="o">.</span><span class="n">POINTER</span><span class="p">(</span><span class="n">str_t</span><span class="p">)</span>
+
+<span class="c"># THE ORDER OF THIS LIST IS IMPORTANT!</span>
+<span class="n">hesaff_typed_params</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="c"># Pyramid Params</span>
+    <span class="p">(</span><span class="n">int_t</span><span class="p">,</span>   <span class="s">&#39;numberOfScales&#39;</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>           <span class="c"># number of scale per octave</span>
+    <span class="p">(</span><span class="n">float_t</span><span class="p">,</span> <span class="s">&#39;threshold&#39;</span><span class="p">,</span> <span class="mf">16.0</span> <span class="o">/</span> <span class="mf">3.0</span><span class="p">),</span>       <span class="c"># noise dependent threshold on the response (sensitivity)</span>
+    <span class="p">(</span><span class="n">float_t</span><span class="p">,</span> <span class="s">&#39;edgeEigenValueRatio&#39;</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">),</span>   <span class="c"># ratio of the eigenvalues</span>
+    <span class="p">(</span><span class="n">int_t</span><span class="p">,</span>   <span class="s">&#39;border&#39;</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>                   <span class="c"># number of pixels ignored at the border of image</span>
+    <span class="c"># Affine Shape Params</span>
+    <span class="p">(</span><span class="n">int_t</span><span class="p">,</span>   <span class="s">&#39;maxIterations&#39;</span><span class="p">,</span> <span class="mi">16</span><span class="p">),</span>           <span class="c"># number of affine shape interations</span>
+    <span class="p">(</span><span class="n">float_t</span><span class="p">,</span> <span class="s">&#39;convergenceThreshold&#39;</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">),</span>  <span class="c"># maximum deviation from isotropic shape at convergence</span>
+    <span class="p">(</span><span class="n">int_t</span><span class="p">,</span>   <span class="s">&#39;smmWindowSize&#39;</span><span class="p">,</span> <span class="mi">19</span><span class="p">),</span>           <span class="c"># width and height of the SMM (second moment matrix) mask</span>
+    <span class="p">(</span><span class="n">float_t</span><span class="p">,</span> <span class="s">&#39;mrSize&#39;</span><span class="p">,</span> <span class="mf">3.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">3.0</span><span class="p">)),</span>  <span class="c"># size of the measurement region (as multiple of the feature scale)</span>
+    <span class="c"># SIFT params</span>
+    <span class="p">(</span><span class="n">int_t</span><span class="p">,</span>   <span class="s">&#39;spatialBins&#39;</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span>
+    <span class="p">(</span><span class="n">int_t</span><span class="p">,</span>   <span class="s">&#39;orientationBins&#39;</span><span class="p">,</span> <span class="mi">8</span><span class="p">),</span>
+    <span class="p">(</span><span class="n">float_t</span><span class="p">,</span> <span class="s">&#39;maxBinValue&#39;</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">),</span>
+    <span class="c"># Shared params</span>
+    <span class="p">(</span><span class="n">float_t</span><span class="p">,</span> <span class="s">&#39;initialSigma&#39;</span><span class="p">,</span> <span class="mf">1.6</span><span class="p">),</span>           <span class="c"># amount of smoothing applied to the initial level of first octave</span>
+    <span class="p">(</span><span class="n">int_t</span><span class="p">,</span>   <span class="s">&#39;patchSize&#39;</span><span class="p">,</span> <span class="mi">41</span><span class="p">),</span>               <span class="c"># width and height of the patch</span>
+    <span class="c"># My params</span>
+    <span class="p">(</span><span class="n">float_t</span><span class="p">,</span> <span class="s">&#39;scale_min&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">),</span>
+    <span class="p">(</span><span class="n">float_t</span><span class="p">,</span> <span class="s">&#39;scale_max&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">),</span>
+    <span class="p">(</span><span class="n">bool_t</span><span class="p">,</span>  <span class="s">&#39;rotation_invariance&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">),</span>
+<span class="p">]</span>
+
+<span class="n">hesaff_param_dict</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">([(</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">type_</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span> <span class="ow">in</span> <span class="n">hesaff_typed_params</span><span class="p">])</span>
+<span class="n">hesaff_param_types</span> <span class="o">=</span> <span class="p">[</span><span class="n">type_</span> <span class="k">for</span> <span class="p">(</span><span class="n">type_</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span> <span class="ow">in</span> <span class="n">hesaff_typed_params</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="load_hesaff_clib"><a class="viewcode-back" href="../../pyhesaff.html#pyhesaff._pyhesaff.load_hesaff_clib">[docs]</a><span class="k">def</span> <span class="nf">load_hesaff_clib</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Specificially loads the hesaff lib and defines its functions</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c"># Get the root directory which should have the dynamic library in it</span>
+    <span class="c">#root_dir = realpath(dirname(__file__)) if &#39;__file__&#39; in vars() else realpath(os.getcwd())</span>
+
+    <span class="c"># os.path.dirname(sys.executable)</span>
+    <span class="c">#if getattr(sys, &#39;frozen&#39;, False):</span>
+    <span class="c">#    # we are running in a |PyInstaller| bundle</span>
+    <span class="c">#     root_dir = realpath(sys._MEIPASS)</span>
+    <span class="c">#else:</span>
+    <span class="c">#    # we are running in a normal Python environment</span>
+    <span class="c">#    root_dir = realpath(dirname(__file__))</span>
+    <span class="n">root_dir</span> <span class="o">=</span> <span class="n">realpath</span><span class="p">(</span><span class="n">dirname</span><span class="p">(</span><span class="n">__file__</span><span class="p">))</span>
+    <span class="n">libname</span> <span class="o">=</span> <span class="s">&#39;hesaff&#39;</span>
+    <span class="p">(</span><span class="n">clib</span><span class="p">,</span> <span class="n">def_cfunc</span><span class="p">,</span> <span class="n">lib_fpath</span><span class="p">)</span> <span class="o">=</span> <span class="n">ctypes_interface</span><span class="o">.</span><span class="n">load_clib</span><span class="p">(</span><span class="n">libname</span><span class="p">,</span> <span class="n">root_dir</span><span class="p">)</span>
+    <span class="c"># Expose extern C Functions to hesaff&#39;s clib</span>
+    <span class="n">def_cfunc</span><span class="p">(</span><span class="n">int_t</span><span class="p">,</span> <span class="s">&#39;detect&#39;</span><span class="p">,</span>                 <span class="p">[</span><span class="n">obj_t</span><span class="p">])</span>
+    <span class="n">def_cfunc</span><span class="p">(</span><span class="n">int_t</span><span class="p">,</span> <span class="s">&#39;get_kpts_dim&#39;</span><span class="p">,</span>           <span class="p">[])</span>
+    <span class="n">def_cfunc</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span>  <span class="s">&#39;exportArrays&#39;</span><span class="p">,</span>           <span class="p">[</span><span class="n">obj_t</span><span class="p">,</span> <span class="n">int_t</span><span class="p">,</span> <span class="n">kpts_t</span><span class="p">,</span> <span class="n">desc_t</span><span class="p">])</span>
+    <span class="n">def_cfunc</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span>  <span class="s">&#39;extractDesc&#39;</span><span class="p">,</span>            <span class="p">[</span><span class="n">obj_t</span><span class="p">,</span> <span class="n">int_t</span><span class="p">,</span> <span class="n">kpts_t</span><span class="p">,</span> <span class="n">desc_t</span><span class="p">])</span>
+    <span class="n">def_cfunc</span><span class="p">(</span><span class="n">obj_t</span><span class="p">,</span> <span class="s">&#39;new_hesaff&#39;</span><span class="p">,</span>             <span class="p">[</span><span class="n">str_t</span><span class="p">])</span>
+    <span class="n">def_cfunc</span><span class="p">(</span><span class="n">obj_t</span><span class="p">,</span> <span class="s">&#39;new_hesaff_from_params&#39;</span><span class="p">,</span> <span class="p">[</span><span class="n">str_t</span><span class="p">]</span> <span class="o">+</span> <span class="n">hesaff_param_types</span><span class="p">)</span>
+    <span class="n">def_cfunc</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span>  <span class="s">&#39;detectKeypointsList&#39;</span><span class="p">,</span>    <span class="p">[</span><span class="n">int_t</span><span class="p">,</span> <span class="n">str_list_t</span><span class="p">,</span> <span class="n">kpts_array_t</span><span class="p">,</span>
+                                                <span class="n">desc_array_t</span><span class="p">,</span> <span class="n">int_array_t</span><span class="p">]</span> <span class="o">+</span>
+                                                <span class="n">hesaff_param_types</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">clib</span><span class="p">,</span> <span class="n">lib_fpath</span>
+
+<span class="c"># Create a global interface to the hesaff lib</span></div>
+<span class="n">HESAFF_CLIB</span><span class="p">,</span> <span class="n">__LIB_FPATH__</span> <span class="o">=</span> <span class="n">load_hesaff_clib</span><span class="p">()</span>
+<span class="n">KPTS_DIM</span> <span class="o">=</span> <span class="n">HESAFF_CLIB</span><span class="o">.</span><span class="n">get_kpts_dim</span><span class="p">()</span>
+<span class="n">DESC_DIM</span> <span class="o">=</span> <span class="n">HESAFF_CLIB</span><span class="o">.</span><span class="n">get_desc_dim</span><span class="p">()</span>
+
+
+<span class="k">if</span> <span class="n">__DEBUG__</span><span class="p">:</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">&#39;[hes] </span><span class="si">%r</span><span class="s"> KPTS_DIM = </span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">KPTS_DIM</span><span class="p">),</span> <span class="n">KPTS_DIM</span><span class="p">))</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">&#39;[hes] </span><span class="si">%r</span><span class="s"> DESC_DIM = </span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">KPTS_DIM</span><span class="p">),</span> <span class="n">DESC_DIM</span><span class="p">))</span>
+
+
+<span class="c">#============================</span>
+<span class="c"># hesaff python interface</span>
+<span class="c">#============================</span>
+
+
+<span class="k">def</span> <span class="nf">_alloc_desc</span><span class="p">(</span><span class="n">nKpts</span><span class="p">):</span>
+    <span class="n">desc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">nKpts</span><span class="p">,</span> <span class="n">DESC_DIM</span><span class="p">),</span> <span class="n">desc_dtype</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">desc</span>
+
+
+<span class="k">def</span> <span class="nf">_allocate_kpts_and_desc</span><span class="p">(</span><span class="n">nKpts</span><span class="p">):</span>
+    <span class="n">kpts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">nKpts</span><span class="p">,</span> <span class="n">KPTS_DIM</span><span class="p">),</span> <span class="n">kpts_dtype</span><span class="p">)</span>  <span class="c"># array of floats</span>
+    <span class="n">desc</span> <span class="o">=</span> <span class="n">_alloc_desc</span><span class="p">(</span><span class="n">nKpts</span><span class="p">)</span>  <span class="c"># array of bytes</span>
+    <span class="k">return</span> <span class="n">kpts</span><span class="p">,</span> <span class="n">desc</span>
+
+
+<span class="k">def</span> <span class="nf">_make_hesaff_cpp_params</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">hesaff_params</span> <span class="o">=</span> <span class="n">hesaff_param_dict</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">six</span><span class="o">.</span><span class="n">iteritems</span><span class="p">(</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">hesaff_params</span><span class="p">:</span>
+            <span class="n">hesaff_params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;[pyhesaff] WARNING: key=</span><span class="si">%r</span><span class="s"> is not known&#39;</span> <span class="o">%</span> <span class="n">key</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_new_hesaff</span><span class="p">(</span><span class="n">img_fpath</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Creates new detector object which reads the image &quot;&quot;&quot;</span>
+    <span class="n">hesaff_params</span> <span class="o">=</span> <span class="n">hesaff_param_dict</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">hesaff_params</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">__DEBUG__</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&#39;[hes] New Hesaff&#39;</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&#39;[hes] hesaff_params=</span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">hesaff_params</span><span class="p">,))</span>
+    <span class="n">hesaff_args</span> <span class="o">=</span> <span class="n">hesaff_params</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>  <span class="c"># pass all parameters to HESAFF_CLIB</span>
+    <span class="n">img_realpath</span> <span class="o">=</span> <span class="n">realpath</span><span class="p">(</span><span class="n">img_fpath</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">six</span><span class="o">.</span><span class="n">PY3</span><span class="p">:</span>
+        <span class="c"># convert out of unicode</span>
+        <span class="n">img_realpath</span> <span class="o">=</span> <span class="n">img_realpath</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;ascii&#39;</span><span class="p">)</span>
+    <span class="n">hesaff_ptr</span> <span class="o">=</span> <span class="n">HESAFF_CLIB</span><span class="o">.</span><span class="n">new_hesaff_from_params</span><span class="p">(</span><span class="n">img_realpath</span><span class="p">,</span>
+                                                    <span class="o">*</span><span class="n">hesaff_args</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">hesaff_ptr</span>
+
+
+<div class="viewcode-block" id="extract_desc"><a class="viewcode-back" href="../../pyhesaff.html#pyhesaff._pyhesaff.extract_desc">[docs]</a><span class="k">def</span> <span class="nf">extract_desc</span><span class="p">(</span><span class="n">img_fpath</span><span class="p">,</span> <span class="n">kpts</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">hesaff_ptr</span> <span class="o">=</span> <span class="n">_new_hesaff</span><span class="p">(</span><span class="n">img_fpath</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">nKpts</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">kpts</span><span class="p">)</span>
+    <span class="n">desc</span> <span class="o">=</span> <span class="n">_alloc_desc</span><span class="p">(</span><span class="n">nKpts</span><span class="p">)</span>  <span class="c"># allocate memory for new descriptors</span>
+    <span class="n">kpts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ascontiguousarray</span><span class="p">(</span><span class="n">kpts</span><span class="p">)</span>  <span class="c"># kpts might not be contiguous</span>
+    <span class="c"># extract descriptors at given locations</span>
+    <span class="n">HESAFF_CLIB</span><span class="o">.</span><span class="n">extractDesc</span><span class="p">(</span><span class="n">hesaff_ptr</span><span class="p">,</span> <span class="n">nKpts</span><span class="p">,</span> <span class="n">kpts</span><span class="p">,</span> <span class="n">desc</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">desc</span>
+
+</div>
+<span class="k">def</span> <span class="nf">_cast_strlist_to_C</span><span class="p">(</span><span class="n">py_strlist</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Converts a python list of strings into a c array of strings</span>
+<span class="sd">    adapted from &quot;http://stackoverflow.com/questions/3494598/passing-a-list-of</span>
+<span class="sd">    -strings-to-from-python-ctypes-to-c-function-expecting-char&quot;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">c_strarr</span> <span class="o">=</span> <span class="p">(</span><span class="n">str_t</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">py_strlist</span><span class="p">))()</span>
+    <span class="n">c_strarr</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">py_strlist</span>
+    <span class="k">return</span> <span class="n">c_strarr</span>
+
+
+<div class="viewcode-block" id="arrptr_to_np"><a class="viewcode-back" href="../../pyhesaff.html#pyhesaff._pyhesaff.arrptr_to_np">[docs]</a><span class="k">def</span> <span class="nf">arrptr_to_np</span><span class="p">(</span><span class="n">c_arrptr</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">arr_t</span><span class="p">,</span> <span class="n">dtype</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Casts an array pointer from C to numpy</span>
+<span class="sd">    Input:</span>
+<span class="sd">        c_arrpt - an array pointer returned from C</span>
+<span class="sd">        shape   - shape of that array pointer</span>
+<span class="sd">        arr_t   - the ctypes datatype of c_arrptr</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">byte_t</span> <span class="o">=</span> <span class="n">C</span><span class="o">.</span><span class="n">c_char</span>
+        <span class="n">itemsize_</span> <span class="o">=</span> <span class="n">dtype</span><span class="p">()</span><span class="o">.</span><span class="n">itemsize</span>
+        <span class="c">#import utool</span>
+        <span class="c">#utool.printvar2(&#39;itemsize_&#39;)</span>
+        <span class="c">###---------</span>
+        <span class="c">#dtype_t1 = C.c_voidp * itemsize_</span>
+        <span class="c">#dtype_ptr_t1 = C.POINTER(dtype_t1)  # size of each item</span>
+        <span class="c">#dtype_ptr_t = dtype_ptr_t1</span>
+        <span class="c">###---------</span>
+        <span class="k">if</span> <span class="n">six</span><span class="o">.</span><span class="n">PY2</span><span class="p">:</span>
+            <span class="n">dtype_t</span> <span class="o">=</span> <span class="n">byte_t</span> <span class="o">*</span> <span class="n">itemsize_</span>
+            <span class="n">dtype_ptr_t</span> <span class="o">=</span> <span class="n">C</span><span class="o">.</span><span class="n">POINTER</span><span class="p">(</span><span class="n">dtype_t</span><span class="p">)</span>  <span class="c"># size of each item</span>
+            <span class="c">#typed_c_arrptr = c_arrptr.astype(int)</span>
+            <span class="n">typed_c_arrptr</span> <span class="o">=</span> <span class="n">c_arrptr</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+            <span class="n">c_arr</span> <span class="o">=</span> <span class="n">C</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">typed_c_arrptr</span><span class="p">,</span> <span class="n">dtype_ptr_t</span><span class="p">)</span>   <span class="c"># cast to ctypes</span>
+            <span class="c">#raise Exception(&#39;fuuu. Why does 2.7 work? Why does 3.4 not!?!!!&#39;)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">dtype_t</span> <span class="o">=</span> <span class="n">C</span><span class="o">.</span><span class="n">c_char</span> <span class="o">*</span> <span class="n">itemsize_</span>
+            <span class="n">dtype_ptr_t</span> <span class="o">=</span> <span class="n">C</span><span class="o">.</span><span class="n">POINTER</span><span class="p">(</span><span class="n">dtype_t</span><span class="p">)</span>  <span class="c"># size of each item</span>
+            <span class="c">#typed_c_arrptr = c_arrptr.astype(int)</span>
+            <span class="c">#typed_c_arrptr = c_arrptr.astype(C.c_size_t)</span>
+            <span class="n">typed_c_arrptr</span> <span class="o">=</span> <span class="n">c_arrptr</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+            <span class="c">#typed_c_arrptr = c_arrptr.astype(int)</span>
+            <span class="c">#, order=&#39;C&#39;, casting=&#39;safe&#39;)</span>
+            <span class="c">#utool.embed()</span>
+            <span class="c">#typed_c_arrptr = c_arrptr.astype(dtype_t)</span>
+            <span class="c">#typed_c_arrptr = c_arrptr.astype(ptr_t2)</span>
+            <span class="c">#typed_c_arrptr = c_arrptr.astype(C.c_uint8)</span>
+            <span class="c">#typed_c_arrptr = c_arrptr.astype(C.c_void_p)</span>
+            <span class="c">#typed_c_arrptr = c_arrptr.astype(C.c_int)</span>
+            <span class="c">#typed_c_arrptr = c_arrptr.astype(C.c_char)  # WORKS BUT WRONG</span>
+            <span class="c">#typed_c_arrptr = c_arrptr.astype(bytes)  # WORKS BUT WRONG</span>
+            <span class="c">#typed_c_arrptr = c_arrptr.astype(int)</span>
+            <span class="c">#typed_c_arrptr = c_arrptr</span>
+            <span class="c">#typed_c_arrptr = c_arrptr.astype(np.int64)</span>
+            <span class="c">#typed_c_arrptr = c_arrptr.astype(int)</span>
+
+            <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            ctypes.cast(arg1, arg2)</span>
+
+<span class="sd">            Input:</span>
+<span class="sd">                arg1 - a ctypes object that is or can be converted to a pointer</span>
+<span class="sd">                       of some kind</span>
+<span class="sd">                arg2 - a ctypes pointer type.</span>
+<span class="sd">            Output:</span>
+<span class="sd">                 It returns an instance of the second argument, which references</span>
+<span class="sd">                 the same memory block as the first argument</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="n">c_arr</span> <span class="o">=</span> <span class="n">C</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">typed_c_arrptr</span><span class="p">,</span> <span class="n">dtype_ptr_t</span><span class="p">)</span>   <span class="c"># cast to ctypes</span>
+        <span class="n">np_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ctypeslib</span><span class="o">.</span><span class="n">as_array</span><span class="p">(</span><span class="n">c_arr</span><span class="p">,</span> <span class="n">shape</span><span class="p">)</span>       <span class="c"># cast to numpy</span>
+        <span class="n">np_arr</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="n">dtype</span>                               <span class="c"># fix numpy dtype</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+        <span class="kn">import</span> <span class="nn">utool</span>
+        <span class="c">#utool.embed()</span>
+        <span class="n">varnames</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">locals</span><span class="p">()</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+        <span class="n">vartypes</span> <span class="o">=</span> <span class="p">[(</span><span class="nb">type</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">varnames</span><span class="p">]</span>
+        <span class="n">spaces</span>    <span class="o">=</span> <span class="p">[</span><span class="bp">None</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">varnames</span><span class="p">]</span>
+        <span class="n">key_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">utool</span><span class="o">.</span><span class="n">roundrobin</span><span class="p">(</span><span class="n">varnames</span><span class="p">,</span> <span class="n">vartypes</span><span class="p">,</span> <span class="n">spaces</span><span class="p">))</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&#39;itemsize(float) = </span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">itemsize</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&#39;itemsize(c_char) = </span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">C</span><span class="o">.</span><span class="n">c_char</span><span class="p">)</span><span class="o">.</span><span class="n">itemsize</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&#39;itemsize(c_wchar) = </span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">C</span><span class="o">.</span><span class="n">c_wchar</span><span class="p">)</span><span class="o">.</span><span class="n">itemsize</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&#39;itemsize(c_char_p) = </span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">C</span><span class="o">.</span><span class="n">c_char_p</span><span class="p">)</span><span class="o">.</span><span class="n">itemsize</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&#39;itemsize(c_wchar_p) = </span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">C</span><span class="o">.</span><span class="n">c_wchar_p</span><span class="p">)</span><span class="o">.</span><span class="n">itemsize</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&#39;itemsize(c_int) = </span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">C</span><span class="o">.</span><span class="n">c_int</span><span class="p">)</span><span class="o">.</span><span class="n">itemsize</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&#39;itemsize(c_int32) = </span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">C</span><span class="o">.</span><span class="n">c_int32</span><span class="p">)</span><span class="o">.</span><span class="n">itemsize</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&#39;itemsize(c_int64) = </span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">C</span><span class="o">.</span><span class="n">c_int64</span><span class="p">)</span><span class="o">.</span><span class="n">itemsize</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&#39;itemsize(int) = </span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span><span class="o">.</span><span class="n">itemsize</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&#39;itemsize(float32) = </span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span><span class="o">.</span><span class="n">itemsize</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&#39;itemsize(float64) = </span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span><span class="o">.</span><span class="n">itemsize</span><span class="p">)</span>
+        <span class="n">utool</span><span class="o">.</span><span class="n">printex</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">key_list</span><span class="o">=</span><span class="n">key_list</span><span class="p">)</span>
+        <span class="k">raise</span>
+    <span class="k">return</span> <span class="n">np_arr</span>
+
+</div>
+<div class="viewcode-block" id="extract_2darr_list"><a class="viewcode-back" href="../../pyhesaff.html#pyhesaff._pyhesaff.extract_2darr_list">[docs]</a><span class="k">def</span> <span class="nf">extract_2darr_list</span><span class="p">(</span><span class="n">size_list</span><span class="p">,</span> <span class="n">ptr_list</span><span class="p">,</span> <span class="n">arr_t</span><span class="p">,</span> <span class="n">arr_dtype</span><span class="p">,</span>
+                        <span class="n">arr_dim</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    size_list - contains the size of each output 2d array</span>
+<span class="sd">    ptr_list  - an array of pointers to the head of each output 2d</span>
+<span class="sd">                array (which was allocated in C)</span>
+<span class="sd">    arr_t     - the C pointer type</span>
+<span class="sd">    arr_dtype - the numpy array type</span>
+<span class="sd">    arr_dim   - the number of columns in each output 2d array</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">iter_</span> <span class="o">=</span> <span class="p">((</span><span class="n">arr_ptr</span><span class="p">,</span> <span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">arr_dim</span><span class="p">))</span>
+             <span class="k">for</span> <span class="p">(</span><span class="n">arr_ptr</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">ptr_list</span><span class="p">,</span> <span class="n">size_list</span><span class="p">))</span>
+    <span class="n">arr_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">arrptr_to_np</span><span class="p">(</span><span class="n">arr_ptr</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">arr_t</span><span class="p">,</span> <span class="n">arr_dtype</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">arr_ptr</span><span class="p">,</span> <span class="n">shape</span> <span class="ow">in</span> <span class="n">iter_</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">arr_list</span>
+
+</div>
+<div class="viewcode-block" id="detect_kpts_list"><a class="viewcode-back" href="../../pyhesaff.html#pyhesaff._pyhesaff.detect_kpts_list">[docs]</a><span class="k">def</span> <span class="nf">detect_kpts_list</span><span class="p">(</span><span class="n">image_paths_list</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Input: A list of image paths</span>
+<span class="sd">    Output: A tuple of lists of keypoints and descriptors</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c"># Get Num Images</span>
+    <span class="n">nImgs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">image_paths_list</span><span class="p">)</span>
+
+    <span class="c"># Cast string list to C</span>
+    <span class="k">if</span> <span class="n">six</span><span class="o">.</span><span class="n">PY2</span><span class="p">:</span>
+        <span class="n">realpaths_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">realpath</span><span class="p">,</span> <span class="n">image_paths_list</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">six</span><span class="o">.</span><span class="n">PY3</span><span class="p">:</span>
+        <span class="n">realpaths_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">realpath</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;ascii&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">image_paths_list</span><span class="p">]</span>
+
+    <span class="n">c_strs</span> <span class="o">=</span> <span class="n">_cast_strlist_to_C</span><span class="p">(</span><span class="n">realpaths_list</span><span class="p">)</span>
+
+    <span class="c"># Allocate empty array pointers for each image</span>
+    <span class="n">kpts_ptr_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">nImgs</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">kpts_t</span><span class="p">)</span>  <span class="c"># array of float arrays</span>
+    <span class="n">desc_ptr_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">nImgs</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">desc_t</span><span class="p">)</span>  <span class="c"># array of byte arrays</span>
+    <span class="n">nDetect_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">nImgs</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">int_t</span><span class="p">)</span>  <span class="c"># array of detections per image</span>
+
+    <span class="c"># Get algorithm parameters</span>
+    <span class="n">hesaff_params</span> <span class="o">=</span> <span class="n">hesaff_param_dict</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">hesaff_params</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">hesaff_args</span> <span class="o">=</span> <span class="n">hesaff_params</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>  <span class="c"># pass all parameters to HESAFF_CLIB</span>
+
+    <span class="c"># Detect keypoints in parallel</span>
+    <span class="n">HESAFF_CLIB</span><span class="o">.</span><span class="n">detectKeypointsList</span><span class="p">(</span><span class="n">nImgs</span><span class="p">,</span> <span class="n">c_strs</span><span class="p">,</span>
+                                    <span class="n">kpts_ptr_array</span><span class="p">,</span> <span class="n">desc_ptr_array</span><span class="p">,</span>
+                                    <span class="n">nDetect_array</span><span class="p">,</span> <span class="o">*</span><span class="n">hesaff_args</span><span class="p">)</span>
+
+    <span class="c"># Cast keypoint array to list of numpy keypoints</span>
+    <span class="n">kpts_list</span> <span class="o">=</span> <span class="n">extract_2darr_list</span><span class="p">(</span><span class="n">nDetect_array</span><span class="p">,</span> <span class="n">kpts_ptr_array</span><span class="p">,</span> <span class="n">kpts_t</span><span class="p">,</span> <span class="n">kpts_dtype</span><span class="p">,</span> <span class="n">KPTS_DIM</span><span class="p">)</span>
+    <span class="c"># Cast descriptor array to list of numpy descriptors</span>
+    <span class="n">desc_list</span> <span class="o">=</span> <span class="n">extract_2darr_list</span><span class="p">(</span><span class="n">nDetect_array</span><span class="p">,</span> <span class="n">desc_ptr_array</span><span class="p">,</span> <span class="n">desc_t</span><span class="p">,</span> <span class="n">desc_dtype</span><span class="p">,</span> <span class="n">DESC_DIM</span><span class="p">)</span>
+
+    <span class="c">#kpts_list = [arrptr_to_np(kpts_ptr, (len_, KPTS_DIM), kpts_t, kpts_dtype)</span>
+    <span class="c">#             for (kpts_ptr, len_) in zip(kpts_ptr_array, nDetect_array)]</span>
+    <span class="c">#desc_list = [arrptr_to_np(desc_ptr, (len_, DESC_DIM), desc_t, desc_dtype)</span>
+    <span class="c">#             for (desc_ptr, len_) in zip(desc_ptr_array, nDetect_array)]</span>
+
+    <span class="k">return</span> <span class="n">kpts_list</span><span class="p">,</span> <span class="n">desc_list</span>
+
+
+<span class="c">#@profile</span></div>
+<div class="viewcode-block" id="detect_kpts"><a class="viewcode-back" href="../../pyhesaff.html#pyhesaff._pyhesaff.detect_kpts">[docs]</a><span class="k">def</span> <span class="nf">detect_kpts</span><span class="p">(</span><span class="n">img_fpath</span><span class="p">,</span>
+                <span class="n">use_adaptive_scale</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">nogravity_hack</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    main driver function for detecting hessian affine keypoints.</span>
+<span class="sd">    extra parameters can be passed to the hessian affine detector by using</span>
+<span class="sd">    kwargs.  &quot;&quot;&quot;</span>
+    <span class="c">#Valid keyword arguments are: + str(hesaff_param_dict.keys())</span>
+    <span class="k">if</span> <span class="n">__DEBUG__</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&#39;[hes] Detecting Keypoints&#39;</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&#39;[hes] use_adaptive_scale=</span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">use_adaptive_scale</span><span class="p">,))</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&#39;[hes] nogravity_hack=</span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">nogravity_hack</span><span class="p">,))</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&#39;[hes] kwargs=</span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">kwargs</span><span class="p">,))</span>
+    <span class="n">hesaff_ptr</span> <span class="o">=</span> <span class="n">_new_hesaff</span><span class="p">(</span><span class="n">img_fpath</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">__DEBUG__</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&#39;[hes] detect&#39;</span><span class="p">)</span>
+    <span class="n">nKpts</span> <span class="o">=</span> <span class="n">HESAFF_CLIB</span><span class="o">.</span><span class="n">detect</span><span class="p">(</span><span class="n">hesaff_ptr</span><span class="p">)</span>  <span class="c"># Get num detected</span>
+    <span class="k">if</span> <span class="n">__DEBUG__</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&#39;[hes] allocate&#39;</span><span class="p">)</span>
+    <span class="n">kpts</span><span class="p">,</span> <span class="n">desc</span> <span class="o">=</span> <span class="n">_allocate_kpts_and_desc</span><span class="p">(</span><span class="n">nKpts</span><span class="p">)</span>  <span class="c"># Allocate arrays</span>
+    <span class="k">if</span> <span class="n">__DEBUG__</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&#39;[hes] export&#39;</span><span class="p">)</span>
+    <span class="n">HESAFF_CLIB</span><span class="o">.</span><span class="n">exportArrays</span><span class="p">(</span><span class="n">hesaff_ptr</span><span class="p">,</span> <span class="n">nKpts</span><span class="p">,</span> <span class="n">kpts</span><span class="p">,</span> <span class="n">desc</span><span class="p">)</span>  <span class="c"># Populate arrays</span>
+    <span class="k">if</span> <span class="n">use_adaptive_scale</span><span class="p">:</span>  <span class="c"># Adapt scale if requested</span>
+        <span class="c">#print(&#39;Adapting Scale&#39;)</span>
+        <span class="k">if</span> <span class="n">__DEBUG__</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;[hes] adapt_scale&#39;</span><span class="p">)</span>
+        <span class="n">kpts</span><span class="p">,</span> <span class="n">desc</span> <span class="o">=</span> <span class="n">adapt_scale</span><span class="p">(</span><span class="n">img_fpath</span><span class="p">,</span> <span class="n">kpts</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">nogravity_hack</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">__DEBUG__</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;[hes] adapt_rotation&#39;</span><span class="p">)</span>
+        <span class="n">kpts</span><span class="p">,</span> <span class="n">desc</span> <span class="o">=</span> <span class="n">adapt_rotation</span><span class="p">(</span><span class="n">img_fpath</span><span class="p">,</span> <span class="n">kpts</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">kpts</span><span class="p">,</span> <span class="n">desc</span>
+
+</div>
+<div class="viewcode-block" id="adapt_rotation"><a class="viewcode-back" href="../../pyhesaff.html#pyhesaff._pyhesaff.adapt_rotation">[docs]</a><span class="k">def</span> <span class="nf">adapt_rotation</span><span class="p">(</span><span class="n">img_fpath</span><span class="p">,</span> <span class="n">kpts</span><span class="p">):</span>
+    <span class="kn">import</span> <span class="nn">vtool.patch</span> <span class="kn">as</span> <span class="nn">ptool</span>
+    <span class="kn">import</span> <span class="nn">vtool.image</span> <span class="kn">as</span> <span class="nn">gtool</span>
+    <span class="n">imgBGR</span> <span class="o">=</span> <span class="n">gtool</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">img_fpath</span><span class="p">)</span>
+    <span class="n">kpts2</span> <span class="o">=</span> <span class="n">ptool</span><span class="o">.</span><span class="n">find_kpts_direction</span><span class="p">(</span><span class="n">imgBGR</span><span class="p">,</span> <span class="n">kpts</span><span class="p">)</span>
+    <span class="n">desc2</span> <span class="o">=</span> <span class="n">extract_desc</span><span class="p">(</span><span class="n">img_fpath</span><span class="p">,</span> <span class="n">kpts2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">kpts2</span><span class="p">,</span> <span class="n">desc2</span>
+
+
+<span class="c">#@profile</span></div>
+<div class="viewcode-block" id="adapt_scale"><a class="viewcode-back" href="../../pyhesaff.html#pyhesaff._pyhesaff.adapt_scale">[docs]</a><span class="k">def</span> <span class="nf">adapt_scale</span><span class="p">(</span><span class="n">img_fpath</span><span class="p">,</span> <span class="n">kpts</span><span class="p">):</span>
+    <span class="kn">import</span> <span class="nn">vtool.ellipse</span> <span class="kn">as</span> <span class="nn">etool</span>
+    <span class="n">nScales</span> <span class="o">=</span> <span class="mi">16</span>
+    <span class="n">nSamples</span> <span class="o">=</span> <span class="mi">16</span>
+    <span class="n">low</span><span class="p">,</span> <span class="n">high</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span>
+    <span class="n">kpts2</span> <span class="o">=</span> <span class="n">etool</span><span class="o">.</span><span class="n">adaptive_scale</span><span class="p">(</span><span class="n">img_fpath</span><span class="p">,</span> <span class="n">kpts</span><span class="p">,</span> <span class="n">nScales</span><span class="p">,</span> <span class="n">low</span><span class="p">,</span> <span class="n">high</span><span class="p">,</span> <span class="n">nSamples</span><span class="p">)</span>
+    <span class="c"># passing in 0 orientation results in gravity vector direction keypoint</span>
+    <span class="n">desc2</span> <span class="o">=</span> <span class="n">extract_desc</span><span class="p">(</span><span class="n">img_fpath</span><span class="p">,</span> <span class="n">kpts2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">kpts2</span><span class="p">,</span> <span class="n">desc2</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">pyhesaff 1.1.0.dev1 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Jon Crall.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,168 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pyhesaff.tests.pyhestest &mdash; pyhesaff 1.1.0.dev1 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.1.0.dev1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="pyhesaff 1.1.0.dev1 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">pyhesaff 1.1.0.dev1 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for pyhesaff.tests.pyhestest</h1><div class="highlight"><pre>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span><span class="p">,</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">division</span>
+<span class="c"># Standard</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">os.path</span> <span class="kn">import</span> <span class="n">realpath</span><span class="p">,</span> <span class="n">join</span><span class="p">,</span> <span class="n">split</span>
+<span class="kn">from</span> <span class="nn">vtool.tests</span> <span class="kn">import</span> <span class="n">grabdata</span>
+<span class="c"># Scientific</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">cv2</span>
+<span class="c"># TPL</span>
+<span class="kn">import</span> <span class="nn">pyhesaff</span>
+<span class="kn">import</span> <span class="nn">utool</span>
+<span class="n">utool</span><span class="o">.</span><span class="n">inject_colored_exceptions</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="get_test_image"><a class="viewcode-back" href="../../../pyhesaff.tests.html#pyhesaff.tests.pyhestest.get_test_image">[docs]</a><span class="k">def</span> <span class="nf">get_test_image</span><span class="p">():</span>
+    <span class="n">img_fname</span> <span class="o">=</span> <span class="s">&#39;zebra.jpg&#39;</span>
+    <span class="k">if</span> <span class="s">&#39;--zebra.png&#39;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">:</span>
+        <span class="n">img_fname</span> <span class="o">=</span> <span class="s">&#39;zebra.jpg&#39;</span>
+    <span class="k">if</span> <span class="s">&#39;--lena.png&#39;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">:</span>
+        <span class="n">img_fname</span> <span class="o">=</span> <span class="s">&#39;lena.jpg&#39;</span>
+    <span class="k">if</span> <span class="s">&#39;--jeff.png&#39;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">:</span>
+        <span class="n">img_fname</span> <span class="o">=</span> <span class="s">&#39;jeff.png&#39;</span>
+    <span class="n">imgdir</span> <span class="o">=</span> <span class="n">grabdata</span><span class="o">.</span><span class="n">get_testdata_dir</span><span class="p">()</span>
+    <span class="n">img_fpath</span> <span class="o">=</span> <span class="n">realpath</span><span class="p">(</span><span class="n">join</span><span class="p">(</span><span class="n">imgdir</span><span class="p">,</span> <span class="n">img_fname</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">img_fpath</span>
+
+</div>
+<div class="viewcode-block" id="load_test_data"><a class="viewcode-back" href="../../../pyhesaff.tests.html#pyhesaff.tests.pyhestest.load_test_data">[docs]</a><span class="k">def</span> <span class="nf">load_test_data</span><span class="p">(</span><span class="n">short</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">use_cpp</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">if</span> <span class="s">&#39;short&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">vars</span><span class="p">():</span>
+        <span class="n">short</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="c"># Read Image</span>
+    <span class="c">#ellipse.rrr()</span>
+    <span class="n">nScales</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="n">nSamples</span> <span class="o">=</span> <span class="mi">16</span>
+    <span class="n">img_fpath</span> <span class="o">=</span> <span class="n">get_test_image</span><span class="p">()</span>
+    <span class="n">imgBGR</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">img_fpath</span><span class="p">)</span>
+    <span class="n">imgLAB</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">cvtColor</span><span class="p">(</span><span class="n">imgBGR</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">COLOR_BGR2LAB</span><span class="p">)</span>
+    <span class="n">imgL</span> <span class="o">=</span> <span class="n">imgLAB</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">detect_kwargs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s">&#39;scale_min&#39;</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span>
+        <span class="s">&#39;scale_max&#39;</span><span class="p">:</span> <span class="mi">100</span>
+    <span class="p">}</span>
+    <span class="n">detect_kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">use_cpp</span><span class="p">:</span>
+        <span class="n">kpts</span><span class="p">,</span> <span class="n">desc</span> <span class="o">=</span> <span class="n">pyhesaff</span><span class="o">.</span><span class="n">detect_kpts</span><span class="p">(</span><span class="n">img_fpath</span><span class="p">,</span> <span class="o">**</span><span class="n">detect_kwargs</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c"># Try the new C++ code</span>
+        <span class="p">[</span><span class="n">kpts</span><span class="p">],</span> <span class="p">[</span><span class="n">desc</span><span class="p">]</span> <span class="o">=</span> <span class="n">pyhesaff</span><span class="o">.</span><span class="n">detect_kpts_list</span><span class="p">([</span><span class="n">img_fpath</span><span class="p">],</span> <span class="o">**</span><span class="n">detect_kwargs</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">short</span> <span class="ow">and</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">extra_fxs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">split</span><span class="p">(</span><span class="n">img_fpath</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;zebra.png&#39;</span><span class="p">:</span>
+            <span class="n">extra_fxs</span> <span class="o">=</span> <span class="p">[</span><span class="mi">374</span><span class="p">,</span> <span class="mi">520</span><span class="p">,</span> <span class="mi">880</span><span class="p">][</span><span class="mi">0</span><span class="p">:</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">fxs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">spaced_elements2</span><span class="p">(</span><span class="n">kpts</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="o">+</span> <span class="n">extra_fxs</span><span class="p">)</span>
+        <span class="n">kpts</span> <span class="o">=</span> <span class="n">kpts</span><span class="p">[</span><span class="n">fxs</span><span class="p">]</span>
+        <span class="n">desc</span> <span class="o">=</span> <span class="n">desc</span><span class="p">[</span><span class="n">fxs</span><span class="p">]</span>
+    <span class="n">test_data</span> <span class="o">=</span> <span class="nb">locals</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">test_data</span>
+
+</div>
+<div class="viewcode-block" id="spaced_elements2"><a class="viewcode-back" href="../../../pyhesaff.tests.html#pyhesaff.tests.pyhestest.spaced_elements2">[docs]</a><span class="k">def</span> <span class="nf">spaced_elements2</span><span class="p">(</span><span class="n">list_</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">list_</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">indexes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">list_</span><span class="p">))</span>
+    <span class="n">stride</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">indexes</span><span class="p">)</span> <span class="o">//</span> <span class="n">n</span>
+    <span class="k">return</span> <span class="n">indexes</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="n">stride</span><span class="p">]</span>
+
+</div>
+<div class="viewcode-block" id="spaced_elements"><a class="viewcode-back" href="../../../pyhesaff.tests.html#pyhesaff.tests.pyhestest.spaced_elements">[docs]</a><span class="k">def</span> <span class="nf">spaced_elements</span><span class="p">(</span><span class="n">list_</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s">&#39;list&#39;</span>
+    <span class="n">indexes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">list_</span><span class="p">))</span>
+    <span class="n">stride</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">indexes</span><span class="p">)</span> <span class="o">//</span> <span class="n">n</span>
+    <span class="k">return</span> <span class="n">list_</span><span class="p">[</span><span class="n">indexes</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="n">stride</span><span class="p">]]</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">pyhesaff 1.1.0.dev1 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, Jon Crall.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>
