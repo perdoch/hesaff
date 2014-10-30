@@ -38,12 +38,16 @@ __DEBUG__ = '--debug-pyhesaff' in sys.argv or '--debug' in sys.argv
 
 # numpy dtypes
 kpts_dtype = np.float32
-desc_dtype = np.uint8
+vecs_dtype = np.uint8
 # scalar ctypes
 obj_t     = C.c_void_p
 str_t     = C.c_char_p
+PY2 = True  # six.PY2
 #if six.PY2:
-int_t     = C.c_int
+if PY2:
+    int_t     = C.c_int
+else:
+    raise NotImplementedError('PY3')
 #if six.PY3:
 #    int_t     = C.c_long
 bool_t    = C.c_bool
@@ -53,9 +57,9 @@ float_t   = C.c_float
 FLAGS_RW = 'aligned, c_contiguous, writeable'
 #FLAGS_RW = 'aligned, writeable'
 kpts_t       = np.ctypeslib.ndpointer(dtype=kpts_dtype, ndim=2, flags=FLAGS_RW)
-desc_t       = np.ctypeslib.ndpointer(dtype=desc_dtype, ndim=2, flags=FLAGS_RW)
+vecs_t       = np.ctypeslib.ndpointer(dtype=vecs_dtype, ndim=2, flags=FLAGS_RW)
 kpts_array_t = np.ctypeslib.ndpointer(dtype=kpts_t, ndim=1, flags=FLAGS_RW)
-desc_array_t = np.ctypeslib.ndpointer(dtype=desc_t, ndim=1, flags=FLAGS_RW)
+vecs_array_t = np.ctypeslib.ndpointer(dtype=vecs_t, ndim=1, flags=FLAGS_RW)
 int_array_t  = np.ctypeslib.ndpointer(dtype=int_t, ndim=1, flags=FLAGS_RW)
 str_list_t   = C.POINTER(str_t)
 
@@ -108,12 +112,12 @@ def load_hesaff_clib():
     # Expose extern C Functions to hesaff's clib
     def_cfunc(int_t, 'detect',                 [obj_t])
     def_cfunc(int_t, 'get_kpts_dim',           [])
-    def_cfunc(None,  'exportArrays',           [obj_t, int_t, kpts_t, desc_t])
-    def_cfunc(None,  'extractDesc',            [obj_t, int_t, kpts_t, desc_t])
+    def_cfunc(None,  'exportArrays',           [obj_t, int_t, kpts_t, vecs_t])
+    def_cfunc(None,  'extractDesc',            [obj_t, int_t, kpts_t, vecs_t])
     def_cfunc(obj_t, 'new_hesaff',             [str_t])
     def_cfunc(obj_t, 'new_hesaff_from_params', [str_t] + hesaff_param_types)
     def_cfunc(None,  'detectKeypointsList',    [int_t, str_list_t, kpts_array_t,
-                                                desc_array_t, int_array_t] +
+                                                vecs_array_t, int_array_t] +
                                                 hesaff_param_types)
     return clib, lib_fpath
 
@@ -133,15 +137,15 @@ if __DEBUG__:
 #============================
 
 
-def _alloc_desc(nKpts):
-    desc = np.empty((nKpts, DESC_DIM), desc_dtype)
-    return desc
+def _alloc_vecs(nKpts):
+    vecs = np.empty((nKpts, DESC_DIM), vecs_dtype)
+    return vecs
 
 
-def _allocate_kpts_and_desc(nKpts):
+def _allocate_kpts_and_vecs(nKpts):
     kpts = np.empty((nKpts, KPTS_DIM), kpts_dtype)  # array of floats
-    desc = _alloc_desc(nKpts)  # array of bytes
-    return kpts, desc
+    vecs = _alloc_vecs(nKpts)  # array of bytes
+    return kpts, vecs
 
 
 def _make_hesaff_cpp_params(**kwargs):
@@ -165,19 +169,27 @@ def _new_hesaff(img_fpath, **kwargs):
     if six.PY3:
         # convert out of unicode
         img_realpath = img_realpath.encode('ascii')
-    hesaff_ptr = HESAFF_CLIB.new_hesaff_from_params(img_realpath,
-                                                    *hesaff_args)
+    try:
+        hesaff_ptr = HESAFF_CLIB.new_hesaff_from_params(img_realpath, *hesaff_args)
+    except Exception as ex:
+        msg = 'hesaff_ptr = HESAFF_CLIB.new_hesaff_from_params(img_realpath, *hesaff_args)',
+        print(msg)
+        print('hesaff_args = ')
+        print(hesaff_args)
+        import utool
+        utool.printex(ex, msg, keys=['hesaff_args'])
+        raise
     return hesaff_ptr
 
 
-def extract_desc(img_fpath, kpts, **kwargs):
+def extract_vecs(img_fpath, kpts, **kwargs):
     hesaff_ptr = _new_hesaff(img_fpath, **kwargs)
     nKpts = len(kpts)
-    desc = _alloc_desc(nKpts)  # allocate memory for new descriptors
+    vecs = _alloc_vecs(nKpts)  # allocate memory for new vecsriptors
     kpts = np.ascontiguousarray(kpts)  # kpts might not be contiguous
-    # extract descriptors at given locations
-    HESAFF_CLIB.extractDesc(hesaff_ptr, nKpts, kpts, desc)
-    return desc
+    # extract vecsriptors at given locations
+    HESAFF_CLIB.extractDesc(hesaff_ptr, nKpts, kpts, vecs)
+    return vecs
 
 
 def _cast_strlist_to_C(py_strlist):
@@ -294,7 +306,7 @@ def extract_2darr_list(size_list, ptr_list, arr_t, arr_dtype,
 def detect_kpts_list(image_paths_list, **kwargs):
     """
     Input: A list of image paths
-    Output: A tuple of lists of keypoints and descriptors
+    Output: A tuple of lists of keypoints and vecsriptors
     """
     # Get Num Images
     nImgs = len(image_paths_list)
@@ -309,7 +321,7 @@ def detect_kpts_list(image_paths_list, **kwargs):
 
     # Allocate empty array pointers for each image
     kpts_ptr_array = np.empty(nImgs, dtype=kpts_t)  # array of float arrays
-    desc_ptr_array = np.empty(nImgs, dtype=desc_t)  # array of byte arrays
+    vecs_ptr_array = np.empty(nImgs, dtype=vecs_t)  # array of byte arrays
     nDetect_array = np.empty(nImgs, dtype=int_t)  # array of detections per image
 
     # Get algorithm parameters
@@ -319,30 +331,40 @@ def detect_kpts_list(image_paths_list, **kwargs):
 
     # Detect keypoints in parallel
     HESAFF_CLIB.detectKeypointsList(nImgs, c_strs,
-                                    kpts_ptr_array, desc_ptr_array,
+                                    kpts_ptr_array, vecs_ptr_array,
                                     nDetect_array, *hesaff_args)
 
     # Cast keypoint array to list of numpy keypoints
     kpts_list = extract_2darr_list(nDetect_array, kpts_ptr_array, kpts_t, kpts_dtype, KPTS_DIM)
-    # Cast descriptor array to list of numpy descriptors
-    desc_list = extract_2darr_list(nDetect_array, desc_ptr_array, desc_t, desc_dtype, DESC_DIM)
+    # Cast vecsriptor array to list of numpy vecsriptors
+    vecs_list = extract_2darr_list(nDetect_array, vecs_ptr_array, vecs_t, vecs_dtype, DESC_DIM)
 
     #kpts_list = [arrptr_to_np(kpts_ptr, (len_, KPTS_DIM), kpts_t, kpts_dtype)
     #             for (kpts_ptr, len_) in zip(kpts_ptr_array, nDetect_array)]
-    #desc_list = [arrptr_to_np(desc_ptr, (len_, DESC_DIM), desc_t, desc_dtype)
-    #             for (desc_ptr, len_) in zip(desc_ptr_array, nDetect_array)]
+    #vecs_list = [arrptr_to_np(vecs_ptr, (len_, DESC_DIM), vecs_t, vecs_dtype)
+    #             for (vecs_ptr, len_) in zip(vecs_ptr_array, nDetect_array)]
 
-    return kpts_list, desc_list
+    return kpts_list, vecs_list
 
 
 #@profile
-def detect_kpts(img_fpath,
-                use_adaptive_scale=False, nogravity_hack=False,
-                **kwargs):
+def detect_kpts(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kwargs):
     """
     main driver function for detecting hessian affine keypoints.
     extra parameters can be passed to the hessian affine detector by using
-    kwargs.  """
+    kwargs.
+
+    Args:
+        img_fpath (str): image file path on disk
+        use_adaptive_scale (bool):
+        nogravity_hack (bool):
+
+    Returns:
+        tuple : (kpts, vecs)
+
+    Example:
+        >>> from pyhesaff._pyhesaff import *  # NOQA
+    """
     #Valid keyword arguments are: + str(hesaff_param_dict.keys())
     if __DEBUG__:
         print('[hes] Detecting Keypoints')
@@ -355,20 +377,20 @@ def detect_kpts(img_fpath,
     nKpts = HESAFF_CLIB.detect(hesaff_ptr)  # Get num detected
     if __DEBUG__:
         print('[hes] allocate')
-    kpts, desc = _allocate_kpts_and_desc(nKpts)  # Allocate arrays
+    kpts, vecs = _allocate_kpts_and_vecs(nKpts)  # Allocate arrays
     if __DEBUG__:
         print('[hes] export')
-    HESAFF_CLIB.exportArrays(hesaff_ptr, nKpts, kpts, desc)  # Populate arrays
+    HESAFF_CLIB.exportArrays(hesaff_ptr, nKpts, kpts, vecs)  # Populate arrays
     if use_adaptive_scale:  # Adapt scale if requested
         #print('Adapting Scale')
         if __DEBUG__:
             print('[hes] adapt_scale')
-        kpts, desc = adapt_scale(img_fpath, kpts)
+        kpts, vecs = adapt_scale(img_fpath, kpts)
     if nogravity_hack:
         if __DEBUG__:
             print('[hes] adapt_rotation')
-        kpts, desc = adapt_rotation(img_fpath, kpts)
-    return kpts, desc
+        kpts, vecs = adapt_rotation(img_fpath, kpts)
+    return kpts, vecs
 
 
 def adapt_rotation(img_fpath, kpts):
@@ -376,8 +398,8 @@ def adapt_rotation(img_fpath, kpts):
     import vtool.image as gtool
     imgBGR = gtool.imread(img_fpath)
     kpts2 = ptool.find_kpts_direction(imgBGR, kpts)
-    desc2 = extract_desc(img_fpath, kpts2)
-    return kpts2, desc2
+    vecs2 = extract_vecs(img_fpath, kpts2)
+    return kpts2, vecs2
 
 
 #@profile
@@ -388,5 +410,5 @@ def adapt_scale(img_fpath, kpts):
     low, high = -1, 2
     kpts2 = etool.adaptive_scale(img_fpath, kpts, nScales, low, high, nSamples)
     # passing in 0 orientation results in gravity vector direction keypoint
-    desc2 = extract_desc(img_fpath, kpts2)
-    return kpts2, desc2
+    vecs2 = extract_vecs(img_fpath, kpts2)
+    return kpts2, vecs2
