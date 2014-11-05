@@ -4,20 +4,19 @@
 #ifdef WIN32
 #ifndef snprintf
 #define snprintf _snprintf
-#endif
-#endif
+#endif // ndef sprintf
+#endif // WIN32
 
-#define HESAFF_EXPORT
-#ifndef FOO_DLL
-// No need on mingw
-#ifdef HESAFF_EXPORTS
+#define HESAFF_EXPORT // ????
+#ifndef FOO_DLL  // ???
+#ifdef HESAFF_EXPORTS // EXPORTS??? ... No need on mingw
 #define HESAFF_EXPORT __declspec(dllexport)
 #else
 //#define HESAFF_EXPORT __declspec(dllimport)
 #endif
 #else
 #define HESAFF_EXPORT
-#endif
+#endif // FOO_DLL // ???
 
 struct HesaffParams
 {
