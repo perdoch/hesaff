@@ -104,6 +104,9 @@ def TEST_keypoint(imgBGR, img_fpath, kpts, desc, sel, fnum=1, figtitle=''):
 
 if __name__ == '__main__':
     # Read data
+    """
+    python pyhesaff/tests/test_cpp_rotation_invariance.py
+    """
     print('[rotinvar] loading test data')
     img_fpath = pyhestest.get_test_image()
     [kpts1], [desc1] = pyhesaff.detect_kpts_list([img_fpath], rotation_invariance=False)
