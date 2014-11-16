@@ -439,6 +439,9 @@ def in_depth_ellipse(kp):
 
 
 if __name__ == '__main__':
+    """
+    python pyhesaff/tests/test_ellipse.py
+    """
     print('__main__ = test_ellipse.py')
     np.set_printoptions(threshold=5000, linewidth=5000, precision=3)
 

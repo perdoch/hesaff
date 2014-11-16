@@ -305,8 +305,18 @@ def extract_2darr_list(size_list, ptr_list, arr_t, arr_dtype,
 
 def detect_kpts_list(image_paths_list, **kwargs):
     """
-    Input: A list of image paths
-    Output: A tuple of lists of keypoints and vecsriptors
+    Args:
+        image_paths_list (list): A list of image paths
+
+    Returns:
+        tuple: (kpts_list, vecs_list) A tuple of lists of keypoints and vecsriptors
+
+    Example:
+        >>> from pyhesaff._pyhesaff import *  # NOQA
+        >>> image_paths_list = '?'
+        >>> (kpts_list, vecs_list) = detect_kpts_list(image_paths_list)
+        >>> print((kpts_list, vecs_list))
+
     """
     # Get Num Images
     nImgs = len(image_paths_list)
