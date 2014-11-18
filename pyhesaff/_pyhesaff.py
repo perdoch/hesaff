@@ -312,8 +312,11 @@ def detect_kpts_list(image_paths_list, **kwargs):
         tuple: (kpts_list, vecs_list) A tuple of lists of keypoints and vecsriptors
 
     Example:
+        >>> # ENABLE_DOCTEST
         >>> from pyhesaff._pyhesaff import *  # NOQA
-        >>> image_paths_list = '?'
+        >>> import utool as ut
+        >>> lena_fpath = ut.grab_file_url('http://i.imgur.com/JGrqMnV.png', fname='lena.png')
+        >>> image_paths_list = [lena_fpath]
         >>> (kpts_list, vecs_list) = detect_kpts_list(image_paths_list)
         >>> print((kpts_list, vecs_list))
 
@@ -422,3 +425,17 @@ def adapt_scale(img_fpath, kpts):
     # passing in 0 orientation results in gravity vector direction keypoint
     vecs2 = extract_vecs(img_fpath, kpts2)
     return kpts2, vecs2
+
+
+if __name__ == '__main__':
+    """
+    CommandLine:
+        python -c "import utool, pyhesaff._pyhesaff; utool.doctest_funcs(pyhesaff._pyhesaff, allexamples=True)"
+        python -c "import utool, pyhesaff._pyhesaff; utool.doctest_funcs(pyhesaff._pyhesaff)"
+        python pyhesaff\_pyhesaff.py
+        python pyhesaff\_pyhesaff.py --allexamples
+    """
+    import multiprocessing
+    multiprocessing.freeze_support()  # for win32
+    import utool as ut  # NOQA
+    ut.doctest_funcs()
