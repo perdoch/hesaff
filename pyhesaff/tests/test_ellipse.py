@@ -13,7 +13,7 @@ import numpy as np
 import vtool.linalg as ltool
 
 
-np.tau = 2 * np.pi  # tauday.com
+np.tau = 2 * np.pi  # References: tauday.com
 
 
 def draw_expanded_scales(imgL, sel_kpts, exkpts, exdesc_):
