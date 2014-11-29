@@ -6,12 +6,12 @@ from six.moves import zip
 # Scientific
 import numpy as np
 # TPL
-import pyhestest
 import pyhesaff
+from pyhesaff.tests import pyhestest
 # VTool
 from plottool import draw_func2 as df2
 from plottool.viz_keypoints import show_keypoints
-import vtool.ellipse as etool
+import vtool.ellipse as vtellipse
 
 
 def test_hesaff_kpts(img_fpath, **kwargs):
@@ -40,7 +40,7 @@ def test_adaptive_scale():
     """
     __name__ = 'IPython'
     exec(open('test_pyhesaff.py').read())
-    exec(open('etool.py').read())
+    exec(open('vtellipse.py').read())
     """
     print('test_adaptive_scale()')
     test_data = pyhestest.load_test_data(short=True, n=4)
@@ -79,14 +79,14 @@ def test_adaptive_scale():
 
     # STEP1: EXPAND KEYPOINTS
     print('step1: expand_keypoints()')
-    expanded_kpts = etool.expand_scales(kpts, nScales, low, high)
+    expanded_kpts = vtellipse.expand_scales(kpts, nScales, low, high)
     show_kpts(expanded_kpts, 2, 'expanded keypoint')
 
     # STEP2: UNIFORM SAMPLE / INTERPOLATE MAXIMA
     print('step2: uniform_sample / interpolate maxima()')
-    border_vals_sum = etool.sample_ell_border_vals(imgBGR, expanded_kpts, nKp, nScales, nSamples)
-    x_data_list, y_data_list = etool.find_maxima_with_neighbors(border_vals_sum)
-    peak_list = etool.interpolate_peaks(x_data_list, y_data_list)
+    border_vals_sum = vtellipse.sample_ell_border_vals(imgBGR, expanded_kpts, nKp, nScales, nSamples)
+    x_data_list, y_data_list = vtellipse.find_maxima_with_neighbors(border_vals_sum)
+    peak_list = vtellipse.interpolate_peaks(x_data_list, y_data_list)
 
     plot_line(border_vals_sum[fx], 'gradient mag')
     plot_marks([x_data_list[fx][0], y_data_list[fx][0]], 'go', 'left')
@@ -112,22 +112,22 @@ def test_adaptive_scale():
 
     # STEP 3: INTERPOLATE SCALES
     print('step3: interpolate scales')
-    subscale_list = etool.interpolate_between(peak_list, nScales, high, low)
-    subscale_kpts = etool.expand_subscales(kpts, subscale_list)
+    subscale_list = vtellipse.interpolate_between(peak_list, nScales, high, low)
+    subscale_kpts = vtellipse.expand_subscales(kpts, subscale_list)
     #show_kpts(subscale_kpts, 3, 'subscale keypoint')
 
     # STEP 4: Check Image Bounds
     print('step4: check image bounds')
     # Make sure that the new shapes are in bounds
     height, width = imgBGR.shape[0:2]
-    isvalid = etool.check_kpts_in_bounds(subscale_kpts, width, height)
+    isvalid = vtellipse.check_kpts_in_bounds(subscale_kpts, width, height)
     adapted_kpts = np.array(subscale_kpts[isvalid], dtype=np.float32)
     show_kpts(adapted_kpts, 3, 'adapted keypoint')
 
     df2.update()
 
     scales = 2 ** np.linspace(low, high, nScales)
-    adapted_kpts = etool.adaptive_scale(img_fpath, kpts, nScales, low, high, nSamples)
+    adapted_kpts = vtellipse.adaptive_scale(img_fpath, kpts, nScales, low, high, nSamples)
 
     #plot_vals(adapted_kpts, pnum=(3
 
@@ -141,6 +141,10 @@ def test_adaptive_scale():
 
 
 if __name__ == '__main__':
+    """
+    CommandLine:
+        python -m pyhesaff.tests.test_adaptive_scale
+    """
     multiprocessing.freeze_support()
     print('__main__ = test_adaptive_scale.py')
     np.set_printoptions(threshold=5000, linewidth=5000, precision=3)

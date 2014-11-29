@@ -105,7 +105,9 @@ def TEST_keypoint(imgBGR, img_fpath, kpts, desc, sel, fnum=1, figtitle=''):
 if __name__ == '__main__':
     # Read data
     """
-    python pyhesaff/tests/test_cpp_rotation_invariance.py
+    CommandLine:
+        python pyhesaff/tests/test_cpp_rotation_invariance.py
+        python -m pyhesaff.tests.test_cpp_rotation_invariance
     """
     print('[rotinvar] loading test data')
     img_fpath = pyhestest.get_test_image()
@@ -144,3 +146,17 @@ if __name__ == '__main__':
 
     #pinteract.interact_keypoints(imgBGR, kpts2, desc, arrow=True, rect=True)
     exec(df2.present())
+
+
+#if __name__ == '__main__':
+#    """
+#    CommandLine:
+#        python -c "import utool, pyhesaff.tests.test_cpp_rotation_invariance; utool.doctest_funcs(pyhesaff.tests.test_cpp_rotation_invariance, allexamples=True)"
+#
+#        python -m pyhesaff.tests.test_cpp_rotation_invariance --allexamples
+#        python -m pyhesaff.tests.test_cpp_rotation_invariance --allexamples --noface --nosrc
+#    """
+#    import multiprocessing
+#    multiprocessing.freeze_support()  # for win32
+#    import utool as ut  # NOQA
+#    ut.doctest_funcs()
