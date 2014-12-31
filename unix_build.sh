@@ -14,5 +14,5 @@ fi
 export NCPUS=$(grep -c ^processor /proc/cpuinfo)
 make -j$NCPUS || { echo "FAILED MAKE" ; exit 1; }
 
-cp libhesaff* ../pyhesaff --verbose
+cp build/libhesaff* ../pyhesaff --verbose
 cd ..
