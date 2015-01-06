@@ -1,23 +1,22 @@
 cmake_minimum_required(VERSION 2.8)
 
+#######################################
 # Clang2 = Clang + OpenMP built for OSX Mavericks
 # http://goo.gl/1Tg0Zj
-
-#######################################
-project(hesaff)
-set(CMAKE_BUILD_TYPE "Release")
-
-#######################################
 if (APPLE)
     message("Detected APPLE system")
     SET(CLANG2 Off)
 endif()
 
 if (APPLE AND CLANG2)
-	message("Using clang2")
+    message("Using clang2")
     set(CMAKE_C_COMPILER "clang2")
     set(CMAKE_CXX_COMPILER "clang2++")
 endif()
+
+#######################################
+project(hesaff) #### !!!!IMPORTANT!!!! THIS MUST BE DOWN HERE FOR CLANG2
+set(CMAKE_BUILD_TYPE "Release")
 
 if (APPLE)
     #MacPorts
@@ -26,6 +25,10 @@ if (APPLE)
     link_directories(/opt/local/lib)
 endif()
 
+#######################################
+message(STATUS "Checking OpenCV")
+find_package( OpenCV REQUIRED )
+include_directories(${OpenCV_INCLUDE_DIRS})
 
 #######################################
 if(APPLE AND CLANG2)    
@@ -37,14 +40,9 @@ if(APPLE AND CLANG2)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libstdc++ -lstdc++ ")
 endif()
 
-# generate debug info for gdb
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ggdb")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb")
-
-#######################################
-message(STATUS "Checking OpenCV")
-find_package( OpenCV REQUIRED )
-include_directories(${OpenCV_INCLUDE_DIRS})
+# # generate debug info for gdb
+# set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ggdb")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb")
 
 #######################################
 message(STATUS "Checking OpenMP")
@@ -68,9 +66,9 @@ set(SOURCE_FILES
     src/affine.cpp 
     src/siftdesc.cpp)
 
-add_executable(hesaffexe ${SOURCE_FILES})
 add_library(hesaff SHARED ${SOURCE_FILES})
+# add_executable(hesaffexe ${SOURCE_FILES})
 
 #######################################
 target_link_libraries(hesaff ${OpenCV_LIBS})
-target_link_libraries(hesaffexe ${OpenCV_LIBS})
+# target_link_libraries(hesaffexe ${OpenCV_LIBS})

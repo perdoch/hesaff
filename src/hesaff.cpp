@@ -89,7 +89,7 @@ void rotate_downwards(float &a11, float &a12, float &a21, float &a22)
 {
     //same as rectify_up_is_up but doest remove scale
     double a = a11, b = a12, c = a21, d = a22;
-    double absdet_ = abs(a * d - b * c);
+    double absdet_ = std::abs(a * d - b * c);
     double b2a2 = sqrt(b * b + a * a);
     //double sqtdet_ = sqrt(absdet_);
     //-
@@ -318,7 +318,7 @@ public:
             ori  = R_GRAVITY_THETA
 #endif
             // Extract scale.
-            sc = sqrt(abs((iv11 * iv22) - (iv12 * iv21)));
+            sc = sqrt(std::abs((iv11 * iv22) - (iv12 * iv21)));
             // Deintegrate scale. Keep invA format
             s  = (sc / AffineShape::par.mrSize); // scale
             a11 = iv11 / sc;
