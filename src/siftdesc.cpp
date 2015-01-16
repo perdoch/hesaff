@@ -149,6 +149,9 @@ float SIFTDescriptor::normalize()
 
 void SIFTDescriptor::sample()
 {
+    /*
+     * Computes this->vec (The 128D SIFT descriptor) of an image patch
+     */
     // Initialize descriptor vector to zero
     for(size_t i = 0; i < this->vec.size(); i++)
     {
@@ -158,7 +161,7 @@ void SIFTDescriptor::sample()
     this->samplePatch();
     // L2 normalization
     this->normalize();
-    // check if there are some values above threshold
+    // check if there are some descriptor values above threshold
     bool changed = false;
     for(size_t i = 0; i < this->vec.size(); i++) 
     {
@@ -168,12 +171,12 @@ void SIFTDescriptor::sample()
             changed = true;
         }
     }
-    // Do L2 normalization again
+    // L2 normalize descriptor vector again if it was clipped
     if(changed)
     {
         this->normalize();
     }
-    // Quantize into range 0-255
+    // Quantize into range 0-255 but use a hack
     for(size_t i = 0; i < this->vec.size(); i++)
     {
         // Tricky: Components are gaurenteed to be less than .5 due to L2

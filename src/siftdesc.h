@@ -46,9 +46,9 @@ public:
         ori(par.patchSize, par.patchSize, CV_32FC1)
     {
         this->par = par;
-        vec.resize(par.spatialBins * par.spatialBins * par.orientationBins);
-        computeCircularGaussMask(mask);
-        precomputeBinsAndWeights();
+        this->vec.resize(par.spatialBins * par.spatialBins * par.orientationBins);
+        computeCircularGaussMask(this->mask);  // defined in helpers.cpp
+        this->precomputeBinsAndWeights();
     }
 
     void computeSiftDescriptor(cv::Mat &patch);

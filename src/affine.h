@@ -71,7 +71,7 @@ public:
         fy(par.smmWindowSize, par.smmWindowSize, CV_32FC1)
     {
         this->par = par;
-        computeGaussMask(mask);
+        computeGaussMask(mask);  // Defined in helpers.cpp
         affineShapeCallback = 0;
         fx = cv::Scalar(0);
         fy = cv::Scalar(0);
