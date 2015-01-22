@@ -442,9 +442,15 @@ public:
     //------------------------------------------------------------
     float findKeypointsDirection(const cv::Mat& img, const cv::Mat& pat)
     {
+        /*"""
+        Args: 
+            img : an image
+            pat : a keypoints image patch
+         
+        Returns: 
+            submax_ori: dominant gradient orientation
+        """*/
         global_c2++;
-        // Input: image and a keypoint
-        // Returns: dominant gradient orientation
         // Warp elliptical keypoint region in image into a (cropped) unit circle
         //normalizeAffine does the job of ptool.get_warped_patch, but uses a class variable to store the output (messy)
         // Compute gradients
@@ -471,7 +477,8 @@ public:
         htool::hist_interpolated_submaxima(wrapped_hist, submaxima_x, submaxima_y);
         float submax_ori = submaxima_x; //will change if multiple submaxima are returned
         submax_ori -= M_GRAVITY_THETA; // adjust for 0 being downward
-        return ensure_0toTau<float>(submax_ori);
+        submax_ori = ensure_0toTau<float>(submax_ori); //will change if multiple submaxima are returned
+        return submax_ori
     }
 
 

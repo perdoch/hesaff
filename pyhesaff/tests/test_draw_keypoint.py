@@ -12,13 +12,13 @@ from itertools import product as iprod
 import vtool  # NOQA
 import utool
 
-np.tau = 2 * np.pi
+TAU = 2 * np.pi
 
 # Hack these directions to be relative to gravity
-RIGHT = ((0 * np.tau / 4) - ktool.GRAVITY_THETA) % np.tau
-DOWN  = ((1 * np.tau / 4) - ktool.GRAVITY_THETA) % np.tau
-LEFT  = ((2 * np.tau / 4) - ktool.GRAVITY_THETA) % np.tau
-UP    = ((3 * np.tau / 4) - ktool.GRAVITY_THETA) % np.tau
+RIGHT = ((0 * TAU / 4) - ktool.GRAVITY_THETA) % TAU
+DOWN  = ((1 * TAU / 4) - ktool.GRAVITY_THETA) % TAU
+LEFT  = ((2 * TAU / 4) - ktool.GRAVITY_THETA) % TAU
+UP    = ((3 * TAU / 4) - ktool.GRAVITY_THETA) % TAU
 
 
 def test_keypoint(xscale=1, yscale=1, ori=DOWN, skew=0):
@@ -77,7 +77,7 @@ def test_shape(ori=0, skew=0, xscale=1, yscale=1, pnum=(1, 1, 1), fnum=1):
     #print(kptsstr)
     df2.upperleft_text(kptsstr)
 
-    title = 'xyscale=(%.1f, %.1f),\n skew=%.1f, ori=%.2ftau' % (xscale, yscale, skew, ori / np.tau)
+    title = 'xyscale=(%.1f, %.1f),\n skew=%.1f, ori=%.2ftau' % (xscale, yscale, skew, ori / TAU)
     df2.set_title(title)
     df2.dark_background()
     return kpts, sifts
@@ -104,7 +104,7 @@ def pnum_(px=None):
     return (nRows, nCols, px)
 
 MIN_ORI = utool.get_argval('--min-ori', float, DOWN)
-MAX_ORI = utool.get_argval('--max-ori', float, DOWN + np.tau - .2)
+MAX_ORI = utool.get_argval('--max-ori', float, DOWN + TAU - .2)
 
 MIN_X = .5
 MAX_X = 2

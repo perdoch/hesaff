@@ -29,7 +29,7 @@ def TEST_ptool_find_kpts_direction(imgBGR, kpts):
 def TEST_figure1(wpatch, gradx, grady, gmag, gori, hist, centers):
     print('[rotinvar] 4) Draw histogram with interpolation annotations')
     fnum = 1
-    gorimag = plottool.color_orimag(gori, gmag)
+    gorimag = plottool.color_orimag(gori, gmag, True)
     nRow, nCol = (2, 7)
 
     df2.figure(fnum=1, pnum=(nRow, 1, nRow), doclf=True, docla=True)
@@ -75,7 +75,7 @@ def TEST_keypoint(imgBGR, img_fpath, kpts, desc, sel):
     # Extract patches, gradients, and orientations
     print('[rotinvar] 1) Extract patch, gradients, and orientations')
     wpatch, wkp  = ptool.get_warped_patch(imgBGR, kp, gray=True)
-    gradx, grady = ptool.patch_gradient(wpatch)
+    gradx, grady = ptool.patch_gradient(wpatch, gaussian_weighted=False)
     gmag         = ptool.patch_mag(gradx, grady)
     gori         = ptool.patch_ori(gradx, grady)
 
@@ -108,6 +108,11 @@ def TEST_keypoint(imgBGR, img_fpath, kpts, desc, sel):
 
 
 if __name__ == '__main__':
+    """
+    CommandLine:
+        python -m pyhesaff.tests.test_patch_orientation
+        python ~/code/hesaff/pyhesaff/tests/test_patch_orientation.py
+    """
     # Read data
     print('[rotinvar] loading test data')
     test_data = pyhestest.load_test_data(short=True, n=3)

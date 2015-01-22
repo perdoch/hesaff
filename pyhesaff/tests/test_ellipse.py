@@ -13,7 +13,7 @@ import numpy as np
 import vtool.linalg as ltool
 
 
-np.tau = 2 * np.pi  # References: tauday.com
+TAU = 2 * np.pi  # References: tauday.com
 
 
 def draw_expanded_scales(imgL, sel_kpts, exkpts, exdesc_):
@@ -108,7 +108,7 @@ def in_depth_ellipse(kp):
 
     # Define points on a unit circle
     nSamples = 12
-    theta_list = np.linspace(0, np.tau, nSamples)
+    theta_list = np.linspace(0, TAU, nSamples)
     cicrle_pts = np.array([(np.cos(t_), np.sin(t_), 1) for t_ in theta_list])
 
     # Transform those points to the ellipse using invV
@@ -234,7 +234,7 @@ def in_depth_ellipse(kp):
     theta = np.arccos(cosang)
     print('a = ' + str(a))
     print('b = ' + str(b))
-    print('theta = ' + str(theta[0] / np.tau) + ' * 2pi')
+    print('theta = ' + str(theta[0] / TAU) + ' * 2pi')
     # The warped eigenvects should have the same magintude
     # As the axis lengths
     assert utool.almost_eq(a, major.dot(ltool.rotation_mat2x2(theta))[0])
@@ -293,7 +293,7 @@ def in_depth_ellipse(kp):
     #invV = np.array([[iv11, iv12, ix],
     #                 [iv21, iv22, iy],
     #                 [   0,    0,  1]])
-    #theta_list = np.linspace(0, np.tau, nSamples)
+    #theta_list = np.linspace(0, TAU, nSamples)
     #cicrle_pts = np.array([(np.cos(t_), np.sin(t_), 1) for t_ in theta_list])
     uneven_points = invV.dot(cicrle_pts.T).T[:, 0:2]
     #uneven_points2 = xy_fn(theta_list)
@@ -382,7 +382,7 @@ def in_depth_ellipse(kp):
     # Desired number of points
     #ecc = np.sqrt(1 - (b ** 2) / (a ** 2))
     # Total arclength
-    #total_arclen = ellipeinc(np.tau, ecc)
+    #total_arclen = ellipeinc(TAU, ecc)
     #firstquad_arclen = total_arclen / 4
     # Desired arclength between points
     #d = firstquad_arclen / nSamples
