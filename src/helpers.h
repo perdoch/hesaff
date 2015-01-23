@@ -175,7 +175,10 @@ template <class UnaryFn, class Iterator> void inplace_map(UnaryFn fn, Iterator b
     }
 }
 
-template <class T, class Iterator> Histogram<T> computeHistogram(Iterator ori_beg, Iterator ori_end, Iterator mag_beg, Iterator mag_end, int nbins)
+template <class T, class Iterator> Histogram<T> computeHistogram(
+        Iterator ori_beg, Iterator ori_end, 
+        Iterator mag_beg, Iterator mag_end,
+        int nbins)
 {
     // Input: Iterators over orientaitons and magnitudes and the number of bins to discretize the orientation domain
     const T step = (M_TAU) / nbins;
@@ -267,6 +270,29 @@ template <class T> Histogram<T> wrap_histogram(const Histogram<T>& input)
     }
     output.edges.push_back(input.edges[input.edges.size()-1]+high);
     return output;
+}
+
+template <class T> std::vector<T> linspace_with_endpoint(T start, T stop, int num):
+{
+    /* simulate np.linspace
+    if num == 1:
+        return array([start], dtype=dtype)
+    step = (stop-start)/float((num-1))
+    y = _nx.arange(0, num, dtype=dtype) * step + start
+    y[-1] = stop
+    */ 
+    std::vector<T> domain;
+    if (num == 1):
+    {
+        domain.push_back(start)
+    }
+    float step = (stop - start) / float((num - 1.0))
+    for (int i=0; i < (num - 1); i++)
+    {
+        domain.push_back(i * step + start)
+    }
+    domain.push_back(stop)
+    return domain
 }
 
 //void makeCvHistFromHistogram(Histogram<float>& hist, CvHistogram& cvHist);

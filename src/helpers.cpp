@@ -298,6 +298,9 @@ bool getEigenvalues(float a, float b, float c, float d, float &l1, float &l2)
 bool interpolateCheckBorders(const Mat &im, float ofsx, float ofsy,
                              float a11, float a12, float a21, float a22, const Mat &res)
 {
+    /*
+     Simply returns true or false, does not affect state
+     */
     // does not do interpolation, just checks if we can
     const int width  = im.cols - 2;
     const int height = im.rows - 2;
@@ -329,10 +332,20 @@ bool interpolateCheckBorders(const Mat &im, float ofsx, float ofsy,
 bool interpolate(const Mat &im, float ofsx, float ofsy,
                  float a11, float a12, float a21, float a22, Mat &res)
 {
-    // extracts a patch from im, corresponding to the keypoint
-    // (ofsx, ofsy, a11, a12, a21, a22)
-    // outputs the value in res
-    //
+    /*
+    extracts a patch from im, corresponding to the keypoint using bilinear interpolation
+
+    Args:
+        im - image to extract patch from
+        (ofsx, ofsy, a11, a12, a21, a22) - ellipse paramaters of patch to extract
+
+    OutVar:
+         res - patch of image im found using using elliptical shape
+
+    Returns:
+        bool: True if the patch was on the image boundary
+
+    */
     bool ret = false;
     // input size (-1 for the safe bilinear interpolation)
     const int width = im.cols - 1;

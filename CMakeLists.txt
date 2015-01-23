@@ -67,8 +67,8 @@ set(SOURCE_FILES
     src/siftdesc.cpp)
 
 add_library(hesaff SHARED ${SOURCE_FILES})
-# add_executable(hesaffexe ${SOURCE_FILES})
+add_executable(hesaffexe ${SOURCE_FILES})
 
 #######################################
 target_link_libraries(hesaff ${OpenCV_LIBS})
-# target_link_libraries(hesaffexe ${OpenCV_LIBS})
+target_link_libraries(hesaffexe ${OpenCV_LIBS})

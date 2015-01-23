@@ -137,12 +137,12 @@ bool AffineShape::normalizeAffine(const Mat &img,
     assert(fabs(a11 * a22 - a12 * a21 - 1.0f) < 0.01);
     // half patch size in pixels of image
     float mrScale = ceil(s * par.mrSize);
-    // odd size
+    // enforce size to be odd
     int   patchImageSize = 2 * int(mrScale) + 1;
     // patch size in image / patch size -> amount of down/up sampling
     float imageToPatchScale = float(patchImageSize) / float(par.patchSize);
     // is patch touching boundary? if yes, ignore this feature
-    // helper, this->patch is outvar
+    // does not affect state
     if(interpolateCheckBorders(img, x, y, a11 * imageToPatchScale,
                                a12 * imageToPatchScale, a21 * imageToPatchScale,
                                a22 * imageToPatchScale, this->patch))
@@ -152,6 +152,7 @@ bool AffineShape::normalizeAffine(const Mat &img,
 
     if(imageToPatchScale > 0.4)
     {
+        // CASE 1: Bigger patches (in image space)
         // the pixels in the image are 0.4 apart + the affine deformation
         // leave +1 border for the bilinear interpolation
         patchImageSize += 2;
@@ -161,28 +162,38 @@ bool AffineShape::normalizeAffine(const Mat &img,
             workspace.resize(wss);
         }
 
-        Mat smoothed(patchImageSize, patchImageSize, CV_32FC1, (void *)&workspace.front());
         // img is this->image. smoothed is an outvar
         // interpolate with det == 1
+        // smoothed is an outvar, which is the sampled patch
+        // takend from image at the specifeid ellipse
+        // FIRST SAMPLE PATCH SHAPE WITHOUT CHANGING SCALES
+        Mat smoothed(patchImageSize, patchImageSize, CV_32FC1, (void *)&workspace.front());
         if(!interpolate(img, x, y, a11, a12, a21, a22, smoothed))
         {
-            // smooth accordingly
+            // if interpolate is not touching the image boundary
+            // smooth accordingly before sampling to the bigger patch size
             gaussianBlurInplace(smoothed, 1.5f * imageToPatchScale);
             // subsample with corresponding scale
             bool touchesBoundary = interpolate(smoothed,
-                                               (float)(patchImageSize >> 1),
-                                               (float)(patchImageSize >> 1),
-                                               imageToPatchScale, 0, 0,
-                                               imageToPatchScale, this->patch);
+                                               (float)(patchImageSize >> 1),  // x = half width
+                                               (float)(patchImageSize >> 1),  // y = half height
+                                               imageToPatchScale, // scale x
+                                               0, // no rotation
+                                               0, // no shear
+                                               imageToPatchScale,  // scale y
+                                               this->patch);
+            // should have caught a boundary crossing earlier
             assert(!touchesBoundary);
         }
         else
         {
+            // interpolate returned true, so we are touching the image boundary
             return true;
         }
     }
     else
     {
+        // CASE 2: Smaller patches (in image space)
         // if imageToPatchScale is small (i.e. lot of oversampling), affine normalize without smoothing
         a11 *= imageToPatchScale;
         a12 *= imageToPatchScale;

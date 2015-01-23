@@ -22,6 +22,7 @@ import ctypes as C
 from collections import OrderedDict
 # Scientific
 import numpy as np
+import utool as ut
 
 #try:
 #    getattr(builtins, 'profile')
@@ -90,6 +91,35 @@ hesaff_typed_params = [
 
 hesaff_param_dict = OrderedDict([(key, val) for (type_, key, val) in hesaff_typed_params])
 hesaff_param_types = [type_ for (type_, key, val) in hesaff_typed_params]
+
+
+def build_typed_params_kwargs_docstr_block(typed_params):
+    r"""
+    Args:
+        typed_params (?):
+
+    CommandLine:
+        python -m pyhesaff._pyhesaff --test-build_typed_params_docstr
+
+    Example:
+        >>> # DISABLE_DOCTEST
+        >>> from pyhesaff._pyhesaff import *  # NOQA
+        >>> # execute function
+        >>> typed_params = hesaff_typed_params
+        >>> result = build_typed_params_docstr(typed_params)
+        >>> # verify results
+        >>> print(result)
+    """
+    kwargs_lines = []
+    for tup in typed_params:
+        type_, name, default = tup
+        typestr = str(type_).replace('<class \'ctypes.c_', '').replace('\'>', '')
+        line_fmtstr = '{name} ({typestr}): default={default}'
+        line = line_fmtstr.format(name=name, typestr=typestr, default=default)
+        kwargs_lines.append(line)
+    kwargs_docstr_block = ('Kwargs:\n' + ut.indent('\n'.join(kwargs_lines), '    '))
+    return ut.indent(kwargs_docstr_block, '    ')
+hesaff_kwargs_docstr_block = build_typed_params_kwargs_docstr_block(hesaff_typed_params)
 
 
 def load_hesaff_clib():
@@ -311,6 +341,24 @@ def detect_kpts_list(image_paths_list, **kwargs):
     Returns:
         tuple: (kpts_list, vecs_list) A tuple of lists of keypoints and vecsriptors
 
+    Kwargs:
+        numberOfScales (int)         : default=3
+        threshold (float)            : default=5.33333333333
+        edgeEigenValueRatio (float)  : default=10.0
+        border (int)                 : default=5
+        maxIterations (int)          : default=16
+        convergenceThreshold (float) : default=0.05
+        smmWindowSize (int)          : default=19
+        mrSize (float)               : default=5.19615242271
+        spatialBins (int)            : default=4
+        orientationBins (int)        : default=8
+        maxBinValue (float)          : default=0.2
+        initialSigma (float)         : default=1.6
+        patchSize (int)              : default=41
+        scale_min (float)            : default=-1.0
+        scale_max (float)            : default=-1.0
+        rotation_invariance (bool)   : default=False
+
     Example:
         >>> # ENABLE_DOCTEST
         >>> from pyhesaff._pyhesaff import *  # NOQA
@@ -362,7 +410,7 @@ def detect_kpts_list(image_paths_list, **kwargs):
 
 #@profile
 def detect_kpts(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kwargs):
-    """
+    r"""
     main driver function for detecting hessian affine keypoints.
     extra parameters can be passed to the hessian affine detector by using
     kwargs.
@@ -372,11 +420,93 @@ def detect_kpts(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kwa
         use_adaptive_scale (bool):
         nogravity_hack (bool):
 
+    Kwargs:
+        numberOfScales (int)         : default=3
+        threshold (float)            : default=5.33333333333
+        edgeEigenValueRatio (float)  : default=10.0
+        border (int)                 : default=5
+        maxIterations (int)          : default=16
+        convergenceThreshold (float) : default=0.05
+        smmWindowSize (int)          : default=19
+        mrSize (float)               : default=5.19615242271
+        spatialBins (int)            : default=4
+        orientationBins (int)        : default=8
+        maxBinValue (float)          : default=0.2
+        initialSigma (float)         : default=1.6
+        patchSize (int)              : default=41
+        scale_min (float)            : default=-1.0
+        scale_max (float)            : default=-1.0
+        rotation_invariance (bool)   : default=False
+
     Returns:
         tuple : (kpts, vecs)
 
-    Example:
+    CommandLine:
+        python -m pyhesaff._pyhesaff --test-detect_kpts
+        python -m pyhesaff._pyhesaff --test-detect_kpts:0 --show
+        python -m pyhesaff._pyhesaff --test-detect_kpts:1 --show
+        ./unix_build.sh && python -m pyhesaff._pyhesaff --test-detect_kpts:1 --show
+
+    Example0:
+        >>> # ENABLE_DOCTEST
+        >>> # Test simple detect
         >>> from pyhesaff._pyhesaff import *  # NOQA
+        >>> import plottool as pt
+        >>> import utool as ut
+        >>> import vtool as vt
+        >>> #img_fpath = make_small_test_img_fpath()
+        >>> #img_fpath = ut.grab_test_imgpath('lena.png')
+        >>> img_fpath = ut.grab_test_imgpath('star.png')
+        >>> (kpts_list, vecs_list) = detect_kpts(img_fpath)
+        >>> print((kpts_list, vecs_list))
+        >>> kpts = kpts_list
+        >>> # Show keypoints
+        >>> pt.figure(fnum=1, doclf=True, docla=True)
+        >>> imgBGR = vt.imread(img_fpath)
+        >>> pt.imshow(imgBGR)
+        >>> pt.draw_kpts2(kpts, ori=True)
+        >>> pt.show_if_requested()
+
+    Example1:
+        >>> # ENABLE_DOCTEST
+        >>> # Test orientation invariance
+        >>> from pyhesaff._pyhesaff import *  # NOQA
+        >>> import utool as ut
+        >>> import vtool as vt
+        >>> import plottool as pt
+        >>> #img_fpath = ut.grab_test_imgpath('jeff.png')
+        >>> img_fpath = ut.grab_test_imgpath('star.png')
+        >>> (kpts_list1, vecs_list1) = detect_kpts(img_fpath, rotation_invariance=False)
+        >>> (kpts_list2, vecs_list2) = detect_kpts(img_fpath, rotation_invariance=True)
+        >>> kpts1 = kpts_list1[::15]
+        >>> kpts2 = kpts_list2[::15]
+        >>> # find_kpts_direction
+        >>> imgBGR = vt.imread(img_fpath)
+        >>> kpts3 = vt.find_kpts_direction(imgBGR, kpts1)
+        >>> # Verify results stdout
+        >>> print('nkpts = %r' % (len(kpts1)))
+        >>> print(vt.kpts_repr(kpts1))
+        >>> print(vt.kpts_repr(kpts2))
+        >>> print(vt.kpts_repr(kpts3))
+        >>> # Verify results plot
+        >>> pt.figure(fnum=1, doclf=True, docla=True)
+        >>> pt.imshow(imgBGR)
+        >>> pt.draw_kpts2(kpts1, ori=True, ell_color=pt.BLUE, ell_linewidth=10.5)
+        >>> pt.draw_kpts2(kpts2, ori=True, ell_color=pt.RED, ell_linewidth=7.5)
+        >>> pt.draw_kpts2(kpts3, ori=True, ell_color=pt.GREEN, ell_linewidth=4.5)
+        >>> print('\n'.join(vt.get_ori_strs(np.vstack([kpts1, kpts2, kpts3]))))
+        >>> #ut.embed(exec_lines=['pt.update()'])
+        >>> pt.show_if_requested()
+
+    CommandLine:
+        ./unix_build.sh --fast
+        python -m pyhesaff._pyhesaff --test-detect_kpts:1
+
+        python -m pyhesaff._pyhesaff --test-detect_kpts:1 --show
+
+        ./build/hesaffexe /home/joncrall/.config/utool/star.png
+
+        ./unix_build.sh --fast && ./build/hesaffexe /home/joncrall/.config/utool/star.png
     """
     #Valid keyword arguments are: + str(hesaff_param_dict.keys())
     if __DEBUG__:
@@ -404,6 +534,15 @@ def detect_kpts(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kwa
             print('[hes] adapt_rotation')
         kpts, vecs = adapt_rotation(img_fpath, kpts)
     return kpts, vecs
+
+
+#def make_small_test_img_fpath():
+#    import vtool as vt
+#    star = np.array(vt.get_star2_patch() * 255)
+#    star = vt.resize(star, (64, 64), vt.CV2_INTERPOLATION_TYPES['nearest'])
+#    img_fpath = ut.get_app_resource_dir('vtool', 'star.png')
+#    vt.imwrite(img_fpath, star)
+#    return img_fpath
 
 
 def adapt_rotation(img_fpath, kpts):
