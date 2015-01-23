@@ -14,6 +14,15 @@ if (APPLE AND CLANG2)
     set(CMAKE_CXX_COMPILER "clang2++")
 endif()
 
+if (UNIX)
+    set(CMAKE_C_COMPILER "clang-3.5")
+    set(CMAKE_CXX_COMPILER "clang++-3.5")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -stdlib=libstdc++")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -stdlib=libstdc++ -lstdc++")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libstdc++ -lstdc++ ")
+endif()
+
 #######################################
 project(hesaff) #### !!!!IMPORTANT!!!! THIS MUST BE DOWN HERE FOR CLANG2
 set(CMAKE_BUILD_TYPE "Release")

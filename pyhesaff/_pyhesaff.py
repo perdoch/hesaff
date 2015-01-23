@@ -532,7 +532,7 @@ def detect_kpts(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kwa
     if nogravity_hack:
         if __DEBUG__:
             print('[hes] adapt_rotation')
-        kpts, vecs = adapt_rotation(img_fpath, kpts)
+        kpts, vecs = vtool_adapt_rotation(img_fpath, kpts)
     return kpts, vecs
 
 
@@ -545,7 +545,8 @@ def detect_kpts(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kwa
 #    return img_fpath
 
 
-def adapt_rotation(img_fpath, kpts):
+def vtool_adapt_rotation(img_fpath, kpts):
+    # rotation invariance in python
     import vtool.patch as ptool
     import vtool.image as gtool
     imgBGR = gtool.imread(img_fpath)

@@ -27,6 +27,9 @@
 #endif
 #define DEBUG_HELPERS
 
+
+#define DEBUG_ROTINVAR 1
+
 #ifdef DEBUG_HELPERS
 #define printDBG2(msg) std::cerr << "[helpers.c] " << msg << std::endl;
 #define write(msg) std::cerr << msg;
@@ -172,7 +175,30 @@ template <class T> struct Histogram
 {
     std::vector<T> data;
     std::vector<T> edges;
+    T step;
+    T range_min;
+    T range_max;
 };
+
+
+template <class T> void print_vector(std::vector<T> vec, const char* name="vec")
+{
+    //std::cout << name << " = [";
+    std::cout << ">>> " << name << " = [";
+    for(int i = 0; i < vec.size(); ++i)
+    {
+        std::cout <<
+            //std::setprecision(8) << 
+            //std::setprecision(2) <<
+            vec[i] << ", " ;
+        if (i % 6 == 0 && i > 0)
+        {
+            std::cout << std::endl << "...     ";
+        }
+    }
+    std::cout << "]" << std::endl;
+}
+
 
 template <class T> T ensure_0toTau(T x)
 {
@@ -189,128 +215,7 @@ template <class UnaryFn, class Iterator> void inplace_map(UnaryFn fn, Iterator b
     }
 }
 
-template <class T, class Iterator> Histogram<T> computeInterpolatedHistogram(
-        Iterator data_beg, Iterator data_end, 
-        Iterator weight_beg, Iterator weight_end,
-        int nbins)
-{
-    /*
-
-    CommandLine:
-        ./unix_build.sh --fast && ./build/hesaffexe /home/joncrall/.config/utool/star.png
-        python -m vtool.patch --test-find_dominant_kp_orientations
-
-        mingw_build.bat
-        build\hesaffexe.exe /home/joncrall/.config/utool/star.png
-        python -c "import utool; print(utool.grab_test_imgpath('star.png'))"
-        build\hesaffexe.exe C:\Users\joncrall\AppData\Roaming\utool\star.png
-        mingw_build.bat && build\hesaffexe.exe C:\Users\joncrall\AppData\Roaming\utool\star.png
-        mingw_build.bat && python -c "import utool; print(utool.grab_test_imgpath('star.png'))" | build\hesaffexe.exe C:\Users\joncrall\AppData\Roaming\utool\star.png
-
-       
-
-     */
-    // Input: Iterators over orientaitons and magnitudes and the number of bins to discretize the orientation domain
-    const T start = 0;
-    const T stop = M_TAU;
-    const T step = (stop - start) / T(nbins);
-    const T half_step = step / 2.0;
-    const T data_offset = start + half_step;
-    // debug info
-    printDBG2("nbins = " << nbins)
-    printDBG2("step = " << step)
-    printDBG2("half_step = " << half_step)
-    printDBG2("data_offset = " << data_offset)
-    //float ans = fmod(-.5, M_TAU);
-    //printDBG2("-.5 MOD tau = " << ans);
-    //int num_list[] = {-8, -1, 0, 1, 2, 6, 7, 29};
-    //for (int i=0; i < 8; i++)
-    //{
-    //    int num = num_list[i];
-    //    float res_fmod = fmod(float(num), M_TAU);
-    //    float pymodop_res = fmod(float(num), M_TAU);
-    //    if (pymodop_res < 0)
-    //    {
-    //        pymodop_res = M_TAU + pymodop_res;
-    //    }
-
-    //    printf("num=%4d, res_py=%5.2f, res_fmod=%5.2f\n", num, pymodop_res, res_fmod);
-    //}
-
-    // data offset should be 0, but is around for more general case of
-    // interpolated histogram
-    assert(data_offset == 0);
-    // 
-    Histogram<T> hist;  // structure of bins and edges
-    hist.data.resize(nbins);  // Allocate space for bins
-    for(int i = 0; i <= nbins; ++i)
-    {
-        hist.edges.push_back((T(i) * step) + start);
-    }
-    // For each pixel orientation and magnidue
-    for(
-        Iterator data_iter = data_beg, weight_iter = weight_beg; 
-        (data_iter != data_end) && (weight_iter != weight_end);
-        ++data_iter, ++weight_iter
-       )
-    {
-        /*
-         mingw_build.bat && build\hesaffexe.exe C:\Users\joncrall\AppData\Roaming\utool\star.png
-         build\hesaffexe.exe C:\Users\joncrall\AppData\Roaming\utool\star.png
-        */
-        T data = *data_iter;
-        T weight = *weight_iter;
-        T fracBinIndex = (data - data_offset) / step;
-        int left_index = int(floor(fracBinIndex));
-        int right_index = left_index + 1;
-        T right_alpha = fracBinIndex - T(left_index);  // get interpolation weight between 0 and 1
-        // Wrap around indicies
-        // TODO: optimize
-        //left_index  = int(htool::python_modulus(float(left_index), float(nbins)));
-        //right_index = int(htool::python_modulus(float(right_index), float(nbins)));
-        //
-        static int nprint = 0;
-        bool doprint = false && (left_index < 0 || right_index >= nbins);
-        if (doprint) 
-        {
-            printDBG2("+----")
-            printDBG2("range = " << left_index << ", " << right_index)
-        }
-        left_index = fmod(left_index, nbins);
-        right_index = fmod(right_index, nbins);
-        if (left_index < 0)
-        {
-            left_index = nbins + left_index;
-        }
-        if (right_index < 0)
-        {
-            right_index = nbins + right_index;
-        }
-        //float python_modulus(float numer, float denom)
-        //{
-        //    [> module like it works in python <]
-        //    float result = fmod(numer, denom);
-        //    if (result < 0)
-        //    {
-        //        result = denom + result;
-        //    }
-        //    return result;
-        //}
-        if (doprint) 
-        {
-            printDBG2("range = " << left_index << ", " << right_index)
-            printDBG2("L___")
-        }
-        nprint++;
-        
-        // Linear Interpolation of gradient magnitude votes over orientation bins (maybe do quadratic)
-        hist.data[left_index]  += weight * (1 - right_alpha);
-        hist.data[right_index] += weight * (right_alpha);
-    }
-    return hist;
-}
-
-// requires C++11, manually instantiated in wrap_histogram since unsure if this much of C++11 is supported by the compilers this project is intended to work with
+// requires C++11, manually instantiated in wrap histogram since unsure if this much of C++11 is supported by the compilers this project is intended to work with
 /*
 template <class T> void vector_concat(std::vector<T>& out) {}
 template <class T, class... Rest> void vector_concat(std::vector<T>& out, T elem, Rest... rest) { out.push_back(elem); vector_concat(out, rest...); }
@@ -354,29 +259,151 @@ template <class T> std::ostream& operator << (std::ostream& os, const Histogram<
     return os;
 }
 
+template <class T> T python_modulus(T numer, T denom)
+{
+    /*
+    modulus like it works in python
+    */
+    T result = fmod(numer, denom);
+    if (result < 0)
+    {
+        result = denom + result;
+    }
+    return result;
+}
+
+template <class T, class Iterator> Histogram<T> computeInterpolatedHistogram(
+        Iterator data_beg, Iterator data_end, 
+        Iterator weight_beg, Iterator weight_end,
+        int nbins, T range_max, T range_min)
+{
+    /*
+    FIXME: We assume this histogram is wrapped
+
+    CommandLine:
+        ./unix_build.sh --fast && ./build/hesaffexe /home/joncrall/.config/utool/star.png
+        python -m vtool.patch --test-find_dominant_kp_orientations
+
+        mingw_build.bat
+        build\hesaffexe.exe /home/joncrall/.config/utool/star.png
+        python -c "import utool; print(utool.grab_test_imgpath('star.png'))"
+        build\hesaffexe.exe C:\Users\joncrall\AppData\Roaming\utool\star.png
+        mingw_build.bat && build\hesaffexe.exe C:\Users\joncrall\AppData\Roaming\utool\star.png
+        mingw_build.bat && python -c "import utool; print(utool.grab_test_imgpath('star.png'))" | build\hesaffexe.exe C:\Users\joncrall\AppData\Roaming\utool\star.png
+   
+     mingw_build.bat && build\hesaffexe.exe C:\Users\joncrall\AppData\Roaming\utool\star.png
+     build\hesaffexe.exe C:\Users\joncrall\AppData\Roaming\utool\star.png
+
+    ./unix_build.sh --fast && ./build/hesaffexe /home/joncrall/.config/utool/star.png
+
+     */
+    // Input: Iterators over orientaitons and magnitudes and the number of bins to discretize the orientation domain
+    const bool interpolation_wrap = true;
+    const T start = range_min;
+    const T stop = range_max;
+    const T step = (stop - start) / T(nbins + interpolation_wrap);
+    const T half_step = step / 2.0;
+    const T data_offset = start + half_step;
+    // debug info
+    #if DEBUG_ROTINVAR
+        printDBG2("nbins = " << nbins)
+        printDBG2("step = " << step)
+        printDBG2("half_step = " << half_step)
+        printDBG2("data_offset = " << data_offset)
+    #endif
+    // data offset should be 0, but is around for more general case of
+    // interpolated histogram
+    assert(data_offset == 0);
+    // 
+    Histogram<T> hist;  // structure of bins and edges
+    hist.step = step;
+    hist.range_min = range_min;
+    hist.range_max = range_max;
+    hist.data.resize(nbins);  // Allocate space for bins
+    for(int i = 0; i <= nbins; ++i)
+    {
+        hist.edges.push_back((T(i) * step) + start);
+    }
+    // For each pixel orientation and magnidue
+    for(
+        Iterator data_iter = data_beg, weight_iter = weight_beg; 
+        (data_iter != data_end) && (weight_iter != weight_end);
+        ++data_iter, ++weight_iter
+       )
+    {
+        T data = *data_iter;
+        T weight = *weight_iter;
+        T fracBinIndex = (data - data_offset) / step;
+        int left_index = int(floor(fracBinIndex));
+        int right_index = left_index + 1;
+        T right_alpha = fracBinIndex - T(left_index);  // get interpolation weight between 0 and 1
+        // Wrap around indicies
+        #if DEBUG_ROTINVAR
+            static int nprint = 0;
+            bool doprint = false && (left_index < 0 || right_index >= nbins);
+            if (doprint) 
+            {
+                printDBG2("+----")
+                printDBG2("range = " << left_index << ", " << right_index)
+            }
+        #endif
+        left_index  = python_modulus(left_index, nbins);
+        right_index = python_modulus(right_index, nbins);
+        #if DEBUG_ROTINVAR
+            if (doprint) 
+            {
+                printDBG2("range = " << left_index << ", " << right_index)
+                printDBG2("L___")
+            }
+            nprint++;
+        #endif
+        // Linear Interpolation of gradient magnitude votes over orientation
+        // bins (maybe do quadratic)
+        hist.data[left_index]  += weight * (1 - right_alpha);
+        hist.data[right_index] += weight * (right_alpha);
+    
+    }
+    #if DEBUG_ROTINVAR
+    print_vector<T>(hist.data, "hist");
+    print_vector<T>(hist.edges, "edges");
+    #endif
+    return hist;
+}
+
 // from htool (vtool.histogram)
 namespace htool
 {
 
 template <class T> Histogram<T> wrap_histogram(const Histogram<T>& input)
 {
+    // FIXME; THIS NEEDS INFORMATION ABOUT THE DISTANCE FROM THE LAST BIN 
+    // TO THE FIRST. IT IS OK AS LONG AS ALL STEPS ARE EQUAL, BUT IT IS NOT
+    // GENERAL
     std::vector<int> tmp;
     tmp.resize(input.edges.size());
     std::adjacent_difference(input.edges.begin(), input.edges.end(), tmp.begin());
-    int low = tmp[0], high = tmp[tmp.size()-1];
+    int low = tmp[0], high = tmp[tmp.size() - 1];
     Histogram<T> output;
+    output.step = input.step;
+    output.range_min = input.range_min;
+    output.range_max = input.range_max;
     //vector_concat(output.data, input.data[input.data.size()-1], input.data, input.data[0]);
-    output.data.push_back(input.data[input.data.size()-1]);
+    output.data.push_back(input.data[input.data.size() - 1]);
     for(typename std::vector<T>::const_iterator iter = input.data.begin(); iter != input.data.end(); ++iter) {
         output.data.push_back(*iter);
     }
     output.data.push_back(input.data[0]);
     //vector_concat(output.edges, input.edges[0]-low, input.edges, input.edges[input.edges.size()-1]+high);
-    output.edges.push_back(input.edges[0]-low);
+    output.edges.push_back(input.edges[0] - input.step);
     for(typename std::vector<T>::const_iterator iter = input.edges.begin(); iter != input.edges.end(); ++iter) {
         output.edges.push_back(*iter);
     }
-    output.edges.push_back(input.edges[input.edges.size()-1]+high);
+    output.edges.push_back(input.edges[input.edges.size() - 1] + input.step);
+
+    #if DEBUG_ROTINVAR
+        print_vector<T>(output.data, "wrapped_hist");
+        print_vector<T>(output.edges, "wrapped_edges");
+    #endif
     return output;
 }
 
@@ -409,7 +436,7 @@ namespace hist_edges_to_centers_lambdas
 {
 template <class T> T average(T a, T b)
 {
-    return (a+b)/2;
+    return (a + b) / 2;
 }
 }
 
@@ -420,23 +447,42 @@ template <class T> void hist_edges_to_centers(Histogram<T>& hist)
     hist.edges = centers;
 }
 
-template <class T> void hist_argmaxima(Histogram<T> hist, T& maxima_x, T& maxima_y, int& argmaxima)
+template <class T> void hist_argmaxima(Histogram<T> hist, std::vector<int>& argmaxima_list, float maxima_thresh=.8)
 {
-    /*CvHistogram cvHist;
-    makeCvHistFromHistogram(hist, cvHist);
-    cvGetMinMaxHistValue(&cvHist, NULL, NULL, NULL, &argmaxima);
-    maxima_x = hist.edges[argmaxima];
-    maxima_y = hist.data[argmaxima];*/
     int size = hist.data.size() - 2; // the edge points aren't to be counted, due to being only there to make interpolation simpler
-    float* data = &(hist.data[1]);
-    // Pack our histogram structure into an opencv histogram
-    cv::Mat cvhist(1, &size, cv::DataType<T>::type, data);
-    cv::Point argmax2d;
-    // Find index of the maxima ONLY
-    cv::minMaxLoc(cvhist, NULL, NULL, NULL, &argmax2d);
-    argmaxima = argmax2d.y + 1;
-    maxima_x = hist.edges[argmaxima];
-    maxima_y = hist.data[argmaxima];;
+    // The first and last bins are duplicates so we dont need to look at those
+    int argmax = 1;
+    T maxval = hist.data[1]; // initialize
+    for (int i = 1; i < hist.data.size() - 1; i++)
+    {
+        if (hist.data[i] > maxval)
+        {
+            maxval = hist.data[i];
+            argmax = i;
+        }
+    }
+    float thresh_val = maxval * maxima_thresh;
+    // Finds all maxima within maxima_thresh of the maximum
+    for (int i = 1; i < hist.data.size() - 1; i++)
+    {
+        if (hist.data[i] > thresh_val)
+        {
+            argmaxima_list.push_back(i);
+            //T maxima_x = (hist.edges[i] + hist.edges[i + 1]);
+            //maxima_xs.push_back(maxima_x);
+            //maxima_ys.push_back(hist.data[i]);
+        }
+    }
+    //float* data = &(hist.data[1]);
+    //// Pack our histogram structure into an opencv histogram
+    //cv::Mat cvhist(1, &size, cv::DataType<T>::type, data);
+    //cv::Point argmax2d;
+    //// Find index of the maxima ONLY
+    //cv::minMaxLoc(cvhist, NULL, NULL, NULL, &argmax2d);
+    //argmaxima = argmax2d.y + 1;
+    //maxima_x = hist.edges[argmaxima];
+    //maxima_y = hist.data[argmaxima];
+    //printDBG2("maxima_xs, maxima_ys " << maxima_xs << ", " << maxima_ys)
 }
 
 template <class T> void maxima_neighbors(int argmaxima, const Histogram<T>& hist, std::vector<cv::Point_<T> >& points)
@@ -470,15 +516,51 @@ template <class T> void interpolate_submaxima(int argmaxima, const Histogram<T>&
     submaxima_x = xv;
     submaxima_y = yv;
 }
-template <class T> void hist_interpolated_submaxima(const Histogram<T>& hist, T& submaxima_x, T& submaxima_y)
+
+template <class T> void vector_take(
+        const std::vector<T>& item_list, 
+        const std::vector<int>& index_list, 
+        std::vector<T>& item_sublist)
 {
-    T maxima_x, maxima_y;
-    int argmaxima;
+    //item_sublist.resize(index_list.size());
+    for (int i = 0; i < index_list.size(); i++)
+    {
+        int index = index_list[i];
+        T item = item_list[index];
+        item_sublist.push_back(item);
+    }
+}
+
+
+template <class T> void hist_interpolated_submaxima(const Histogram<T>& hist, std::vector<T>& submaxima_xs, std::vector<T>& submaxima_ys)
+{
+    std::vector<int> argmaxima_list;
     // TODO: Currently this returns only one maxima, maybe later incorporate multiple maxima
     // Get the discretized bin maxima
-    hist_argmaxima(hist, maxima_x, maxima_y, argmaxima);
-    // Interpolate the maxima using 2nd order Taylor polynomials
-    interpolate_submaxima(argmaxima, hist, submaxima_x, submaxima_y);
+    float maxima_thresh = .8;
+    hist_argmaxima(hist, argmaxima_list, maxima_thresh);
+    #if DEBUG_ROTINVAR
+        printDBG2("Argmaxima:");
+        std::vector<T> maxima_ys;
+        print_vector(maxima_ys, "maxima_ys");
+        vector_take(hist.data, argmaxima_list, maxima_ys);
+        //vector_take(hist.edges, argmaxima_list, maxima_xs)
+        print_vector(argmaxima_list, "argmaxima_list");
+        print_vector(maxima_ys, "maxima_ys");
+    #endif
+    for (int i = 0; i < argmaxima_list.size(); i++)
+    {
+        int argmaxima = argmaxima_list[i];
+        T submaxima_x, submaxima_y;
+        // Interpolate the maxima using 2nd order Taylor polynomials
+        interpolate_submaxima(argmaxima, hist, submaxima_x, submaxima_y);
+        submaxima_xs.push_back(submaxima_x);
+        submaxima_ys.push_back(submaxima_y);
+    }
+    #if DEBUG_ROTINVAR
+        print_vector(submaxima_xs, "submaxima_xs");
+        print_vector(submaxima_ys, "submaxima_ys");
+    #endif
 }
 }
 

@@ -135,10 +135,12 @@ bool AffineShape::normalizeAffine(const Mat &img,
 
     // determinant == 1 assumed (i.e. isotropic scaling should be separated in mrScale
     assert(fabs(a11 * a22 - a12 * a21 - 1.0f) < 0.01);
+    //    mrSize = 3.0f*sqrt(3.0f);
     // half patch size in pixels of image
     float mrScale = ceil(s * par.mrSize);
     // enforce size to be odd
     int   patchImageSize = 2 * int(mrScale) + 1;
+    // patchSize = 41;
     // patch size in image / patch size -> amount of down/up sampling
     float imageToPatchScale = float(patchImageSize) / float(par.patchSize);
     // is patch touching boundary? if yes, ignore this feature

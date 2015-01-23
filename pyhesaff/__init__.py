@@ -8,5 +8,5 @@ ut.noinject(__name__, '[pyhesaff.__init__]')
 
 
 from pyhesaff._pyhesaff import (extract_vecs, detect_kpts, detect_kpts_list,
-                                adapt_rotation, adapt_scale, kpts_dtype, vecs_dtype,
+                                adapt_scale, kpts_dtype, vecs_dtype,
                                 KPTS_DIM, DESC_DIM, __LIB_FPATH__, HESAFF_CLIB)
