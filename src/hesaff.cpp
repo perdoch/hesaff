@@ -505,15 +505,16 @@ public:
         cv::Mat orientations;
         computeOrientation<float>(xgradient, ygradient, orientations);
         inplace_map(ensure_0toTau<float>, orientations.begin<float>(), orientations.end<float>());
-        cv::Mat orientations01 = orientations.mul(255.0 / 6.28);
-        this->DBG_dump_patch("orientations01", orientations01);
+        //cv::Mat orientations01 = orientations.mul(255.0 / 6.28);
+        //this->DBG_dump_patch("orientations01", orientations01);
         // Compute magnitude
         cv::Mat magnitudes;
         computeMagnitude<float>(xgradient, ygradient, magnitudes);
         //this->DBG_dump_patch("magnitudes", magnitudes);
+        // TODO: weight by a gaussian
         // Compute orientation histogram, splitting votes using linear interpolation
         const int nbins = 36;
-        Histogram<float> hist = computeHistogram<float>(orientations.begin<float>(), orientations.end<float>(),
+        Histogram<float> hist = computeInterpolatedHistogram<float>(orientations.begin<float>(), orientations.end<float>(),
                                 magnitudes.begin<float>(), magnitudes.end<float>(),
                                 nbins);
         // wrap histogram (because orientations are circular)

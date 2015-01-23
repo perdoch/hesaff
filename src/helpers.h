@@ -21,6 +21,19 @@
 #define M_TAU 6.28318
 #endif
 
+// DUPLICATE
+#ifdef DEBUG_HELPERS
+#undef DEBUG_HELPERS
+#endif
+#define DEBUG_HELPERS
+
+#ifdef DEBUG_HELPERS
+#define printDBG2(msg) std::cerr << "[helpers.c] " << msg << std::endl;
+#define write(msg) std::cerr << msg;
+#else
+#define printDBG2(msg);
+#endif
+
 void solveLinear3x3(float *A, float *b);
 bool getEigenvalues(float a, float b, float c, float d, float &l1, float &l2);
 void invSqrt(float &a, float &b, float &c, float &l1, float &l2);
@@ -42,6 +55,7 @@ double getTime();
 
 bool almost_eq(float, float);
 void computeGradient(const cv::Mat &img, cv::Mat &gradx, cv::Mat &grady);
+
 
 // from ltool (vtool.linalg)
 template<class T> cv::Mat get3x3Translation(T x, T y)
@@ -140,7 +154,7 @@ template <class T, class Iterator> T maximumElement(Iterator begin, Iterator end
     return rv;
 }
 
-// helper function for computeHistogram
+// helper function for computeInterpolatedHistogram
 /*template <class T> int computeBin(T elem, T min, T max, T step)
 {
     // uses linear search, possibly upgrade to binary search later?
@@ -175,30 +189,79 @@ template <class UnaryFn, class Iterator> void inplace_map(UnaryFn fn, Iterator b
     }
 }
 
-template <class T, class Iterator> Histogram<T> computeHistogram(
-        Iterator ori_beg, Iterator ori_end, 
-        Iterator mag_beg, Iterator mag_end,
+template <class T, class Iterator> Histogram<T> computeInterpolatedHistogram(
+        Iterator data_beg, Iterator data_end, 
+        Iterator weight_beg, Iterator weight_end,
         int nbins)
 {
+    /*
+
+    CommandLine:
+        ./unix_build.sh --fast && ./build/hesaffexe /home/joncrall/.config/utool/star.png
+        python -m vtool.patch --test-find_dominant_kp_orientations
+       
+
+     */
     // Input: Iterators over orientaitons and magnitudes and the number of bins to discretize the orientation domain
-    const T step = (M_TAU) / nbins;
+    const T start = 0;
+    const T stop = M_TAU;
+    const T step = (stop - start) / T(nbins);
+    const T half_step = step / 2.0;
+    const T data_offset = start + half_step;
+    // debug info
+    printDBG2("nbins = " << nbins)
+    printDBG2("step = " << step)
+    printDBG2("half_step = " << half_step)
+    printDBG2("data_offset = " << data_offset)
+    //float ans = fmod(-.5, M_TAU);
+    //printDBG2("-.5 MOD tau = " << ans);
+    //int num_list[] = {-8, -1, 0, 1, 2, 6, 7, 29};
+    //for (int i=0; i < 8; i++)
+    //{
+    //    int num = num_list[i];
+    //    float res_fmod = fmod(float(num), M_TAU);
+    //    float pymodop_res = fmod(float(num), M_TAU);
+    //    if (pymodop_res < 0)
+    //    {
+    //        pymodop_res = M_TAU + pymodop_res;
+    //    }
+
+    //    printf("num=%4d, res_py=%5.2f, res_fmod=%5.2f\n", num, pymodop_res, res_fmod);
+    //}
+
+    // data offset should be 0, but is around for more general case of
+    // interpolated histogram
+    assert(data_offset == 0);
+    // 
     Histogram<T> hist;  // structure of bins and edges
     hist.data.resize(nbins);  // Allocate space for bins
     for(int i = 0; i <= nbins; ++i)
     {
-        hist.edges.push_back(T(i) * M_TAU / T(nbins));
+        hist.edges.push_back((T(i) * step) + start);
     }
     // For each pixel orientation and magnidue
-    for(Iterator ori_iter = ori_beg, mag_iter = mag_beg; (ori_iter != ori_end) && (mag_iter != mag_end); ++ori_iter, ++mag_iter)
+    for(
+        Iterator data_iter = data_beg, weight_iter = weight_beg; 
+        (data_iter != data_end) && (weight_iter != weight_end);
+        ++data_iter, ++weight_iter
+       )
     {
-        T ori = *ori_iter;
-        T mag = *mag_iter;
-        T fracBinIndex = ori / step;
-        int intPart = int(floor(fracBinIndex));
-        T alpha = fracBinIndex - intPart;  // get interpolation weight between 0 and 1
+        T data = *data_iter;
+        T weight = *weight_iter;
+        T fracBinIndex = (data - data_offset) / step;
+        int left_index = int(floor(fracBinIndex));
+        int right_index = left_index + 1;
+        T right_alpha = fracBinIndex - left_index;  // get interpolation weight between 0 and 1
+        // Wrap around indicies
+        // TODO: optimize
+        left_index  = int(htool::python_modulus(float(left_index), float(nbins)));
+        right_index = int(htool::python_modulus(float(right_index), float(nbins)));
+        printDBG2("left_index = " << left_index)
+        printDBG2("right_index = " << right_index)
+        printDBG2("-----")
         // Linear Interpolation of gradient magnitude votes over orientation bins (maybe do quadratic)
-        hist.data[intPart]     += mag * (1 - alpha);
-        hist.data[intPart + 1] += mag * (alpha);
+        hist.data[left_index]     += weight * (1 - right_alpha);
+        hist.data[right_index] += weight * (right_alpha);
     }
     return hist;
 }
@@ -250,6 +313,17 @@ template <class T> std::ostream& operator << (std::ostream& os, const Histogram<
 // from htool (vtool.histogram)
 namespace htool
 {
+
+float python_modulus(float numer, float denom)
+{
+    /* module like it works in python */
+    float result = fmod(numer, denom);
+    if (result < 0)
+    {
+        result = denom + result;
+    }
+    return result;
+}
 template <class T> Histogram<T> wrap_histogram(const Histogram<T>& input)
 {
     std::vector<int> tmp;
@@ -272,28 +346,28 @@ template <class T> Histogram<T> wrap_histogram(const Histogram<T>& input)
     return output;
 }
 
-template <class T> std::vector<T> linspace_with_endpoint(T start, T stop, int num):
-{
-    /* simulate np.linspace
-    if num == 1:
-        return array([start], dtype=dtype)
-    step = (stop-start)/float((num-1))
-    y = _nx.arange(0, num, dtype=dtype) * step + start
-    y[-1] = stop
-    */ 
-    std::vector<T> domain;
-    if (num == 1):
-    {
-        domain.push_back(start)
-    }
-    float step = (stop - start) / float((num - 1.0))
-    for (int i=0; i < (num - 1); i++)
-    {
-        domain.push_back(i * step + start)
-    }
-    domain.push_back(stop)
-    return domain
-}
+//template <class T> std::vector<T> linspace_with_endpoint(T start, T stop, int num):
+//{
+//    [> simulate np.linspace
+//    if num == 1:
+//        return array([start], dtype=dtype)
+//    step = (stop-start)/float((num-1))
+//    y = _nx.arange(0, num, dtype=dtype) * step + start
+//    y[-1] = stop
+//    */ 
+//    std::vector<T> domain;
+//    if (num == 1)
+//    {
+//        domain.push_back(start);
+//    }
+//    float step = (stop - start) / float((num - 1.0))
+//    for (int i=0; i < (num - 1); i++)
+//    {
+//        domain.push_back(i * step + start);
+//    }
+//    domain.push_back(stop)
+//    return domain
+//}
 
 //void makeCvHistFromHistogram(Histogram<float>& hist, CvHistogram& cvHist);
 
