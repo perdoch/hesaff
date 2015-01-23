@@ -549,6 +549,8 @@ public:
         CommandLine:
              ./unix_build.sh --fast && ./build/hesaffexe /home/joncrall/.config/utool/star.png
              ./unix_build.sh --fast && ./build/hesaffexe /home/joncrall/.config/utool/star.png
+             sh mingw_build.sh --fast
+             build/hesaffexe /home/joncrall/.config/utool/star.png
 
 
         References:

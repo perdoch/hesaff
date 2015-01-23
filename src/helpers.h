@@ -199,6 +199,14 @@ template <class T, class Iterator> Histogram<T> computeInterpolatedHistogram(
     CommandLine:
         ./unix_build.sh --fast && ./build/hesaffexe /home/joncrall/.config/utool/star.png
         python -m vtool.patch --test-find_dominant_kp_orientations
+
+        mingw_build.bat
+        build\hesaffexe.exe /home/joncrall/.config/utool/star.png
+        python -c "import utool; print(utool.grab_test_imgpath('star.png'))"
+        build\hesaffexe.exe C:\Users\joncrall\AppData\Roaming\utool\star.png
+        mingw_build.bat && build\hesaffexe.exe C:\Users\joncrall\AppData\Roaming\utool\star.png
+        mingw_build.bat && python -c "import utool; print(utool.grab_test_imgpath('star.png'))" | build\hesaffexe.exe C:\Users\joncrall\AppData\Roaming\utool\star.png
+
        
 
      */
@@ -246,21 +254,57 @@ template <class T, class Iterator> Histogram<T> computeInterpolatedHistogram(
         ++data_iter, ++weight_iter
        )
     {
+        /*
+         mingw_build.bat && build\hesaffexe.exe C:\Users\joncrall\AppData\Roaming\utool\star.png
+         build\hesaffexe.exe C:\Users\joncrall\AppData\Roaming\utool\star.png
+        */
         T data = *data_iter;
         T weight = *weight_iter;
         T fracBinIndex = (data - data_offset) / step;
         int left_index = int(floor(fracBinIndex));
         int right_index = left_index + 1;
-        T right_alpha = fracBinIndex - left_index;  // get interpolation weight between 0 and 1
+        T right_alpha = fracBinIndex - T(left_index);  // get interpolation weight between 0 and 1
         // Wrap around indicies
         // TODO: optimize
-        left_index  = int(htool::python_modulus(float(left_index), float(nbins)));
-        right_index = int(htool::python_modulus(float(right_index), float(nbins)));
-        printDBG2("left_index = " << left_index)
-        printDBG2("right_index = " << right_index)
-        printDBG2("-----")
+        //left_index  = int(htool::python_modulus(float(left_index), float(nbins)));
+        //right_index = int(htool::python_modulus(float(right_index), float(nbins)));
+        //
+        static int nprint = 0;
+        bool doprint = false && (left_index < 0 || right_index >= nbins);
+        if (doprint) 
+        {
+            printDBG2("+----")
+            printDBG2("range = " << left_index << ", " << right_index)
+        }
+        left_index = fmod(left_index, nbins);
+        right_index = fmod(right_index, nbins);
+        if (left_index < 0)
+        {
+            left_index = nbins + left_index;
+        }
+        if (right_index < 0)
+        {
+            right_index = nbins + right_index;
+        }
+        //float python_modulus(float numer, float denom)
+        //{
+        //    [> module like it works in python <]
+        //    float result = fmod(numer, denom);
+        //    if (result < 0)
+        //    {
+        //        result = denom + result;
+        //    }
+        //    return result;
+        //}
+        if (doprint) 
+        {
+            printDBG2("range = " << left_index << ", " << right_index)
+            printDBG2("L___")
+        }
+        nprint++;
+        
         // Linear Interpolation of gradient magnitude votes over orientation bins (maybe do quadratic)
-        hist.data[left_index]     += weight * (1 - right_alpha);
+        hist.data[left_index]  += weight * (1 - right_alpha);
         hist.data[right_index] += weight * (right_alpha);
     }
     return hist;
@@ -314,16 +358,6 @@ template <class T> std::ostream& operator << (std::ostream& os, const Histogram<
 namespace htool
 {
 
-float python_modulus(float numer, float denom)
-{
-    /* module like it works in python */
-    float result = fmod(numer, denom);
-    if (result < 0)
-    {
-        result = denom + result;
-    }
-    return result;
-}
 template <class T> Histogram<T> wrap_histogram(const Histogram<T>& input)
 {
     std::vector<int> tmp;
