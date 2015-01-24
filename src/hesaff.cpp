@@ -9,6 +9,15 @@ int global_c2 = 0;
  * the terms of the BSD license (see the COPYING file).
  *
  */
+/*
+CommandLine:
+mingw_build.bat && python -c "import utool as ut; ut.cmd('build/hesaffexe.exe ' + ut.grab_test_imgpath('star.png'))"
+mingw_build.bat && python -c "import utool as ut; ut.cmd('build\\hesaffexe.exe', ut.grab_test_imgpath('star.png'))"
+
+./unix_build.sh && python -c "import utool as ut; ut.cmd('build/hesaffexe ' + ut.grab_test_imgpath('star.png'))"
+
+
+ */
 
 // Main File. Includes and uses the other files
 //
@@ -218,6 +227,7 @@ public:
 #endif
         snprintf(out_fpath, len, "%s%s", img_fpath, suffix);
         out_fpath[len - 1] = 0;
+        printDBG("detector->writing_features: " << out_fpath);
         std::ofstream out(out_fpath);
         this->exportKeypoints(out);
         // Clean Up
@@ -417,7 +427,10 @@ public:
         if(hesPar.rotation_invariance)
         {
             std::vector<float> submaxima_oris;
-            if (this->findKeypointsDirection(this->image, x, y, s, a11, a12, a21, a22, ori, submaxima_oris))
+            bool passed = this->findKeypointsDirection(this->image, x, y, s, a11, a12, a21, a22, ori, submaxima_oris);
+            //submaxima_oris.push_back(0);  // hack in 0 always
+            printDBG("[onAffShapeFound] Found " << submaxima_oris.size() << " orientations")
+            if (passed)
             {
                 global_c1++;
                 // push a keypoint for every orientation found
@@ -481,7 +494,7 @@ public:
                                  float a11, float a12,
                                  float a21, float a22,
                                  float ori,
-                                 std::vector<float> submaxima_oris)
+                                 std::vector<float>& submaxima_oris)
     {
         /*"""
         Args: 
@@ -953,7 +966,6 @@ PYHESAFF void exportArrays(AffineHessianDetector* detector,
 PYHESAFF void writeFeatures(AffineHessianDetector* detector,
                             char* img_fpath)
 {
-    printDBG("detector->write_features");
     detector->write_features(img_fpath);
 }
 
