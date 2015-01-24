@@ -605,7 +605,8 @@ public:
         htool::hist_edges_to_centers(wrapped_hist); // inplace modification
         // Compute orientation as maxima of wrapped histogram
         std::vector<float> submaxima_xs, submaxima_ys;
-        htool::hist_interpolated_submaxima(wrapped_hist, submaxima_xs, submaxima_ys);
+        float maxima_thresh = .8;
+        htool::hist_interpolated_submaxima(wrapped_hist, submaxima_xs, submaxima_ys, maxima_thresh);
         for (int i = 0; i < submaxima_xs.size(); i ++ )
         {
             float submax_ori = submaxima_xs[i];

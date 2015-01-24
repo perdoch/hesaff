@@ -532,12 +532,11 @@ template <class T> void vector_take(
 }
 
 
-template <class T> void hist_interpolated_submaxima(const Histogram<T>& hist, std::vector<T>& submaxima_xs, std::vector<T>& submaxima_ys)
+template <class T> void hist_interpolated_submaxima(const Histogram<T>& hist, std::vector<T>& submaxima_xs, std::vector<T>& submaxima_ys, float maxima_thresh=.8)
 {
     std::vector<int> argmaxima_list;
     // TODO: Currently this returns only one maxima, maybe later incorporate multiple maxima
     // Get the discretized bin maxima
-    float maxima_thresh = .8;
     hist_argmaxima(hist, argmaxima_list, maxima_thresh);
     #if DEBUG_ROTINVAR
         printDBG2("Argmaxima:");

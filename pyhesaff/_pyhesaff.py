@@ -456,7 +456,8 @@ def detect_kpts(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kwa
         >>> import vtool as vt
         >>> #img_fpath = make_small_test_img_fpath()
         >>> #img_fpath = ut.grab_test_imgpath('lena.png')
-        >>> img_fpath = ut.grab_test_imgpath('star.png')
+        >>> TAU = 2 * np.pi
+        >>> img_fpath = vt.rotate_image_on_disk(ut.grab_test_imgpath('star.png'), TAU * 3 / 8)
         >>> (kpts_list, vecs_list) = detect_kpts(img_fpath)
         >>> print((kpts_list, vecs_list))
         >>> kpts = kpts_list
@@ -475,26 +476,28 @@ def detect_kpts(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kwa
         >>> import vtool as vt
         >>> import plottool as pt
         >>> #img_fpath = ut.grab_test_imgpath('jeff.png')
-        >>> img_fpath = ut.grab_test_imgpath('star.png')
-        >>> (kpts_list1, vecs_list1) = detect_kpts(img_fpath, rotation_invariance=False)
-        >>> (kpts_list2, vecs_list2) = detect_kpts(img_fpath, rotation_invariance=True)
-        >>> kpts1 = kpts_list1[::15]
-        >>> kpts2 = kpts_list2[::15]
+        >>> TAU = 2 * np.pi
+        >>> theta = ut.get_argval('--theta', type_=float, default=TAU * 3 / 8)
+        >>> img_fpath = vt.rotate_image_on_disk(ut.grab_test_imgpath('star.png'), theta)
+        >>> (kpts_list_gv, vecs_list1) = detect_kpts(img_fpath, rotation_invariance=False)
+        >>> (kpts_list_ri, vecs_list2) = detect_kpts(img_fpath, rotation_invariance=True)
+        >>> kpts_gv = kpts_list_gv[::15]
+        >>> kpts_ri = kpts_list_ri[::15]
         >>> # find_kpts_direction
         >>> imgBGR = vt.imread(img_fpath)
-        >>> kpts3 = vt.find_kpts_direction(imgBGR, kpts1)
+        >>> kpts_ripy = vt.find_kpts_direction(imgBGR, kpts_gv)
         >>> # Verify results stdout
-        >>> print('nkpts = %r' % (len(kpts1)))
-        >>> print(vt.kpts_repr(kpts1))
-        >>> print(vt.kpts_repr(kpts2))
-        >>> print(vt.kpts_repr(kpts3))
+        >>> print('nkpts = %r' % (len(kpts_gv)))
+        >>> print(vt.kpts_repr(kpts_gv))
+        >>> print(vt.kpts_repr(kpts_ri))
+        >>> print(vt.kpts_repr(kpts_ripy))
         >>> # Verify results plot
         >>> pt.figure(fnum=1, doclf=True, docla=True)
         >>> pt.imshow(imgBGR)
-        >>> pt.draw_kpts2(kpts1, ori=True, ell_color=pt.BLUE, ell_linewidth=10.5)
-        >>> pt.draw_kpts2(kpts2, ori=True, ell_color=pt.RED, ell_linewidth=7.5)
-        >>> pt.draw_kpts2(kpts3, ori=True, ell_color=pt.GREEN, ell_linewidth=4.5)
-        >>> print('\n'.join(vt.get_ori_strs(np.vstack([kpts1, kpts2, kpts3]))))
+        >>> pt.draw_kpts2(kpts_gv, ori=True, ell_color=pt.BLUE, ell_linewidth=10.5)
+        >>> pt.draw_kpts2(kpts_ri, ori=True, ell_color=pt.RED, ell_linewidth=7.5)
+        >>> pt.draw_kpts2(kpts_ripy, ori=True, ell_color=pt.GREEN, ell_linewidth=4.5)
+        >>> print('\n'.join(vt.get_ori_strs(np.vstack([kpts_gv, kpts_ri, kpts_ripy]))))
         >>> #ut.embed(exec_lines=['pt.update()'])
         >>> pt.show_if_requested()
 
@@ -503,6 +506,9 @@ def detect_kpts(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kwa
         python -m pyhesaff._pyhesaff --test-detect_kpts:1
 
         python -m pyhesaff._pyhesaff --test-detect_kpts:1 --show
+
+        python -m pyhesaff._pyhesaff --test-detect_kpts:1 --show --theta 2
+
 
         ./build/hesaffexe /home/joncrall/.config/utool/star.png
 
