@@ -419,7 +419,8 @@ public:
             std::vector<float> submaxima_oris;
             if (this->findKeypointsDirection(this->image, x, y, s, a11, a12, a21, a22, ori, submaxima_oris))
             {
-                // TODO: push a keypoint for every orientation found
+                global_c1++;
+                // push a keypoint for every orientation found
                 for (int i = 0; i < submaxima_oris.size(); i++)
                 {
                     ori = submaxima_oris[i];
@@ -427,7 +428,6 @@ public:
                     // sample the patch (populates this->patch)
                     if(!this->normalizeAffine(this->image, x, y, s, a11, a12, a21, a22, ori))  // affine.cpp
                     {
-                        //this->keys.push_back(k);
                         this->push_new_keypoint(x, y, s, a11, a12, a21, a22, ori, type, response);
                     }
                 }
@@ -629,6 +629,8 @@ public:
              ./unix_build.sh --fast && ./build/hesaffexe /home/joncrall/.config/utool/star.png
              sh mingw_build.sh --fast
              build/hesaffexe /home/joncrall/.config/utool/star.png
+
+            python -c "import utool; utool.cmd('build/hesaffexe.exe ' + utool.grab_test_imgpath('star.png'))"
 
 
         References:
