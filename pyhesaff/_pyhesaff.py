@@ -23,6 +23,7 @@ from collections import OrderedDict
 # Scientific
 import numpy as np
 import utool as ut
+#print, print_, printDBG, rrr, profile = ut.inject(__name__, '[hesaff]')
 
 #try:
 #    getattr(builtins, 'profile')
@@ -87,6 +88,7 @@ hesaff_typed_params = [
     (float_t, 'scale_min', -1.0),
     (float_t, 'scale_max', -1.0),
     (bool_t,  'rotation_invariance', False),
+    (float_t, 'ori_maxima_thresh', .8),
 ]
 
 hesaff_param_dict = OrderedDict([(key, val) for (type_, key, val) in hesaff_typed_params])
@@ -445,7 +447,6 @@ def detect_kpts(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kwa
         python -m pyhesaff._pyhesaff --test-detect_kpts
         python -m pyhesaff._pyhesaff --test-detect_kpts:0 --show
         python -m pyhesaff._pyhesaff --test-detect_kpts:1 --show
-        ./unix_build.sh && python -m pyhesaff._pyhesaff --test-detect_kpts:1 --show
 
     Example0:
         >>> # ENABLE_DOCTEST
@@ -467,52 +468,6 @@ def detect_kpts(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kwa
         >>> pt.imshow(imgBGR)
         >>> pt.draw_kpts2(kpts, ori=True)
         >>> pt.show_if_requested()
-
-    Example1:
-        >>> # ENABLE_DOCTEST
-        >>> # Test orientation invariance
-        >>> from pyhesaff._pyhesaff import *  # NOQA
-        >>> import utool as ut
-        >>> import vtool as vt
-        >>> import plottool as pt
-        >>> #img_fpath = ut.grab_test_imgpath('jeff.png')
-        >>> TAU = 2 * np.pi
-        >>> theta = ut.get_argval('--theta', type_=float, default=TAU * 3 / 8)
-        >>> img_fpath = vt.rotate_image_on_disk(ut.grab_test_imgpath('star.png'), theta)
-        >>> (kpts_list_gv, vecs_list1) = detect_kpts(img_fpath, rotation_invariance=False)
-        >>> (kpts_list_ri, vecs_list2) = detect_kpts(img_fpath, rotation_invariance=True)
-        >>> kpts_gv = kpts_list_gv[::15]
-        >>> kpts_ri = kpts_list_ri[::15]
-        >>> # find_kpts_direction
-        >>> imgBGR = vt.imread(img_fpath)
-        >>> kpts_ripy = vt.find_kpts_direction(imgBGR, kpts_gv)
-        >>> # Verify results stdout
-        >>> print('nkpts = %r' % (len(kpts_gv)))
-        >>> print(vt.kpts_repr(kpts_gv))
-        >>> print(vt.kpts_repr(kpts_ri))
-        >>> print(vt.kpts_repr(kpts_ripy))
-        >>> # Verify results plot
-        >>> pt.figure(fnum=1, doclf=True, docla=True)
-        >>> pt.imshow(imgBGR)
-        >>> pt.draw_kpts2(kpts_gv, ori=True, ell_color=pt.BLUE, ell_linewidth=10.5)
-        >>> pt.draw_kpts2(kpts_ri, ori=True, ell_color=pt.RED, ell_linewidth=7.5)
-        >>> pt.draw_kpts2(kpts_ripy, ori=True, ell_color=pt.GREEN, ell_linewidth=4.5)
-        >>> print('\n'.join(vt.get_ori_strs(np.vstack([kpts_gv, kpts_ri, kpts_ripy]))))
-        >>> #ut.embed(exec_lines=['pt.update()'])
-        >>> pt.show_if_requested()
-
-    CommandLine:
-        ./unix_build.sh --fast
-        python -m pyhesaff._pyhesaff --test-detect_kpts:1
-
-        python -m pyhesaff._pyhesaff --test-detect_kpts:1 --show
-
-        python -m pyhesaff._pyhesaff --test-detect_kpts:1 --show --theta 2
-
-
-        ./build/hesaffexe /home/joncrall/.config/utool/star.png
-
-        ./unix_build.sh --fast && ./build/hesaffexe /home/joncrall/.config/utool/star.png
     """
     #Valid keyword arguments are: + str(hesaff_param_dict.keys())
     if __DEBUG__:
@@ -540,6 +495,67 @@ def detect_kpts(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kwa
             print('[hes] adapt_rotation')
         kpts, vecs = vtool_adapt_rotation(img_fpath, kpts)
     return kpts, vecs
+
+
+def test_rot_invar():
+    r"""
+    CommandLine:
+        mingw_build.bat
+        python -m pyhesaff._pyhesaff --test-test_rot_invar --show
+
+    Example:
+        >>> # ENABLE_DOCTEST
+        >>> from pyhesaff._pyhesaff import *  # NOQA
+        >>> test_rot_invar()
+    """
+    from pyhesaff._pyhesaff import *  # NOQA
+    import cv2
+    import utool as ut
+    import vtool as vt
+    import plottool as pt
+    #img_fpath = ut.grab_test_imgpath('jeff.png')
+    TAU = 2 * np.pi
+    fnum = pt.next_fnum()
+    NUM_PTS = 1  # 5  # 9
+    theta_list = np.linspace(0, TAU, NUM_PTS, endpoint=False)
+    nRows, nCols = pt.get_square_row_cols(len(theta_list), fix=True)
+    next_pnum = pt.make_pnum_nextgen(nRows, nCols)
+    # Expand the border a bit around star.png
+    pad_ = 100
+    img_fpath = ut.grab_test_imgpath('star.png')
+    img_fpath2 = vt.pad_image_on_disk(img_fpath, pad_, value=26)
+    for theta in theta_list:
+        print('-----------------')
+        print('theta = %r' % (theta,))
+        #theta = ut.get_argval('--theta', type_=float, default=TAU * 3 / 8)
+        img_fpath = vt.rotate_image_on_disk(img_fpath2, theta, borderMode=cv2.BORDER_REPLICATE)
+        (kpts_list_ri, vecs_list2) = detect_kpts(img_fpath, rotation_invariance=True)
+        (kpts_list_gv, vecs_list1) = detect_kpts(img_fpath, rotation_invariance=False)
+        kpts_gv = ut.strided_sample(kpts_list_gv, 2)
+        kpts_ri = ut.strided_sample(kpts_list_ri, 2)
+        # find_kpts_direction
+        imgBGR = vt.imread(img_fpath)
+        kpts_ripy = vt.find_kpts_direction(imgBGR, kpts_gv, DEBUG_ROTINVAR=True)
+        # Verify results stdout
+        #print('nkpts = %r' % (len(kpts_gv)))
+        #print(vt.kpts_repr(kpts_gv))
+        #print(vt.kpts_repr(kpts_ri))
+        #print(vt.kpts_repr(kpts_ripy))
+        # Verify results plot
+        pt.figure(fnum=fnum, pnum=next_pnum())
+        pt.imshow(imgBGR)
+        #if len(kpts_gv) > 0:
+        #    pt.draw_kpts2(kpts_gv, ori=True, ell_color=pt.BLUE, ell_linewidth=10.5)
+        ell = True
+        rect = False
+        if len(kpts_ri) > 0:
+            pt.draw_kpts2(kpts_ri, rect=rect, ell=ell, ori=True, ell_color=pt.RED, ell_linewidth=5.5)
+        if len(kpts_ripy) > 0:
+            pt.draw_kpts2(kpts_ripy, rect=rect, ell=ell,  ori=True, ell_color=pt.GREEN, ell_linewidth=3.5)
+        #print('\n'.join(vt.get_ori_strs(np.vstack([kpts_gv, kpts_ri, kpts_ripy]))))
+        #ut.embed(exec_lines=['pt.update()'])
+    pt.set_figtitle('green=python, red=C++')
+    pt.show_if_requested()
 
 
 #def make_small_test_img_fpath():

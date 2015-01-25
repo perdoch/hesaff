@@ -14,7 +14,7 @@ if (APPLE AND CLANG2)
     set(CMAKE_CXX_COMPILER "clang2++")
 endif()
 
-if (UNIX)
+if (FALSE)
     set(CMAKE_C_COMPILER "clang-3.5")
     set(CMAKE_CXX_COMPILER "clang++-3.5")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -stdlib=libstdc++")
@@ -73,6 +73,7 @@ set(SOURCE_FILES
     src/pyramid.cpp 
     src/helpers.cpp 
     src/affine.cpp 
+    src/orientation.cpp 
     src/siftdesc.cpp)
 
 add_library(hesaff SHARED ${SOURCE_FILES})

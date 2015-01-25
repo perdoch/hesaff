@@ -1,4 +1,5 @@
 int global_nkpts = 0;
+int global_nmulti_ori = 0;
 int global_c1 = 0;
 int global_c2 = 0;
 /*
@@ -11,10 +12,12 @@ int global_c2 = 0;
  */
 /*
 CommandLine:
-mingw_build.bat && python -c "import utool as ut; ut.cmd('build/hesaffexe.exe ' + ut.grab_test_imgpath('star.png'))"
-mingw_build.bat && python -c "import utool as ut; ut.cmd('build\\hesaffexe.exe', ut.grab_test_imgpath('star.png'))"
+    mingw_build.bat && python -c "import utool as ut; ut.cmd('build/hesaffexe.exe ' + ut.grab_test_imgpath('star.png'))"
+    mingw_build.bat && python -c "import utool as ut; ut.cmd('build\\hesaffexe.exe', ut.grab_test_imgpath('star.png'))"
 
-./unix_build.sh && python -c "import utool as ut; ut.cmd('build/hesaffexe ' + ut.grab_test_imgpath('star.png'))"
+    ./unix_build.sh && python -c "import utool as ut; ut.cmd('build/hesaffexe ' + ut.grab_test_imgpath('star.png'))"
+
+    python -m pyhesaff._pyhesaff --test-test_rot_invar --show
 
 
  */
@@ -33,6 +36,7 @@ mingw_build.bat && python -c "import utool as ut; ut.cmd('build\\hesaffexe.exe',
 
 #include "pyramid.h"
 #include "helpers.h"
+#include "orientation.h"
 #include "affine.h"
 #include "siftdesc.h"
 #include "hesaff.h"
@@ -399,11 +403,17 @@ public:
             s - keypoint scale (specifies determinant of shape matrix)
             a11, a12, a21, a22 - shape matrix (force to have determinant 1)
             type - can be one of {HESSIAN_DARK = 0, HESSIAN_BRIGHT = 1, HESSIAN_SADDLE = 2,}
-            responce - 
+            response - 
             iters - 
 
          */
         // type can be one of:
+        #ifdef DEBUG_HESAFF
+        if (std::abs(response) > 1000 || std::abs(response) < 800)
+        {
+            return;
+        }
+        #endif
 
         // check if detected keypoint is within scale thresholds
         float scale_min = hesPar.scale_min;
@@ -424,40 +434,36 @@ public:
         // Enforce the gravity vector: convert shape into a up is up frame
         float ori = R_GRAVITY_THETA;
         rectifyAffineTransformationUpIsUp(a11, a12, a21, a22); // Helper
+        std::vector<float> submaxima_oris;
         if(hesPar.rotation_invariance)
         {
-            std::vector<float> submaxima_oris;
-            bool passed = this->findKeypointsDirection(this->image, x, y, s, a11, a12, a21, a22, ori, submaxima_oris);
-            //submaxima_oris.push_back(0);  // hack in 0 always
-            printDBG("[onAffShapeFound] Found " << submaxima_oris.size() << " orientations")
-            if (passed)
-            {
-                global_c1++;
-                // push a keypoint for every orientation found
-                for (int i = 0; i < submaxima_oris.size(); i++)
-                {
-                    ori = submaxima_oris[i];
-                    global_nkpts++;
-                    // sample the patch (populates this->patch)
-                    if(!this->normalizeAffine(this->image, x, y, s, a11, a12, a21, a22, ori))  // affine.cpp
-                    {
-                        this->push_new_keypoint(x, y, s, a11, a12, a21, a22, ori, type, response);
-                    }
-                }
-            }
-            else
+            bool passed = this->localizeKeypointOrientation(
+                this->image, x, y, s, a11, a12, a21, a22, submaxima_oris);
+            if (!passed)
             {
                 return;
             }
+            //submaxima_oris.push_back(2.0f);  // hack an orientations
+            //submaxima_oris.push_back(R_GRAVITY_THETA);  // hack in a gravity orientation
         }
         else
         {
-            ori = R_GRAVITY_THETA;
+            // Just use one gravity orientation
+            submaxima_oris.push_back(R_GRAVITY_THETA);
+        }
+
+        //printDBG("[onAffShapeFound] Found " << submaxima_oris.size() << " orientations")
+        global_c1++;
+        global_nmulti_ori += submaxima_oris.size() - 1;
+        // push a keypoint for every orientation found
+        for (int i = 0; i < submaxima_oris.size(); i++)
+        {
+            ori = submaxima_oris[i];
             global_nkpts++;
             // sample the patch (populates this->patch)
-            if(!this->normalizeAffine(this->image, x, y, s, a11, a12, a21, a22, ori))  // affine.cpp
+            // (from affine.cpp)
+            if(!this->normalizeAffine(this->image, x, y, s, a11, a12, a21, a22, ori)) 
             {
-                //this->keys.push_back(k);
                 this->push_new_keypoint(x, y, s, a11, a12, a21, a22, ori, type, response);
             }
         }
@@ -468,6 +474,7 @@ public:
     //------------------------------------------------------------
     void push_new_keypoint(float x, float y, float s, float a11, float a12, float a21, float a22, float ori, int type, float response)
     {
+        //printDBG("response = " << response)
         // compute SIFT and append new keypoint and descriptor
         global_c1++;
         //this->DBG_patch();
@@ -489,33 +496,37 @@ public:
         //this->keys.push_back(Keypoint());
     }
 
-    float findKeypointsDirection(const cv::Mat& img, float x, float y,
-                                 float s, 
-                                 float a11, float a12,
-                                 float a21, float a22,
-                                 float ori,
-                                 std::vector<float>& submaxima_oris)
+    float localizeKeypointOrientation(const cv::Mat& img, float x, float y,
+            float s, 
+            float a11, float a12,
+            float a21, float a22,
+            std::vector<float>& submaxima_oris)
     {
-        /*"""
+        /*
+        Finds keypoint orientation by warping keypoint into a unit circle, then
+        computes orientation histogram with 36 bins using linear interpolation
+        between bins, and fits a parabaloa (2nd degree taylor expansion)
+        to localize sub-bin orientation.
+
         Args: 
             img : an image
             pat : a keypoints image patch
 
         OutVars:
-            ori : dominant gradient orientation
+            submaxima_oris : dominant gradient orientations
          
         Returns: 
             bool : success flag
-        """*/
+
+        References: 
+             http://docs.opencv.org/modules/imgproc/doc/filtering.html?highlight=sobel#sobel
+        */
         global_c2++;
 
         // Enforce that the shape is pointing down and sample the patch when the
         // orientation is the gravity vector 
+        float ori = R_GRAVITY_THETA;
         rectifyAffineTransformationUpIsUp(a11, a12, a21, a22);
-        #ifdef DEBUG_HESAFF
-            assert(ori == R_GRAVITY_THETA);
-            assert(a12 == 0);
-        #endif 
         // sample the patch (populates this->patch)
         if(this->normalizeAffine(img, x, y, s, a11, a12, a21, a22, ori))
         {
@@ -530,98 +541,93 @@ public:
         // Compute gradient
         //this->DBG_kp_shape_a(x, y, s, a11, a12, a21, a22, ori);
         //this->DBG_print_mat(this->patch, 10, "PATCH");
-        //this->DBG_dump_patch("PATCH", this->patch);
+        #if 1
+            //this->DBG_dump_patch("PATCH", this->patch);
+        #endif
         
         cv::Mat xgradient(this->patch.rows, this->patch.cols, this->patch.depth());
         cv::Mat ygradient(this->patch.rows, this->patch.cols, this->patch.depth());
 
-        #undef OLDROT_INVAR
-        #ifdef OLDROT_INVAR
-            // OLD; GRADIANT FUNCTION 
-            computeGradient(this->patch, xgradient, ygradient);
-        #else
-            // References: http://docs.opencv.org/modules/imgproc/doc/filtering.html?highlight=sobel#sobel
-            // NEW: COMPUTE GRADIENT WITH SOBEL
-            cv::Sobel(this->patch, xgradient, this->patch.depth(), 1, 0, 1, 1.0, 0, cv::BORDER_DEFAULT );
-            cv::Sobel(this->patch, ygradient, this->patch.depth(), 0, 1, 1, 1.0, 0, cv::BORDER_DEFAULT );
-        #endif
+        // NEW: COMPUTE GRADIENT WITH SOBEL
+        cv::Sobel(this->patch, xgradient, this->patch.depth(), 
+                1, 0, 1, 1.0, 0, cv::BORDER_DEFAULT);
+        cv::Sobel(this->patch, ygradient, this->patch.depth(), 
+                0, 1, 1, 1.0, 0, cv::BORDER_DEFAULT);
+        
+        // Compute magnitude and orientation
+        cv::Mat orientations;
+        cv::Mat magnitudes;
+        //cv::magnitude(xgradient, ygradient, magnitudes);
+        cv::cartToPolar(xgradient, ygradient, magnitudes, orientations);
+        // gaussian weight magnitudes
+        float sigma0 = (magnitudes.rows / 2) * .95;
+        float sigma1 = (magnitudes.cols / 2) * .95;
+        double d0_max, d0_min, d1_max, d1_min;
+        cv::Mat gauss_kernel_d0 = cv::getGaussianKernel(magnitudes.rows, sigma0, CV_32F);
+        cv::Mat gauss_kernel_d1 = cv::getGaussianKernel(magnitudes.cols, sigma1, CV_32F);
+        cv::minMaxLoc(gauss_kernel_d0, &d0_min, &d0_max);
+        cv::minMaxLoc(gauss_kernel_d1, &d1_min, &d1_max);
+        gauss_kernel_d0 = gauss_kernel_d0.mul(1.0f / d0_max);
+        gauss_kernel_d1 = gauss_kernel_d1.mul(1.0f / d1_max);
+        //cv::Mat gauss_weights = gauss_kernel_d1.dot(gauss_kernel_d0.t());
+        cv::Mat gauss_weights = gauss_kernel_d1 * gauss_kernel_d0.t();
+        //cv::Mat gauss_weights = gauss_kernel_d1; 
+        // Weight magnitudes using a gaussian kernel
+        cv::Mat weights = magnitudes.mul(gauss_weights);
 
         //this->DBG_print_mat(xgradient, 10, "xgradient");
         //this->DBG_print_mat(ygradient, 10, "ygradient");
-        //this->DBG_dump_patch("PATCH", this->patch);
-        //this->DBG_dump_patch("xgradient", xgradient);
-        //this->DBG_dump_patch("ygradient", ygradient);
-        
-        // Compute orientation
-        cv::Mat orientations;
-        // Compute magnitude
-        cv::Mat magnitudes;
-        #ifdef OLDROT_INVAR
-            computeOrientation<float>(xgradient, ygradient, orientations);
-            inplace_map(ensure_0toTau<float>, orientations.begin<float>(), orientations.end<float>());
-            computeMagnitude<float>(xgradient, ygradient, magnitudes);
-            cv::Mat weights = magnitudes;
-        #else
-            //cv::magnitude(xgradient, ygradient, magnitudes);
-            cv::cartToPolar(xgradient, ygradient, magnitudes, orientations);
-            // gaussian weight magnitudes
-            float sigma0 = (magnitudes.rows / 2) * .95;
-            float sigma1 = (magnitudes.cols / 2) * .95;
-            double d0_max, d0_min, d1_max, d1_min;
-            cv::Mat gauss_kernel_d0 = cv::getGaussianKernel(magnitudes.rows, sigma0, CV_32F);
-            cv::Mat gauss_kernel_d1 = cv::getGaussianKernel(magnitudes.cols, sigma1, CV_32F);
-            cv::minMaxLoc(gauss_kernel_d0, &d0_min, &d0_max);
-            cv::minMaxLoc(gauss_kernel_d1, &d1_min, &d1_max);
-            //printDBG("d0_max = " << d0_max);
-            //printDBG("d1_max = " << d1_max);
-            //this->DBG_print_mat(gauss_kernel_d0, 1, "GAUSSd0");
-            //this->DBG_print_mat(gauss_kernel_d1, 1, "GAUSSd1");
-            gauss_kernel_d0 = gauss_kernel_d0.mul(1.0f / d0_max);
-            gauss_kernel_d1 = gauss_kernel_d1.mul(1.0f / d1_max);
-            //cv::Mat gauss_weights = gauss_kernel_d1.dot(gauss_kernel_d0.t());
-            cv::Mat gauss_weights = gauss_kernel_d1 * gauss_kernel_d0.t();
-            //cv::Mat gauss_weights = gauss_kernel_d1; 
-            this->DBG_print_mat(gauss_weights, 10, "GAUSS");
-            cv::Mat weights = magnitudes.mul(gauss_weights);
+        this->DBG_dump_patch("PATCH", this->patch);
+        this->DBG_dump_patch("xgradient", xgradient);
+        this->DBG_dump_patch("ygradient", ygradient);
+        //printDBG("d0_max = " << d0_max);
+        //printDBG("d1_max = " << d1_max);
+        //this->DBG_print_mat(gauss_kernel_d0, 1, "GAUSSd0");
+        //this->DBG_print_mat(gauss_kernel_d1, 1, "GAUSSd1");
+        //this->DBG_print_mat(gauss_weights, 10, "GAUSS");
+        //this->DBG_print_mat(orientations, 10, "ORI");
+        cv::Mat orientations01 = orientations.mul(255.0 / 6.28);
+        this->DBG_dump_patch("orientations01", orientations01);
+        //this->DBG_print_mat(magnitudes, 10, "MAG");
+        //this->DBG_print_mat(weights, 10, "WEIGHTS");
+        this->DBG_dump_patch("magnitudes", magnitudes);
+        this->DBG_dump_patch("gauss_weights", gauss_weights, true);
+        this->DBG_dump_patch("WEIGHTS", weights);
 
-        #endif
-        this->DBG_print_mat(orientations, 10, "ORI");
-        //cv::Mat orientations01 = orientations.mul(255.0 / 6.28);
-        //this->DBG_dump_patch("orientations01", orientations01);
-        this->DBG_print_mat(magnitudes, 10, "MAG");
-        this->DBG_print_mat(weights, 10, "WEIGHTS");
-
-        //this->DBG_dump_patch("magnitudes", magnitudes);
-        //this->DBG_dump_patch("gauss_weights", gauss_weights, true);
-        //this->DBG_dump_patch("WEIGHTS", weights);
-        // TODO: weight by a gaussian
-        // Compute orientation histogram, splitting votes using linear interpolation
+        // HISTOGRAM PART
+        // Compute ori histogram, splitting votes using linear interpolation
         const int nbins = 36;
-        Histogram<float> hist = computeInterpolatedHistogram<float>(orientations.begin<float>(), orientations.end<float>(),
-                                weights.begin<float>(), weights.end<float>(),
-                                nbins, M_TAU, 0.0);
-        // wrap histogram (because orientations are circular)
+        Histogram<float> hist = computeInterpolatedHistogram<float>(
+                orientations.begin<float>(), orientations.end<float>(),
+                weights.begin<float>(), weights.end<float>(),
+                nbins, M_TAU, 0.0);
+        // inplace wrap histogram (because orientations are circular)
         Histogram<float> wrapped_hist = htool::wrap_histogram(hist);
-        htool::hist_edges_to_centers(wrapped_hist); // inplace modification
+        htool::hist_edges_to_centers(wrapped_hist); 
         // Compute orientation as maxima of wrapped histogram
         std::vector<float> submaxima_xs, submaxima_ys;
-        float maxima_thresh = .8;
-        htool::hist_interpolated_submaxima(wrapped_hist, submaxima_xs, submaxima_ys, maxima_thresh);
+        const float maxima_thresh = this->hesPar.ori_maxima_thresh;
+        htool::hist_interpolated_submaxima(
+                wrapped_hist, submaxima_xs, submaxima_ys, maxima_thresh);
         for (int i = 0; i < submaxima_xs.size(); i ++ )
         {
             float submax_ori = submaxima_xs[i];
-            submax_ori = ensure_0toTau<float>(submax_ori); //will change if multiple submaxima are returned
+            float submax_ori2 = ensure_0toTau<float>(submax_ori); 
             submaxima_oris.push_back(submax_ori);
-            printDBG("[find_ori] submax_ori = " << submax_ori)
+            if (submax_ori != submax_ori2)
+            {
+                printDBG("[find_ori] +------------")
+                printDBG("[find_ori] submax_ori  = " << submax_ori)
+                printDBG("[find_ori] submax_ori2 = " << submax_ori2)
+                printDBG("[find_ori] L____________")
+            }
+            submax_ori = submax_ori2;
+            submaxima_oris.push_back(submax_ori);
+
         }
-        //float submax_ori = submaxima_xs[0]; //will change if multiple submaxima are returned
-        //printDBG("[find_ori] submax_ori = " << submax_ori)
         //submax_ori -= M_GRAVITY_THETA; // adjust for 0 being downward
         //submax_ori += M_GRAVITY_THETA; // adjust for 0 being downward
         //submax_ori = ensure_0toTau<float>(submax_ori); //will change if multiple submaxima are returned
-        //printDBG("[find_ori] submax_ori = " << submax_ori)
-        // populate outvar
-        //ori = submax_ori;
         return true;
     }
 
@@ -639,13 +645,12 @@ public:
     {
         /*
         CommandLine:
-             ./unix_build.sh --fast && ./build/hesaffexe /home/joncrall/.config/utool/star.png
-             ./unix_build.sh --fast && ./build/hesaffexe /home/joncrall/.config/utool/star.png
-             sh mingw_build.sh --fast
-             build/hesaffexe /home/joncrall/.config/utool/star.png
+            ./unix_build.sh --fast && ./build/hesaffexe /home/joncrall/.config/utool/star.png
+            ./unix_build.sh --fast && ./build/hesaffexe /home/joncrall/.config/utool/star.png
+            sh mingw_build.sh --fast
+            build/hesaffexe /home/joncrall/.config/utool/star.png
 
             python -c "import utool; utool.cmd('build/hesaffexe.exe ' + utool.grab_test_imgpath('star.png'))"
-
 
         References:
             http://docs.opencv.org/modules/core/doc/basic_structures.html#mat-depth
@@ -662,6 +667,7 @@ public:
              print(ut.dict_str(dict(zip(keys, ut.dict_take(cv2.__dict__, keys)))))
          */
         //DBG: write out patches
+        system("python -c 'import utool as ut; ut.ensuredir(\"patches\"))'");
         make_str(patch_fpath, "patches/" << str_name << "_" << this->keys.size() << ".png");
         printDBG("[DBG] ----------------------")
         printDBG("[DBG] Dumping patch to patch_fpath = " << patch_fpath);
@@ -674,7 +680,6 @@ public:
         printDBG("[DBG] patch.depth() = " <<  dbgpatch.depth());
         printDBG("[DBG] patch.at(0, 0) = " <<  (dbgpatch.at<float>(0, 0)));
         //printDBG(this->patch)
-        cv::namedWindow(patch_fpath, cv::WINDOW_NORMAL);
         cv::Mat dbgpatch_;
         if (fix)
         {
@@ -685,8 +690,9 @@ public:
         {
             dbgpatch.convertTo(dbgpatch_, CV_8U);
         }
-        cv::imshow(patch_fpath, dbgpatch_);
-        cv::waitKey(0);
+        //cv::namedWindow(patch_fpath, cv::WINDOW_NORMAL);
+        //cv::imshow(patch_fpath, dbgpatch_);
+        //cv::waitKey(0);
         cv::imwrite(patch_fpath, dbgpatch);
     }
 
@@ -788,9 +794,10 @@ public:
     //printDBG("siftParams.orientationBins = " << siftParams.orientationBins);
     //printDBG("siftParams.maxBinValue     = " << siftParams.maxBinValue);
     //printDBG("siftParams.patchSize       = " << siftParams.patchSize);
-    printDBG(" * affShapeParams.scale_min            = " << hesPar.scale_min);
-    printDBG(" * affShapeParams.scale_max            = " << hesPar.scale_max);
-    printDBG(" * affShapeParams.rotation_invariance  = " << hesPar.rotation_invariance);
+    printDBG(" * hesPar.scale_min            = " << hesPar.scale_min);
+    printDBG(" * hesPar.scale_max            = " << hesPar.scale_max);
+    printDBG(" * hesPar.rotation_invariance  = " << hesPar.rotation_invariance);
+    printDBG(" * hesPar.ori_maxima_thresh    = " << hesPar.ori_maxima_thresh);
     }       
 
 
@@ -817,7 +824,11 @@ PYHESAFF int detect(AffineHessianDetector* detector)
 {
     printDBG("detector->detect");
     int nKpts = detector->detect();
-    printDBG("nKpts = " << nKpts);
+    printDBG("[detet] nKpts = " << nKpts);
+    printDBG("[detet] global_c1 = " << global_c1);
+    printDBG("[detet] global_c2 = " << global_c2);
+    printDBG("[detet] global_nkpts = " << global_nkpts);
+    printDBG("[detet] global_nmulti_ori = " << global_nmulti_ori);
     return nKpts;
 }
 
@@ -855,7 +866,8 @@ PYHESAFF AffineHessianDetector* new_hesaff_from_params(char* img_fpath,
         // My Params
         float scale_min,
         float scale_max,
-        bool rotation_invariance)
+        bool rotation_invariance,
+        float ori_maxima_thresh)
 {
     printDBG("making detector for " << img_fpath);
     printDBG(" * img_fpath = " << img_fpath);
@@ -902,6 +914,7 @@ PYHESAFF AffineHessianDetector* new_hesaff_from_params(char* img_fpath,
     hesParams.scale_min            = scale_min;
     hesParams.scale_max            = scale_max;
     hesParams.rotation_invariance  = rotation_invariance;
+    hesParams.ori_maxima_thresh    = ori_maxima_thresh;
     // Create detector
     AffineHessianDetector* detector = new AffineHessianDetector(image, pyrParams, affShapeParams, siftParams, hesParams);
     return detector;
@@ -932,12 +945,13 @@ PYHESAFF AffineHessianDetector* new_hesaff(char* img_fpath)
     float scale_min = -1;
     float scale_max = -1;
     bool rotation_invariance = false;
+    float ori_maxima_thresh = .8;
 
     AffineHessianDetector* detector = new_hesaff_from_params(img_fpath,
                                       numberOfScales, threshold, edgeEigenValueRatio, border,
                                       maxIterations, convergenceThreshold, smmWindowSize, mrSize,
                                       spatialBins, orientationBins, maxBinValue, initialSigma, patchSize,
-                                      scale_min, scale_max, rotation_invariance);
+                                      scale_min, scale_max, rotation_invariance, ori_maxima_thresh);
     return detector;
 }
 
@@ -995,13 +1009,15 @@ void detectKeypoints(char* image_filename,
                      // My Params
                      float scale_min,
                      float scale_max,
-                     bool rotation_invariance)
+                     bool rotation_invariance,
+                     float ori_maxima_thresh)
 {
     AffineHessianDetector* detector = new_hesaff_from_params(image_filename,
                                       numberOfScales, threshold, edgeEigenValueRatio, border,
                                       maxIterations, convergenceThreshold, smmWindowSize, mrSize,
                                       spatialBins, orientationBins, maxBinValue, initialSigma,
-                                      patchSize, scale_min, scale_max, rotation_invariance);
+                                      patchSize, scale_min, scale_max, rotation_invariance,
+                                      ori_maxima_thresh);
     detector->DBG_params();
     *length = detector->detect();
     *keypoints = new float[(*length)*KPTS_DIM];
@@ -1038,7 +1054,8 @@ PYHESAFF void detectKeypointsList(int num_filenames,
                                   // My Params
                                   float scale_min,
                                   float scale_max,
-                                  bool rotation_invariance)
+                                  bool rotation_invariance,
+                                  float ori_maxima_thresh)
 {
     // Maybe use this implimentation instead to be more similar to the way
     // pyhesaff calls this library?
@@ -1052,7 +1069,7 @@ PYHESAFF void detectKeypointsList(int num_filenames,
                                    threshold, edgeEigenValueRatio, border, maxIterations,
                                    convergenceThreshold, smmWindowSize, mrSize,
                                    spatialBins, orientationBins, maxBinValue, initialSigma,
-                                   patchSize, scale_min, scale_max, rotation_invariance);
+                                   patchSize, scale_min, scale_max, rotation_invariance, ori_maxima_thresh);
         detector->DBG_params();
         int length = detector->detect();
         length_array[index] = length;
@@ -1089,7 +1106,8 @@ PYHESAFF void detectKeypointsList1(int num_filenames,
                                    // My Params
                                    float scale_min,
                                    float scale_max,
-                                   bool rotation_invariance)
+                                   bool rotation_invariance,
+                                   float ori_maxima_thresh)
 {
     int index;
     #pragma omp parallel for private(index)
@@ -1103,7 +1121,7 @@ PYHESAFF void detectKeypointsList1(int num_filenames,
                         edgeEigenValueRatio, border, maxIterations,
                         convergenceThreshold, smmWindowSize, mrSize, spatialBins,
                         orientationBins, maxBinValue, initialSigma, patchSize,
-                        scale_min, scale_max, rotation_invariance);
+                        scale_min, scale_max, rotation_invariance, ori_maxima_thresh);
     }
 }
 #ifdef __cplusplus
@@ -1167,10 +1185,10 @@ int main(int argc, char **argv)
         detector->DBG_params();
         nKpts = detect(detector);
         writeFeatures(detector, img_fpath);
-        std::cout << "nKpts: " << nKpts << std::endl;
-        std::cout << "global_nkpts: " << global_nkpts << std::endl;
-        std::cout << "global_c1: " << global_c1 << std::endl;
-        std::cout << "global_c2: " << global_c2 << std::endl;
+        std::cout << "[main] nKpts: " << nKpts << std::endl;
+        std::cout << "[main] global_nkpts: " << global_nkpts << std::endl;
+        std::cout << "[main] global_c1: " << global_c1 << std::endl;
+        std::cout << "[main] global_c2: " << global_c2 << std::endl;
     }
     else
     {

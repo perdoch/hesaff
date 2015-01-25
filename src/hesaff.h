@@ -18,12 +18,14 @@
 #define HESAFF_EXPORT
 #endif // FOO_DLL // ???
 
+// TODO : use either adapt_rotation or rotation_invariance, but not both
+
 struct HesaffParams
 {
     float scale_min;     // minimum scale threshold
     float scale_max;     // maximum scale threshold
+    float ori_maxima_thresh;  // threshold for orientation invaraince
     bool rotation_invariance;  // are we assuming the gravity vector?
-
     bool adapt_rotation;
     bool adapt_scale;
 
@@ -31,6 +33,7 @@ struct HesaffParams
     {
         scale_min = -1;
         scale_max = -1;
+        ori_maxima_thresh = .8; 
         rotation_invariance = false; //remove in favor of adapt_rotation?
         adapt_rotation = false;
         adapt_scale = false;

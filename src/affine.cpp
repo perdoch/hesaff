@@ -30,14 +30,19 @@
 
 using namespace cv;
 
-// Step 3:
-// main
-//   0: void HessianDetector::detectPyramidKeypoints(const Mat &image)
-//   1: void HessianDetector::detectOctaveKeypoints(const Mat &firstLevel, float pixelDistance, Mat &nextOctaveFirstLevel)
-// 1.2: void HessianDetector::findLevelKeypoints(float curScale, float pixelDistance)
-//   2: void HessianDetector::localizeKeypoint(int r, int c, float curScale, float pixelDistance)
 bool AffineShape::findAffineShape(const Mat &blur, float x, float y, float s, float pixelDistance, int type, float response)
 {
+    /*
+    Takes a keypoint with localized position and shape and iteravely computes the 
+    affine shape that causes the second moment matrix (SMM) to become the identity
+
+    Step 3: main
+    0: void HessianDetector::detectPyramidKeypoints(const Mat &image)
+    1: void HessianDetector::detectOctaveKeypoints(const Mat &firstLevel, float pixelDistance,
+                                                    Mat &nextOctaveFirstLevel)
+    1.2: void HessianDetector::findLevelKeypoints(float curScale, float pixelDistance)
+      2: void HessianDetector::localizeKeypoint(int r, int c, float curScale, float pixelDistance)
+    */
     float eigen_ratio_act = 0.0f, eigen_ratio_bef = 0.0f;
     float u11 = 1.0f, u12 = 0.0f, u21 = 0.0f, u22 = 1.0f, l1 = 1.0f, l2 = 1.0f;
     float lx = x / pixelDistance, ly = y / pixelDistance;
@@ -124,6 +129,9 @@ bool AffineShape::normalizeAffine(const Mat &img,
                                   float a21, float a22,
                                   float ori)
 {
+    /*
+     Populates this->patch with the pixel data of an affine normalized keypoint
+     */
     // img is passed from onAffineShapeFound as this->image
     if(!almost_eq(ori, R_GRAVITY_THETA))
     {
