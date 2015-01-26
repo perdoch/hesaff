@@ -588,12 +588,29 @@ public:
         //this->DBG_print_mat(orientations, 10, "ORI");
         cv::Mat orientations01 = orientations.mul(255.0 / 6.28);
         this->DBG_dump_patch("orientations01", orientations01);
-        //this->DBG_print_mat(magnitudes, 10, "MAG");
-        //this->DBG_print_mat(weights, 10, "WEIGHTS");
         this->DBG_dump_patch("magnitudes", magnitudes);
         this->DBG_dump_patch("gauss_weights", gauss_weights, true);
-        this->DBG_dump_patch("WEIGHTS", weights);
+        //std::str ori_fpath;
+        //std::str weights_fpath;
 
+        this->DBG_dump_patch("WEIGHTS", weights);
+        this->DBG_dump_patch("orientations", orientations);
+        make_str(weights_fpath, "patches/" << "WEIGHTS" << "_" << this->keys.size() << ".png");
+        make_str(ori_fpath, "patches/" << "orientations" << "_" << this->keys.size() << ".png");
+        //this->DBG_print_mat(magnitudes, 10, "MAG");
+        //this->DBG_print_mat(weights, 10, "WEIGHTS");
+        make_str(cmd_str, 
+                "python -m vtool.histogram --test-show_ori_image_ondisk --show" << 
+                " --fpath-ori " << ori_fpath <<
+                " --fpath-weight \"None\"" <<
+                //" --fpath-weight " << weights_fpath <<
+                ""
+                );
+        printDBG(cmd_str);
+        system(cmd_str.c_str());
+
+        // python -m pyhesaff._pyhesaff --test-test_rot_invar --show
+        
         // HISTOGRAM PART
         // Compute ori histogram, splitting votes using linear interpolation
         const int nbins = 36;
@@ -641,7 +658,8 @@ public:
         }
     }
 
-    void DBG_dump_patch(std::string str_name, cv::Mat& dbgpatch, bool fix=false)
+    void DBG_dump_patch(std::string str_name, cv::Mat& dbgpatch,
+            bool fix=false)
     {
         /*
         CommandLine:
@@ -667,7 +685,7 @@ public:
              print(ut.dict_str(dict(zip(keys, ut.dict_take(cv2.__dict__, keys)))))
          */
         //DBG: write out patches
-        system("python -c 'import utool as ut; ut.ensuredir(\"patches\"))'");
+        system("python -c \"import utool as ut; ut.ensuredir('patches')\"");
         make_str(patch_fpath, "patches/" << str_name << "_" << this->keys.size() << ".png");
         printDBG("[DBG] ----------------------")
         printDBG("[DBG] Dumping patch to patch_fpath = " << patch_fpath);
