@@ -7,6 +7,7 @@
 #include <cmath>
 #include <vector>
 #include <numeric>
+#include "helpers.h"
 
 #ifndef M_TAU
 #define M_TAU 6.28318
@@ -183,16 +184,16 @@ template <class T> void show_hist_submaxima(const Histogram<T>& hist)
     */
     // Uses python command via system call to debug visually
     make_str(basecmd, "python -m vtool.histogram --test-show_hist_submaxima --show");
+    printDBG2("SHOWING HIST SUBMAXIMA WITH PYTHON");
     make_str(cmdstr, basecmd <<
             " --hist=\"" << hist.data << "\"" << 
             " --edges=\"" << hist.edges << "\"" <<
             " --maxima_thesh .8" <<
-            " --legend"
+            //" --legend"
             ""
             );
-    printDBG2("SHOWING HIST SUBMAXIMA WITH PYTHON");
-    printDBG2(cmdstr.c_str());
-    system(cmdstr.c_str());
+    //printDBG2(cmdstr.c_str());
+    run_system_command(cmdstr);
 }
 
 
@@ -532,7 +533,6 @@ template <class T> void vector_take(
 
 template <class T> void hist_interpolated_submaxima(const Histogram<T>& hist, std::vector<T>& submaxima_xs, std::vector<T>& submaxima_ys, float maxima_thresh=.8)
 {
-    show_hist_submaxima(hist);
     std::vector<int> argmaxima_list;
     // TODO: Currently this returns only one maxima, maybe later incorporate multiple maxima
     // Get the discretized bin maxima

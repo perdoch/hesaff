@@ -13,10 +13,9 @@ int global_c2 = 0;
 /*
 CommandLine:
     mingw_build.bat && python -c "import utool as ut; ut.cmd('build/hesaffexe.exe ' + ut.grab_test_imgpath('star.png'))"
-    mingw_build.bat && python -c "import utool as ut; ut.cmd('build\\hesaffexe.exe', ut.grab_test_imgpath('star.png'))"
-
     ./unix_build.sh && python -c "import utool as ut; ut.cmd('build/hesaffexe ' + ut.grab_test_imgpath('star.png'))"
 
+    python -m pyhesaff._pyhesaff --test-test_rot_invar --show --rebuild-hesaff --no-rmbuild
     python -m pyhesaff._pyhesaff --test-test_rot_invar --show
 
 
@@ -520,6 +519,10 @@ public:
 
         References: 
              http://docs.opencv.org/modules/imgproc/doc/filtering.html?highlight=sobel#sobel
+
+        CommandLine:
+            python -m pyhesaff._pyhesaff --test-test_rot_invar --show --rebuild-hesaff --no-rmbuild
+
         */
         global_c2++;
 
@@ -595,21 +598,23 @@ public:
 
         this->DBG_dump_patch("WEIGHTS", weights);
         this->DBG_dump_patch("orientations", orientations);
-        make_str(weights_fpath, "patches/" << "WEIGHTS" << "_" << this->keys.size() << ".png");
-        make_str(ori_fpath, "patches/" << "orientations" << "_" << this->keys.size() << ".png");
+        make_str(ori_fpath, "patches/KP_" << this->keys.size() << "_" << "orientations01" << ".png");
+        make_str(weights_fpath, "patches/KP_" << this->keys.size() << "_" << "WEIGHTS" << ".png");
         //this->DBG_print_mat(magnitudes, 10, "MAG");
         //this->DBG_print_mat(weights, 10, "WEIGHTS");
+        //cv::waitKey(0);
+
         make_str(cmd_str, 
                 "python -m vtool.histogram --test-show_ori_image_ondisk --show" << 
                 " --fpath-ori " << ori_fpath <<
-                " --fpath-weight \"None\"" <<
-                //" --fpath-weight " << weights_fpath <<
-                ""
+                //" --fpath-weight \"None\"" <<
+                " --fpath-weight " << weights_fpath <<
+                "&"
                 );
-        printDBG(cmd_str);
-        system(cmd_str.c_str());
+        run_system_command(cmd_str);
 
-        // python -m pyhesaff._pyhesaff --test-test_rot_invar --show
+        // python -m pyhesaff._pyhesaff --test-test_rot_invar --show --rebuild-hesaff --no-rmbuild
+        // python -m pyhesaff._pyhesaff --test-test_rot_invar --show 
         
         // HISTOGRAM PART
         // Compute ori histogram, splitting votes using linear interpolation
@@ -624,6 +629,9 @@ public:
         // Compute orientation as maxima of wrapped histogram
         std::vector<float> submaxima_xs, submaxima_ys;
         const float maxima_thresh = this->hesPar.ori_maxima_thresh;
+
+        show_hist_submaxima(hist);
+
         htool::hist_interpolated_submaxima(
                 wrapped_hist, submaxima_xs, submaxima_ys, maxima_thresh);
         for (int i = 0; i < submaxima_xs.size(); i ++ )
@@ -672,6 +680,7 @@ public:
 
         References:
             http://docs.opencv.org/modules/core/doc/basic_structures.html#mat-depth
+            http://stackoverflow.com/questions/23019021/opencv-how-to-save-float-array-as-an-image
 
             define CV_8U   0
             define CV_8S   1
@@ -685,8 +694,8 @@ public:
              print(ut.dict_str(dict(zip(keys, ut.dict_take(cv2.__dict__, keys)))))
          */
         //DBG: write out patches
-        system("python -c \"import utool as ut; ut.ensuredir('patches')\"");
-        make_str(patch_fpath, "patches/" << str_name << "_" << this->keys.size() << ".png");
+        run_system_command("python -c \"import utool as ut; ut.ensuredir('patches', verbose=True)\"");
+        make_str(patch_fpath, "patches/KP_" << this->keys.size() << "_" << str_name << ".png");
         printDBG("[DBG] ----------------------")
         printDBG("[DBG] Dumping patch to patch_fpath = " << patch_fpath);
         printDBG("[DBG] patch.shape = (" << 
@@ -702,6 +711,7 @@ public:
         if (fix)
         {
             cv::Mat dbgpatch_fix = dbgpatch.mul(255.0);
+            //cv::Mat dbgpatch_fix = dbgpatch;
             dbgpatch_fix.convertTo(dbgpatch_, CV_8U);
         }
         else

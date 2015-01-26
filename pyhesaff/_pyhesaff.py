@@ -124,10 +124,22 @@ def build_typed_params_kwargs_docstr_block(typed_params):
 hesaff_kwargs_docstr_block = build_typed_params_kwargs_docstr_block(hesaff_typed_params)
 
 
-def load_hesaff_clib():
+HESAFF_CLIB = None
+REBUILD_ONCE = 0
+
+
+def load_hesaff_clib(rebuild=None):
     """
     Specificially loads the hesaff lib and defines its functions
+
+    CommandLine:
+        python -m pyhesaff._pyhesaff --test-load_hesaff_clib --rebuild
+
+    Example:
+        >>> pass
+        >>> #import pyhesaff
     """
+    global REBUILD_ONCE
     # Get the root directory which should have the dynamic library in it
     #root_dir = realpath(dirname(__file__)) if '__file__' in vars() else realpath(os.getcwd())
 
@@ -139,6 +151,14 @@ def load_hesaff_clib():
     #    # we are running in a normal Python environment
     #    root_dir = realpath(dirname(__file__))
     root_dir = realpath(dirname(__file__))
+    if rebuild is not False and REBUILD_ONCE == 0 and __name__ != '__main__':
+        REBUILD_ONCE += 1
+        rebuild = ut.get_argflag('--rebuild-hesaff')
+        if rebuild:
+            print('REBUILDING HESAFF')
+            repo_dir = dirname(root_dir)
+            ut.std_build_command(repo_dir)
+
     libname = 'hesaff'
     (clib, def_cfunc, lib_fpath) = ctypes_interface.load_clib(libname, root_dir)
     # Expose extern C Functions to hesaff's clib
@@ -508,7 +528,7 @@ def test_rot_invar():
         >>> from pyhesaff._pyhesaff import *  # NOQA
         >>> test_rot_invar()
     """
-    from pyhesaff._pyhesaff import *  # NOQA
+    #from pyhesaff._pyhesaff import *  # NOQA
     import cv2
     import utool as ut
     import vtool as vt

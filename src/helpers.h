@@ -44,4 +44,8 @@ bool almost_eq(float, float);
 void computeGradient(const cv::Mat &img, cv::Mat &gradx, cv::Mat &grady);
 
 
+void run_system_command(std::string command_string);
+
+
+
 #endif // __HELPERS_H__

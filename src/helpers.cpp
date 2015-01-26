@@ -52,6 +52,33 @@ double getTime()
 }
 #endif
 
+#ifdef DEBUG_HELPERS
+#undef DEBUG_HELPERS
+#endif
+#define DEBUG_HELPERS
+
+#ifdef DEBUG_HELPERS
+#define printDBG(msg) std::cerr << "[helpers.c] " << msg << std::endl;
+#define write(msg) std::cerr << msg;
+#else
+#define printDBG(msg);
+#endif
+
+
+void run_system_command(std::string cmd_str)
+{
+    printDBG("+ ----- RUNNING COMMAND ----- ")
+    printDBG(cmd_str);
+    int retcode = system(cmd_str.c_str());
+    printDBG(" retcode = " << retcode)
+    printDBG("L _______ FINISHED RUNNING COMMAND _______ ")
+    if (retcode != 0)
+    {
+        printDBG("FAILURE")
+        exit(1);
+    }
+}
+
 
 template <typename ValueType>
 void swap(ValueType *a, ValueType *b)
