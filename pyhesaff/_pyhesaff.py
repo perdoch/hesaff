@@ -521,7 +521,8 @@ def test_rot_invar():
     r"""
     CommandLine:
         mingw_build.bat
-        python -m pyhesaff._pyhesaff --test-test_rot_invar --show
+        python -m pyhesaff._pyhesaff --test-test_rot_invar --show --rebuild-hesaff --no-rmbuild
+        python -m pyhesaff._pyhesaff --test-test_rot_invar --show --nocpp
 
     Example:
         >>> # ENABLE_DOCTEST
@@ -536,7 +537,7 @@ def test_rot_invar():
     #img_fpath = ut.grab_test_imgpath('jeff.png')
     TAU = 2 * np.pi
     fnum = pt.next_fnum()
-    NUM_PTS = 1  # 5  # 9
+    NUM_PTS = 5  # 9
     theta_list = np.linspace(0, TAU, NUM_PTS, endpoint=False)
     nRows, nCols = pt.get_square_row_cols(len(theta_list), fix=True)
     next_pnum = pt.make_pnum_nextgen(nRows, nCols)
@@ -549,13 +550,14 @@ def test_rot_invar():
         print('theta = %r' % (theta,))
         #theta = ut.get_argval('--theta', type_=float, default=TAU * 3 / 8)
         img_fpath = vt.rotate_image_on_disk(img_fpath2, theta, borderMode=cv2.BORDER_REPLICATE)
-        (kpts_list_ri, vecs_list2) = detect_kpts(img_fpath, rotation_invariance=True)
+        if not ut.get_argflag('--nocpp'):
+            (kpts_list_ri, vecs_list2) = detect_kpts(img_fpath, rotation_invariance=True)
+            kpts_ri = ut.strided_sample(kpts_list_ri, 2)
         (kpts_list_gv, vecs_list1) = detect_kpts(img_fpath, rotation_invariance=False)
         kpts_gv = ut.strided_sample(kpts_list_gv, 2)
-        kpts_ri = ut.strided_sample(kpts_list_ri, 2)
         # find_kpts_direction
         imgBGR = vt.imread(img_fpath)
-        kpts_ripy = vt.find_kpts_direction(imgBGR, kpts_gv, DEBUG_ROTINVAR=True)
+        kpts_ripy = vt.find_kpts_direction(imgBGR, kpts_gv, DEBUG_ROTINVAR=False)
         # Verify results stdout
         #print('nkpts = %r' % (len(kpts_gv)))
         #print(vt.kpts_repr(kpts_gv))
@@ -566,10 +568,11 @@ def test_rot_invar():
         pt.imshow(imgBGR)
         #if len(kpts_gv) > 0:
         #    pt.draw_kpts2(kpts_gv, ori=True, ell_color=pt.BLUE, ell_linewidth=10.5)
-        ell = True
-        rect = False
-        if len(kpts_ri) > 0:
-            pt.draw_kpts2(kpts_ri, rect=rect, ell=ell, ori=True, ell_color=pt.RED, ell_linewidth=5.5)
+        ell = False
+        rect = True
+        if not ut.get_argflag('--nocpp'):
+            if len(kpts_ri) > 0:
+                pt.draw_kpts2(kpts_ri, rect=rect, ell=ell, ori=True, ell_color=pt.RED, ell_linewidth=5.5)
         if len(kpts_ripy) > 0:
             pt.draw_kpts2(kpts_ripy, rect=rect, ell=ell,  ori=True, ell_color=pt.GREEN, ell_linewidth=3.5)
         #print('\n'.join(vt.get_ori_strs(np.vstack([kpts_gv, kpts_ri, kpts_ripy]))))

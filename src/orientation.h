@@ -14,13 +14,7 @@
 #endif
 
 // DUPLICATE
-#ifdef DEBUG_HELPERS
-#undef DEBUG_HELPERS
-#endif
-#define DEBUG_HELPERS
-
-
-#define DEBUG_ROTINVAR 0
+#define DEBUG_HELPERS 1
 
 #define make_str(str_name, stream_input) \
     std::string str_name;\
@@ -29,11 +23,11 @@
     str_name = tmp_sstm.str();\
 };
 
-#ifdef DEBUG_HELPERS
-#define printDBG2(msg) std::cerr << "[ori.c] " << msg << std::endl;
+#if DEBUG_HELPERS
+#define printDBG(msg) std::cerr << "[helpers.c] " << msg << std::endl;
 #define write(msg) std::cerr << msg;
 #else
-#define printDBG2(msg);
+#define printDBG(msg);
 #endif
 
 
@@ -162,7 +156,7 @@ template <class T> struct Histogram
 template <class T> void print_vector(std::vector<T> vec, const char* name="vec")
 {
     //std::cout << name << " = [";
-    std::cout << ">>> " << name << " = [";
+    std::cout << "[ori.c] >>> " << name << " = [";
     for(int i = 0; i < vec.size(); ++i)
     {
         std::cout <<
@@ -177,22 +171,23 @@ template <class T> void print_vector(std::vector<T> vec, const char* name="vec")
     std::cout << "]" << std::endl;
 }
 
-template <class T> void show_hist_submaxima(const Histogram<T>& hist)
+template <class T> void show_hist_submaxima(const Histogram<T>& hist, float maxima_thresh=.8)
 {
     /*
      python -m pyhesaff._pyhesaff --test-test_rot_invar --show
     */
     // Uses python command via system call to debug visually
     make_str(basecmd, "python -m vtool.histogram --test-show_hist_submaxima --show");
-    printDBG2("SHOWING HIST SUBMAXIMA WITH PYTHON");
+    printDBG("SHOWING HIST SUBMAXIMA WITH PYTHON");
     make_str(cmdstr, basecmd <<
             " --hist=\"" << hist.data << "\"" << 
             " --edges=\"" << hist.edges << "\"" <<
-            " --maxima_thesh .8" <<
+            " --maxima_thesh " << maxima_thresh << 
+            " --title cpporihist" <<
             //" --legend"
             ""
             );
-    //printDBG2(cmdstr.c_str());
+    //printDBG(cmdstr.c_str());
     run_system_command(cmdstr);
 }
 
@@ -302,12 +297,10 @@ template <class T, class Iterator> Histogram<T> computeInterpolatedHistogram(
     const T half_step = step / 2.0;
     const T data_offset = start + half_step;
     // debug info
-    //#if DEBUG_ROTINVAR
-    //    printDBG2("nbins = " << nbins)
-    //    printDBG2("step = " << step)
-    //    printDBG2("half_step = " << half_step)
-    //    printDBG2("data_offset = " << data_offset)
-    //#endif
+    //    printDBG("nbins = " << nbins)
+    //    printDBG("step = " << step)
+    //    printDBG("half_step = " << half_step)
+    //    printDBG("data_offset = " << data_offset)
     // data offset should be 0, but is around for more general case of
     // interpolated histogram
     assert(data_offset == 0);
@@ -335,35 +328,27 @@ template <class T, class Iterator> Histogram<T> computeInterpolatedHistogram(
         int right_index = left_index + 1;
         T right_alpha = fracBinIndex - T(left_index);  // get interpolation weight between 0 and 1
         // Wrap around indicies
-        //#if DEBUG_ROTINVAR
         //    static int nprint = 0;
         //    bool doprint = false && (left_index < 0 || right_index >= nbins);
         //    if (doprint) 
         //    {
-        //        printDBG2("+----")
-        //        printDBG2("range = " << left_index << ", " << right_index)
+        //        printDBG("+----")
+        //        printDBG("range = " << left_index << ", " << right_index)
         //    }
-        //#endif
         left_index  = python_modulus(left_index, nbins);
         right_index = python_modulus(right_index, nbins);
-        //#if DEBUG_ROTINVAR
         //    if (doprint) 
         //    {
-        //        printDBG2("range = " << left_index << ", " << right_index)
-        //        printDBG2("L___")
+        //        printDBG("range = " << left_index << ", " << right_index)
+        //        printDBG("L___")
         //    }
         //    nprint++;
-        //#endif
         // Linear Interpolation of gradient magnitude votes over orientation
         // bins (maybe do quadratic)
         hist.data[left_index]  += weight * (1 - right_alpha);
         hist.data[right_index] += weight * (right_alpha);
     
     }
-    #if DEBUG_ROTINVAR
-    //print_vector<T>(hist.data, "hist");
-    //print_vector<T>(hist.edges, "edges");
-    #endif
     return hist;
 }
 
@@ -397,10 +382,8 @@ template <class T> Histogram<T> wrap_histogram(const Histogram<T>& input)
     }
     output.edges.push_back(input.edges[input.edges.size() - 1] + input.step);
 
-    //#if DEBUG_ROTINVAR
     //    print_vector<T>(output.data, "wrapped_hist");
     //    print_vector<T>(output.edges, "wrapped_edges");
-    //#endif
     return output;
 }
 
@@ -481,7 +464,7 @@ template <class T> void hist_argmaxima(Histogram<T> hist, std::vector<int>& argm
     //argmaxima = argmax2d.y + 1;
     //maxima_x = hist.edges[argmaxima];
     //maxima_y = hist.data[argmaxima];
-    //printDBG2("maxima_xs, maxima_ys " << maxima_xs << ", " << maxima_ys)
+    //printDBG("maxima_xs, maxima_ys " << maxima_xs << ", " << maxima_ys)
 }
 
 template <class T> void maxima_neighbors(int argmaxima, const Histogram<T>& hist, std::vector<cv::Point_<T> >& points)
@@ -537,15 +520,13 @@ template <class T> void hist_interpolated_submaxima(const Histogram<T>& hist, st
     // TODO: Currently this returns only one maxima, maybe later incorporate multiple maxima
     // Get the discretized bin maxima
     hist_argmaxima(hist, argmaxima_list, maxima_thresh);
-    //#if DEBUG_ROTINVAR
-    //    printDBG2("Argmaxima:");
+    //    printDBG("Argmaxima:");
     //    std::vector<T> maxima_ys;
     //    print_vector(maxima_ys, "maxima_ys");
     //    vector_take(hist.data, argmaxima_list, maxima_ys);
     //    //vector_take(hist.edges, argmaxima_list, maxima_xs)
     //    print_vector(argmaxima_list, "argmaxima_list");
     //    print_vector(maxima_ys, "maxima_ys");
-    //#endif
     for (int i = 0; i < argmaxima_list.size(); i++)
     {
         int argmaxima = argmaxima_list[i];
@@ -555,10 +536,8 @@ template <class T> void hist_interpolated_submaxima(const Histogram<T>& hist, st
         submaxima_xs.push_back(submaxima_x);
         submaxima_ys.push_back(submaxima_y);
     }
-    //#if DEBUG_ROTINVAR
     //    print_vector(submaxima_xs, "submaxima_xs");
     //    print_vector(submaxima_ys, "submaxima_ys");
-    //#endif
 }
 
 }

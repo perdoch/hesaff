@@ -47,19 +47,6 @@ CommandLine:
     str_name = tmp_sstm.str();\
 };
 
-#ifdef DEBUG_HESAFF
-#undef DEBUG_HESAFF
-#endif
-#define DEBUG_HESAFF
-
-#ifdef DEBUG_HESAFF
-#define printDBG(msg) std::cerr << "[hesaff.c] " << msg << std::endl;
-#define write(msg) std::cerr << msg;
-#else
-#define printDBG(msg);
-#endif
-
-
 #ifndef M_PI
 #define M_PI 3.14159
 #endif
@@ -75,8 +62,12 @@ CommandLine:
 #define R_GRAVITY_THETA 0
 #endif
 
-#define USE_ORI  // developing rotational invariance
-#ifdef USE_ORI
+
+#define DEBUG_ROTINVAR 0
+#define USE_ORI 1  // developing rotational invariance
+
+
+#if USE_ORI
 const int KPTS_DIM = 6;
 #else
 const int KPTS_DIM = 5;
@@ -89,61 +80,13 @@ struct Keypoint
 {
     float x, y, s;
     float a11, a12, a21, a22;
-#ifdef USE_ORI
+    #ifdef USE_ORI
     float ori;
-#endif
+    #endif
     float response;
     int type;
     uint8 desc[DESC_DIM];
 };
-
-
-void rotate_downwards(float &a11, float &a12, float &a21, float &a22)
-{
-    //same as rectify_up_is_up but doest remove scale
-    double a = a11, b = a12, c = a21, d = a22;
-    double absdet_ = std::abs(a * d - b * c);
-    double b2a2 = sqrt(b * b + a * a);
-    //double sqtdet_ = sqrt(absdet_);
-    //-
-    a11 = b2a2;
-    a12 = 0;
-    a21 = (d * b + c * a) / (b2a2);
-    a22 = absdet_ / b2a2;
-}
-
-
-void invE_to_invA(cv::Mat& invE, float &a11, float &a12, float &a21, float &a22)
-{
-    SVD svd_invE(invE, SVD::FULL_UV);
-    float *diagE = (float *)svd_invE.w.data;
-    diagE[0] = 1.0f / sqrt(diagE[0]);
-    diagE[1] = 1.0f / sqrt(diagE[1]);
-    // build new invA
-    cv::Mat invA_ = svd_invE.u * cv::Mat::diag(svd_invE.w);
-    a11 = invA_.at<float>(0, 0);
-    a12 = invA_.at<float>(0, 1);
-    a21 = invA_.at<float>(1, 0);
-    a22 = invA_.at<float>(1, 1);
-    // Rectify it (maintain scale)
-    rotate_downwards(a11, a12, a21, a22);
-}
-
-
-cv::Mat invA_to_invE(float &a11, float &a12, float &a21, float &a22, float& s, float& desc_factor)
-{
-    float sc = desc_factor * s;
-    cv::Mat invA = (cv::Mat_<float>(2, 2) << a11, a12, a21, a22);
-
-    //-----------------------
-    // Convert invA to invE format
-    SVD svd_invA(invA, SVD::FULL_UV);
-    float *diagA = (float *)svd_invA.w.data;
-    diagA[0] = 1.0f / (diagA[0] * diagA[0] * sc * sc);
-    diagA[1] = 1.0f / (diagA[1] * diagA[1] * sc * sc);
-    cv::Mat invE = svd_invA.u * cv::Mat::diag(svd_invA.w) * svd_invA.u.t();
-    return invE;
-}
 
 extern void computeGradient(const cv::Mat &img, cv::Mat &gradx, cv::Mat &grady); //from affine.cpp
 
@@ -200,16 +143,15 @@ public:
             kpts[rowk + 2] = iv11;
             kpts[rowk + 3] = iv21;
             kpts[rowk + 4] = iv22;
-#ifdef USE_ORI
+            #ifdef USE_ORI
             kpts[rowk + 5] = k.ori;
-#endif
+            #endif
 
-#ifdef DEBUG_HESAFF
+            #if 0
             //if(fx == 0 || fx == nKpts - 1){
             //    DBG_keypoint(kpts, rowk);
             //}
-#endif
-
+            #endif
             // Assign Descriptor Output
             for(size_t ix = 0; ix < DESC_DIM; ix++)
             {
@@ -223,20 +165,20 @@ public:
         // Dump keypoints to disk in text format
         char suffix[] = ".hesaff.sift";
         int len = strlen(img_fpath) + strlen(suffix) + 1;
-#ifdef WIN32
+        #ifdef WIN32
         char* out_fpath = new char[len];
-#else
+        #else
         char out_fpath[len];
-#endif
+        #endif
         snprintf(out_fpath, len, "%s%s", img_fpath, suffix);
         out_fpath[len - 1] = 0;
         printDBG("detector->writing_features: " << out_fpath);
         std::ofstream out(out_fpath);
         this->exportKeypoints(out);
         // Clean Up
-#ifdef WIN32
+        #ifdef WIN32
         delete[] out_fpath;
-#endif
+        #endif
     }
 
     void exportKeypoints(std::ostream &out)
@@ -350,17 +292,6 @@ public:
             a12 = 0;
             a21 = iv21 / sc;
             a22 = iv22 / sc;
-#ifdef DEBUG_HESAFF
-            if(fx == 0)
-            {
-                //printDBG(" [extract_desc]    sc = "  << sc);
-                //printDBG(" [extract_desc] iabcd = [" << ia << ", " << ib << ", " << ic << ", " << id << "] ");
-                //printDBG(" [extract_desc]    xy = (" <<  x << ", " <<  y << ") ");
-                //printDBG(" [extract_desc]    ab = [" << a11 << ", " << a12 << ",
-                //printDBG(" [extract_desc]    cd =  " << a21 << ", " << a22 << "] ");
-                //printDBG(" [extract_desc]     s = " << s);
-            }
-#endif
             // now sample the patch (populates this->patch)
             if(!this->normalizeAffine(this->image, x, y, s, a11, a12, a21, a22, ori))  //affine.cpp
             {
@@ -407,7 +338,7 @@ public:
 
          */
         // type can be one of:
-        #ifdef DEBUG_HESAFF
+        #if DEBUG_ROTINVAR 
         if (std::abs(response) > 1000 || std::abs(response) < 800)
         {
             return;
@@ -488,7 +419,7 @@ public:
         k.a12 = a12;
         k.a21 = a21;
         k.a22 = a22;
-        #ifdef USE_ORI
+        #if USE_ORI
         k.ori = ori;
         #endif
         this->populateDescriptor(k.desc, 0);
@@ -542,11 +473,6 @@ public:
         // Warp elliptical keypoint region in image into a (cropped) unit circle
         //normalizeAffine does the job of ptool.get_warped_patch, but uses a class variable to store the output (messy)
         // Compute gradient
-        //this->DBG_kp_shape_a(x, y, s, a11, a12, a21, a22, ori);
-        //this->DBG_print_mat(this->patch, 10, "PATCH");
-        #if 1
-            //this->DBG_dump_patch("PATCH", this->patch);
-        #endif
         
         cv::Mat xgradient(this->patch.rows, this->patch.cols, this->patch.depth());
         cv::Mat ygradient(this->patch.rows, this->patch.cols, this->patch.depth());
@@ -578,9 +504,13 @@ public:
         // Weight magnitudes using a gaussian kernel
         cv::Mat weights = magnitudes.mul(gauss_weights);
 
+        #if DEBUG_ROTINVAR
+        //this->DBG_kp_shape_a(x, y, s, a11, a12, a21, a22, ori);
+        //this->DBG_print_mat(this->patch, 10, "PATCH");
+        //this->DBG_dump_patch("PATCH", this->patch);
         //this->DBG_print_mat(xgradient, 10, "xgradient");
         //this->DBG_print_mat(ygradient, 10, "ygradient");
-        this->DBG_dump_patch("PATCH", this->patch);
+        std::string patch_fpath = this->DBG_dump_patch("PATCH", this->patch);
         this->DBG_dump_patch("xgradient", xgradient);
         this->DBG_dump_patch("ygradient", ygradient);
         //printDBG("d0_max = " << d0_max);
@@ -589,29 +519,21 @@ public:
         //this->DBG_print_mat(gauss_kernel_d1, 1, "GAUSSd1");
         //this->DBG_print_mat(gauss_weights, 10, "GAUSS");
         //this->DBG_print_mat(orientations, 10, "ORI");
-        cv::Mat orientations01 = orientations.mul(255.0 / 6.28);
-        this->DBG_dump_patch("orientations01", orientations01);
         this->DBG_dump_patch("magnitudes", magnitudes);
         this->DBG_dump_patch("gauss_weights", gauss_weights, true);
         //std::str ori_fpath;
         //std::str weights_fpath;
 
-        this->DBG_dump_patch("WEIGHTS", weights);
+        std::string weights_fpath = this->DBG_dump_patch("WEIGHTS", weights);
         this->DBG_dump_patch("orientations", orientations);
-        make_str(ori_fpath, "patches/KP_" << this->keys.size() << "_" << "orientations01" << ".png");
-        make_str(weights_fpath, "patches/KP_" << this->keys.size() << "_" << "WEIGHTS" << ".png");
+        cv::Mat orientations01 = orientations.mul(255.0 / 6.28);
+        std::string ori_fpath = this->DBG_dump_patch("orientations01", orientations01);
+        //make_str(ori_fpath, "patches/KP_" << this->keys.size() << "_" << "orientations01" << ".png");
+        //make_str(weights_fpath, "patches/KP_" << this->keys.size() << "_" << "WEIGHTS" << ".png");
         //this->DBG_print_mat(magnitudes, 10, "MAG");
         //this->DBG_print_mat(weights, 10, "WEIGHTS");
         //cv::waitKey(0);
-
-        make_str(cmd_str, 
-                "python -m vtool.histogram --test-show_ori_image_ondisk --show" << 
-                " --fpath-ori " << ori_fpath <<
-                //" --fpath-weight \"None\"" <<
-                " --fpath-weight " << weights_fpath <<
-                "&"
-                );
-        run_system_command(cmd_str);
+        #endif
 
         // python -m pyhesaff._pyhesaff --test-test_rot_invar --show --rebuild-hesaff --no-rmbuild
         // python -m pyhesaff._pyhesaff --test-test_rot_invar --show 
@@ -629,8 +551,6 @@ public:
         // Compute orientation as maxima of wrapped histogram
         std::vector<float> submaxima_xs, submaxima_ys;
         const float maxima_thresh = this->hesPar.ori_maxima_thresh;
-
-        show_hist_submaxima(hist);
 
         htool::hist_interpolated_submaxima(
                 wrapped_hist, submaxima_xs, submaxima_ys, maxima_thresh);
@@ -650,6 +570,32 @@ public:
             submaxima_oris.push_back(submax_ori);
 
         }
+        #if DEBUG_ROTINVAR
+        make_str(cmd_str1, 
+                "python -m vtool.patch --test-test_ondisk_find_patch_fpath_dominant_orientations --show" << 
+                " --patch-fpath " << patch_fpath <<
+                "&"
+                ""
+                );
+        run_system_command(cmd_str1);
+
+        make_str(cmd_str2, 
+                "python -m vtool.histogram --test-show_ori_image_ondisk --show" << 
+                " --fpath-ori " << ori_fpath <<
+                //" --fpath-weight \"None\"" <<
+                " --fpath-weight " << weights_fpath <<
+                " --fpath " << weights_fpath <<
+                " --title cpp_show_ori_ondisk "
+                "&"
+                );
+        run_system_command(cmd_str2);
+
+        print_vector<float>(wrapped_hist.data, "wrapped_hist");
+        print_vector<float>(wrapped_hist.edges, "wrapped_edges");
+        print_vector<float>(wrapped_hist.centers, "wrapped_centers");
+
+        show_hist_submaxima(wrapped_hist);
+        #endif
         //submax_ori -= M_GRAVITY_THETA; // adjust for 0 being downward
         //submax_ori += M_GRAVITY_THETA; // adjust for 0 being downward
         //submax_ori = ensure_0toTau<float>(submax_ori); //will change if multiple submaxima are returned
@@ -666,8 +612,7 @@ public:
         }
     }
 
-    void DBG_dump_patch(std::string str_name, cv::Mat& dbgpatch,
-            bool fix=false)
+    std::string DBG_dump_patch(std::string str_name, cv::Mat& dbgpatch, bool fix=false)
     {
         /*
         CommandLine:
@@ -722,6 +667,7 @@ public:
         //cv::imshow(patch_fpath, dbgpatch_);
         //cv::waitKey(0);
         cv::imwrite(patch_fpath, dbgpatch);
+        return patch_fpath;
     }
 
     void DBG_keypoint(float* kpts, int rowk)
