@@ -465,8 +465,9 @@ def detect_kpts(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kwa
 
     CommandLine:
         python -m pyhesaff._pyhesaff --test-detect_kpts
-        python -m pyhesaff._pyhesaff --test-detect_kpts:0 --show
-        python -m pyhesaff._pyhesaff --test-detect_kpts:1 --show
+        python -m pyhesaff._pyhesaff --test-detect_kpts --show
+        python -m pyhesaff._pyhesaff --test-detect_kpts --show --fname lena.png
+        python -m pyhesaff._pyhesaff --test-detect_kpts --show --fname carl.jpg
 
     Example0:
         >>> # ENABLE_DOCTEST
@@ -478,9 +479,12 @@ def detect_kpts(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kwa
         >>> #img_fpath = make_small_test_img_fpath()
         >>> #img_fpath = ut.grab_test_imgpath('lena.png')
         >>> TAU = 2 * np.pi
-        >>> img_fpath = vt.rotate_image_on_disk(ut.grab_test_imgpath('star.png'), TAU * 3 / 8)
-        >>> (kpts_list, vecs_list) = detect_kpts(img_fpath)
-        >>> print((kpts_list, vecs_list))
+        >>> fpath = ut.grab_test_imgpath(ut.get_argval('--fname', default='star.png'))
+        >>> theta = ut.get_argval('--theta', float, 0)  # TAU * 3 / 8)
+        >>> img_fpath = vt.rotate_image_on_disk(fpath, theta)
+        >>> (kpts_list, vecs_list) = detect_kpts(img_fpath, rotation_invariance=True)
+        >>> #print(kpts_list)
+        >>> #print(vecs_list)
         >>> kpts = kpts_list
         >>> # Show keypoints
         >>> pt.figure(fnum=1, doclf=True, docla=True)
