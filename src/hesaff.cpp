@@ -63,7 +63,6 @@ CommandLine:
 #endif
 
 
-#define DEBUG_ROTINVAR 0
 #define USE_ORI 1  // developing rotational invariance
 
 
@@ -373,6 +372,13 @@ public:
             {
                 return;
             }
+
+            #define MAX_ORIS_PER_KEYPOINT 4
+            if (submaxima_oris.size() > MAX_ORIS_PER_KEYPOINT)
+            {
+                submaxima_oris.clear();
+                submaxima_oris.push_back(R_GRAVITY_THETA);
+            }
             //submaxima_oris.push_back(2.0f);  // hack an orientations
             //submaxima_oris.push_back(R_GRAVITY_THETA);  // hack in a gravity orientation
         }
@@ -488,19 +494,38 @@ public:
         cv::Mat magnitudes;
         //cv::magnitude(xgradient, ygradient, magnitudes);
         cv::cartToPolar(xgradient, ygradient, magnitudes, orientations);
+        #if DEBUG_ROTINVAR
+        this->DBG_dump_patch("orientationsbef", orientations);
+        #endif
+
+        orientations += M_GRAVITY_THETA; // adjust for 0 being downward
+        // Keep orientations inside range (0, TAU)
+        // Hacky, shoud just define modulus func for cvMat
+        for (int r = 0; r < orientations.rows; r+=1)
+        {
+            for (int c = 0; c < orientations.cols; c+=1)
+            {
+                if (orientations.at<float>(r, c) > M_TAU)
+                {
+                    orientations.at<float>(r, c) = orientations.at<float>(r, c) - M_TAU;
+                }
+                else if (orientations.at<float>(r, c) < 0)
+                {
+                    orientations.at<float>(r, c) = M_TAU + orientations.at<float>(r, c);
+                }
+            }
+        }
+        #if DEBUG_ROTINVAR
+        this->DBG_dump_patch("orientationsaft", orientations);
+        #endif
+        
         // gaussian weight magnitudes
-        float sigma0 = (magnitudes.rows / 2) * .95;
-        float sigma1 = (magnitudes.cols / 2) * .95;
-        double d0_max, d0_min, d1_max, d1_min;
-        cv::Mat gauss_kernel_d0 = cv::getGaussianKernel(magnitudes.rows, sigma0, CV_32F);
-        cv::Mat gauss_kernel_d1 = cv::getGaussianKernel(magnitudes.cols, sigma1, CV_32F);
-        cv::minMaxLoc(gauss_kernel_d0, &d0_min, &d0_max);
-        cv::minMaxLoc(gauss_kernel_d1, &d1_min, &d1_max);
-        gauss_kernel_d0 = gauss_kernel_d0.mul(1.0f / d0_max);
-        gauss_kernel_d1 = gauss_kernel_d1.mul(1.0f / d1_max);
-        //cv::Mat gauss_weights = gauss_kernel_d1.dot(gauss_kernel_d0.t());
-        cv::Mat gauss_weights = gauss_kernel_d1 * gauss_kernel_d0.t();
-        //cv::Mat gauss_weights = gauss_kernel_d1; 
+        //float sigma0 = (magnitudes.rows / 2) * .95;
+        //float sigma1 = (magnitudes.cols / 2) * .95;
+        float sigma0 = (magnitudes.rows / 2) * .4;
+        float sigma1 = (magnitudes.cols / 2) * .4;
+        cv::Mat gauss_weights;
+        make_2d_gauss_patch_01(magnitudes.rows, magnitudes.cols, sigma0, sigma1, gauss_weights);
         // Weight magnitudes using a gaussian kernel
         cv::Mat weights = magnitudes.mul(gauss_weights);
 
@@ -511,45 +536,45 @@ public:
         //this->DBG_print_mat(xgradient, 10, "xgradient");
         //this->DBG_print_mat(ygradient, 10, "ygradient");
         std::string patch_fpath = this->DBG_dump_patch("PATCH", this->patch);
-        this->DBG_dump_patch("xgradient", xgradient);
-        this->DBG_dump_patch("ygradient", ygradient);
+        std::string gradx_fpath = this->DBG_dump_patch("xgradient", xgradient);
+        std::string grady_fpath = this->DBG_dump_patch("ygradient", ygradient);
         //printDBG("d0_max = " << d0_max);
         //printDBG("d1_max = " << d1_max);
         //this->DBG_print_mat(gauss_kernel_d0, 1, "GAUSSd0");
         //this->DBG_print_mat(gauss_kernel_d1, 1, "GAUSSd1");
         //this->DBG_print_mat(gauss_weights, 10, "GAUSS");
         //this->DBG_print_mat(orientations, 10, "ORI");
-        this->DBG_dump_patch("magnitudes", magnitudes);
-        this->DBG_dump_patch("gauss_weights", gauss_weights, true);
+        std::string gmag_fpath = this->DBG_dump_patch("magnitudes", magnitudes);
+        std::string gaussweight_fpath = this->DBG_dump_patch("gauss_weights", gauss_weights, true);
         //std::str ori_fpath;
         //std::str weights_fpath;
 
         std::string weights_fpath = this->DBG_dump_patch("WEIGHTS", weights);
         this->DBG_dump_patch("orientations", orientations);
         cv::Mat orientations01 = orientations.mul(255.0 / 6.28);
-        std::string ori_fpath = this->DBG_dump_patch("orientations01", orientations01);
+        std::string ori_fpath01 = this->DBG_dump_patch("orientations01", orientations01);
+        cv::Mat gaussweight01 = gauss_weights.mul(255.0 / 6.28);
+        std::string gaussweight01_fpath = this->DBG_dump_patch("gaussweight01", gaussweight01);
         //make_str(ori_fpath, "patches/KP_" << this->keys.size() << "_" << "orientations01" << ".png");
         //make_str(weights_fpath, "patches/KP_" << this->keys.size() << "_" << "WEIGHTS" << ".png");
         //this->DBG_print_mat(magnitudes, 10, "MAG");
         //this->DBG_print_mat(weights, 10, "WEIGHTS");
         //cv::waitKey(0);
         #endif
-
-        // python -m pyhesaff._pyhesaff --test-test_rot_invar --show --rebuild-hesaff --no-rmbuild
-        // python -m pyhesaff._pyhesaff --test-test_rot_invar --show 
         
-        // HISTOGRAM PART
+        // HISTOGRAM INTERPOLOATION PART
         // Compute ori histogram, splitting votes using linear interpolation
         const int nbins = 36;
         Histogram<float> hist = computeInterpolatedHistogram<float>(
                 orientations.begin<float>(), orientations.end<float>(),
                 weights.begin<float>(), weights.end<float>(),
                 nbins, M_TAU, 0.0);
-        // inplace wrap histogram (because orientations are circular)
+
         Histogram<float> wrapped_hist = htool::wrap_histogram(hist);
+        std::vector<float> submaxima_xs, submaxima_ys;
+        // inplace wrap histogram (because orientations are circular)
         htool::hist_edges_to_centers(wrapped_hist); 
         // Compute orientation as maxima of wrapped histogram
-        std::vector<float> submaxima_xs, submaxima_ys;
         const float maxima_thresh = this->hesPar.ori_maxima_thresh;
 
         htool::hist_interpolated_submaxima(
@@ -559,6 +584,7 @@ public:
             float submax_ori = submaxima_xs[i];
             float submax_ori2 = ensure_0toTau<float>(submax_ori); 
             submaxima_oris.push_back(submax_ori);
+            #if DEBUG_ROTINVAR
             if (submax_ori != submax_ori2)
             {
                 printDBG("[find_ori] +------------")
@@ -566,25 +592,34 @@ public:
                 printDBG("[find_ori] submax_ori2 = " << submax_ori2)
                 printDBG("[find_ori] L____________")
             }
-            submax_ori = submax_ori2;
-            submaxima_oris.push_back(submax_ori);
+            #endif
+            //submax_ori = submax_ori2;
+            //submaxima_oris.push_back(submax_ori);
 
         }
+
         #if DEBUG_ROTINVAR
-        make_str(cmd_str1, 
-                "python -m vtool.patch --test-test_ondisk_find_patch_fpath_dominant_orientations --show" << 
-                " --patch-fpath " << patch_fpath <<
-                "&"
-                ""
-                );
-        run_system_command(cmd_str1);
+        /*
+         python -m pyhesaff._pyhesaff --test-test_rot_invar --show --rebuild-hesaff --no-rmbuild
+         python -m pyhesaff._pyhesaff --test-test_rot_invar --show 
+         */
+        
+        //make_str(cmd_str1, 
+        //        "python -m vtool.patch --test-test_ondisk_find_patch_fpath_dominant_orientations --show" << 
+        //        " --patch-fpath " << patch_fpath <<
+        //        "&"
+        //        ""
+        //        );
+        //run_system_command(cmd_str1);
 
         make_str(cmd_str2, 
                 "python -m vtool.histogram --test-show_ori_image_ondisk --show" << 
-                " --fpath-ori " << ori_fpath <<
-                //" --fpath-weight \"None\"" <<
-                " --fpath-weight " << weights_fpath <<
-                " --fpath " << weights_fpath <<
+                " --patch_img_fpath "   << patch_fpath <<
+                " --ori_img_fpath "     << ori_fpath01 <<
+                " --weights_img_fpath " << weights_fpath <<
+                " --grady_img_fpath "   << grady_fpath <<
+                " --gradx_img_fpath "   << gradx_fpath <<
+                " --gauss_weights_img_fpath "   << gaussweight01_fpath <<
                 " --title cpp_show_ori_ondisk "
                 "&"
                 );
@@ -639,7 +674,7 @@ public:
              print(ut.dict_str(dict(zip(keys, ut.dict_take(cv2.__dict__, keys)))))
          */
         //DBG: write out patches
-        run_system_command("python -c \"import utool as ut; ut.ensuredir('patches', verbose=True)\"");
+        run_system_command("python -c \"import utool as ut; ut.ensuredir('patches', verbose=False)\"");
         make_str(patch_fpath, "patches/KP_" << this->keys.size() << "_" << str_name << ".png");
         printDBG("[DBG] ----------------------")
         printDBG("[DBG] Dumping patch to patch_fpath = " << patch_fpath);
@@ -804,6 +839,18 @@ PYHESAFF int detect(AffineHessianDetector* detector)
     printDBG("[detet] global_nkpts = " << global_nkpts);
     printDBG("[detet] global_nmulti_ori = " << global_nmulti_ori);
     return nKpts;
+}
+
+
+PYHESAFF int get_cpp_version()
+{
+    return 1;
+}
+
+
+PYHESAFF int is_debug_mode()
+{
+    return DEBUG_ROTINVAR;
 }
 
 

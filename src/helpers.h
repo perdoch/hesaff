@@ -46,6 +46,8 @@ void computeGradient(const cv::Mat &img, cv::Mat &gradx, cv::Mat &grady);
 
 void run_system_command(std::string command_string);
 
+void make_2d_gauss_patch_01(int rows, int cols, float sigma0, float sigma1, cv::Mat& gauss_weights);
+
 
 
 #endif // __HELPERS_H__

@@ -14,7 +14,7 @@
 #endif
 
 // DUPLICATE
-#define DEBUG_ORI 0
+#define DEBUG_ROTINVAR 0
 
 #define make_str(str_name, stream_input) \
     std::string str_name;\
@@ -23,7 +23,7 @@
     str_name = tmp_sstm.str();\
 };
 
-#if DEBUG_ORI
+#if DEBUG_ROTINVAR
 #define printDBG(msg) std::cerr << "[ori.c] " << msg << std::endl;
 #define write(msg) std::cerr << msg;
 #else

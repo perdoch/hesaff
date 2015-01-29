@@ -80,6 +80,20 @@ void run_system_command(std::string cmd_str)
 }
 
 
+void make_2d_gauss_patch_01(int rows, int cols, float sigma0, float sigma1, cv::Mat& gauss_weights)
+{
+    double d0_max, d0_min, d1_max, d1_min;
+    cv::Mat gauss_kernel_d0 = cv::getGaussianKernel(rows, sigma0, CV_32F);
+    cv::Mat gauss_kernel_d1 = cv::getGaussianKernel(cols, sigma1, CV_32F);
+    cv::minMaxLoc(gauss_kernel_d0, &d0_min, &d0_max);
+    cv::minMaxLoc(gauss_kernel_d1, &d1_min, &d1_max);
+    gauss_kernel_d0 = gauss_kernel_d0.mul(1.0f / d0_max);
+    gauss_kernel_d1 = gauss_kernel_d1.mul(1.0f / d1_max);
+    //cv::Mat gauss_weights = gauss_kernel_d1.dot(gauss_kernel_d0.t());
+    gauss_weights = gauss_kernel_d1 * gauss_kernel_d0.t();
+}
+
+
 template <typename ValueType>
 void swap(ValueType *a, ValueType *b)
 {

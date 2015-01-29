@@ -162,8 +162,11 @@ def load_hesaff_clib(rebuild=None):
     libname = 'hesaff'
     (clib, def_cfunc, lib_fpath) = ctypes_interface.load_clib(libname, root_dir)
     # Expose extern C Functions to hesaff's clib
+    def_cfunc(int_t, 'get_cpp_version',        [])
+    def_cfunc(int_t, 'is_debug_mode',          [])
     def_cfunc(int_t, 'detect',                 [obj_t])
     def_cfunc(int_t, 'get_kpts_dim',           [])
+    def_cfunc(int_t, 'get_desc_dim',           [])
     def_cfunc(None,  'exportArrays',           [obj_t, int_t, kpts_t, vecs_t])
     def_cfunc(None,  'extractDesc',            [obj_t, int_t, kpts_t, vecs_t])
     def_cfunc(obj_t, 'new_hesaff',             [str_t])
@@ -430,6 +433,10 @@ def detect_kpts_list(image_paths_list, **kwargs):
     return kpts_list, vecs_list
 
 
+def get_hesaff_default_params():
+    return hesaff_param_dict.copy()
+
+
 #@profile
 def detect_kpts(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kwargs):
     r"""
@@ -468,6 +475,10 @@ def detect_kpts(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kwa
         python -m pyhesaff._pyhesaff --test-detect_kpts --show
         python -m pyhesaff._pyhesaff --test-detect_kpts --show --fname lena.png
         python -m pyhesaff._pyhesaff --test-detect_kpts --show --fname carl.jpg
+
+        python -m vtool.test_constrained_matching --test-visualize_matches --show
+        python -m vtool.tests.dummy --test-testdata_ratio_matches --show
+
 
     Example0:
         >>> # ENABLE_DOCTEST
@@ -527,6 +538,9 @@ def test_rot_invar():
         mingw_build.bat
         python -m pyhesaff._pyhesaff --test-test_rot_invar --show --rebuild-hesaff --no-rmbuild
         python -m pyhesaff._pyhesaff --test-test_rot_invar --show --nocpp
+
+        python -m vtool.tests.dummy --test-testdata_ratio_matches --show --ratio_thresh=1.0 --rotation_invariance --rebuild-hesaff
+        python -m vtool.tests.dummy --test-testdata_ratio_matches --show --ratio_thresh=1.1 --rotation_invariance --rebuild-hesaff
 
     Example:
         >>> # ENABLE_DOCTEST

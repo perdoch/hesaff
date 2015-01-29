@@ -74,6 +74,7 @@ set(SOURCE_FILES
     src/helpers.cpp 
     src/affine.cpp 
     src/orientation.cpp 
+    #src/python_bindings.cpp 
     src/siftdesc.cpp)
 
 add_library(hesaff SHARED ${SOURCE_FILES})
