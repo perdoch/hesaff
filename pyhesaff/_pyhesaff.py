@@ -216,6 +216,13 @@ def _new_hesaff(img_fpath, **kwargs):
     """ Creates new detector object which reads the image """
     hesaff_params = hesaff_param_dict.copy()
     hesaff_params.update(kwargs)
+    try:
+        assert len(hesaff_params) == len(hesaff_param_dict), (
+            'len(hesaff_params) = %d, len(hesaff_param_dict)=%d' % (len(hesaff_params), len(hesaff_param_dict)))
+    except AssertionError as ex:
+        print('Unknown paramaters = %s' % (ut.dict_str(ut.dict_setdiff(kwargs, hesaff_param_dict.keys()))))
+        raise
+
     if __DEBUG__:
         print('[hes] New Hesaff')
         print('[hes] hesaff_params=%r' % (hesaff_params,))
