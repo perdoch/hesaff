@@ -631,9 +631,6 @@ public:
 
         show_hist_submaxima(wrapped_hist);
         #endif
-        //submax_ori -= M_GRAVITY_THETA; // adjust for 0 being downward
-        //submax_ori += M_GRAVITY_THETA; // adjust for 0 being downward
-        //submax_ori = ensure_0toTau<float>(submax_ori); //will change if multiple submaxima are returned
         return true;
     }
 
