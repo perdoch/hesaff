@@ -27,3 +27,4 @@ run_cyth_benchmarks.sh
 
 *.orig
 _doc
+test_times.txt
