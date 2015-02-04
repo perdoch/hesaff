@@ -373,11 +373,12 @@ public:
                 return;
             }
 
-            #define MAX_ORIS_PER_KEYPOINT 4
+            #define MAX_ORIS_PER_KEYPOINT 3
             if (submaxima_oris.size() > MAX_ORIS_PER_KEYPOINT)
             {
-                submaxima_oris.clear();
-                submaxima_oris.push_back(R_GRAVITY_THETA);
+                return;
+                //submaxima_oris.clear();
+                //submaxima_oris.push_back(R_GRAVITY_THETA);
             }
             //submaxima_oris.push_back(2.0f);  // hack an orientations
             //submaxima_oris.push_back(R_GRAVITY_THETA);  // hack in a gravity orientation
