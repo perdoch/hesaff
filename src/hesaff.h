@@ -28,6 +28,7 @@ struct HesaffParams
     bool rotation_invariance;  // are we assuming the gravity vector?
     bool adapt_rotation;
     bool adapt_scale;
+    bool affine_invariance;
 
     HesaffParams()
     {
@@ -37,6 +38,7 @@ struct HesaffParams
         rotation_invariance = false; //remove in favor of adapt_rotation?
         adapt_rotation = false;
         adapt_scale = false;
+        affine_invariance = true;  // if false uses circular keypoints 
     }
 };
 

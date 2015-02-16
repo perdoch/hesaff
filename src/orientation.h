@@ -24,10 +24,10 @@
 };
 
 #if DEBUG_ROTINVAR
-#define printDBG(msg) std::cerr << "[ori.c] " << msg << std::endl;
+#define printDBG_ORI(msg) std::cerr << "[ori.c] " << msg << std::endl;
 #define write(msg) std::cerr << msg;
 #else
-#define printDBG(msg);
+#define printDBG_ORI(msg);
 #endif
 
 
@@ -178,7 +178,7 @@ template <class T> void show_hist_submaxima(const Histogram<T>& hist, float maxi
     */
     // Uses python command via system call to debug visually
     make_str(basecmd, "python -m vtool.histogram --test-show_hist_submaxima --show");
-    printDBG("SHOWING HIST SUBMAXIMA WITH PYTHON");
+    printDBG_ORI("SHOWING HIST SUBMAXIMA WITH PYTHON");
     make_str(cmdstr, basecmd <<
             " --hist=\"" << hist.data << "\"" << 
             " --edges=\"" << hist.edges << "\"" <<
@@ -187,7 +187,7 @@ template <class T> void show_hist_submaxima(const Histogram<T>& hist, float maxi
             //" --legend"
             ""
             );
-    //printDBG(cmdstr.c_str());
+    //printDBG_ORI(cmdstr.c_str());
     run_system_command(cmdstr);
 }
 
@@ -297,10 +297,10 @@ template <class T, class Iterator> Histogram<T> computeInterpolatedHistogram(
     const T half_step = step / 2.0;
     const T data_offset = start + half_step;
     // debug info
-    //    printDBG("nbins = " << nbins)
-    //    printDBG("step = " << step)
-    //    printDBG("half_step = " << half_step)
-    //    printDBG("data_offset = " << data_offset)
+    //    printDBG_ORI("nbins = " << nbins)
+    //    printDBG_ORI("step = " << step)
+    //    printDBG_ORI("half_step = " << half_step)
+    //    printDBG_ORI("data_offset = " << data_offset)
     // data offset should be 0, but is around for more general case of
     // interpolated histogram
     assert(data_offset == 0);
@@ -332,15 +332,15 @@ template <class T, class Iterator> Histogram<T> computeInterpolatedHistogram(
         //    bool doprint = false && (left_index < 0 || right_index >= nbins);
         //    if (doprint) 
         //    {
-        //        printDBG("+----")
-        //        printDBG("range = " << left_index << ", " << right_index)
+        //        printDBG_ORI("+----")
+        //        printDBG_ORI("range = " << left_index << ", " << right_index)
         //    }
         left_index  = python_modulus(left_index, nbins);
         right_index = python_modulus(right_index, nbins);
         //    if (doprint) 
         //    {
-        //        printDBG("range = " << left_index << ", " << right_index)
-        //        printDBG("L___")
+        //        printDBG_ORI("range = " << left_index << ", " << right_index)
+        //        printDBG_ORI("L___")
         //    }
         //    nprint++;
         // Linear Interpolation of gradient magnitude votes over orientation
@@ -464,7 +464,7 @@ template <class T> void hist_argmaxima(Histogram<T> hist, std::vector<int>& argm
     //argmaxima = argmax2d.y + 1;
     //maxima_x = hist.edges[argmaxima];
     //maxima_y = hist.data[argmaxima];
-    //printDBG("maxima_xs, maxima_ys " << maxima_xs << ", " << maxima_ys)
+    //printDBG_ORI("maxima_xs, maxima_ys " << maxima_xs << ", " << maxima_ys)
 }
 
 template <class T> void maxima_neighbors(int argmaxima, const Histogram<T>& hist, std::vector<cv::Point_<T> >& points)
@@ -520,7 +520,7 @@ template <class T> void hist_interpolated_submaxima(const Histogram<T>& hist, st
     // TODO: Currently this returns only one maxima, maybe later incorporate multiple maxima
     // Get the discretized bin maxima
     hist_argmaxima(hist, argmaxima_list, maxima_thresh);
-    //    printDBG("Argmaxima:");
+    //    printDBG_ORI("Argmaxima:");
     //    std::vector<T> maxima_ys;
     //    print_vector(maxima_ys, "maxima_ys");
     //    vector_take(hist.data, argmaxima_list, maxima_ys);

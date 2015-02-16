@@ -66,7 +66,7 @@ int_array_t  = np.ctypeslib.ndpointer(dtype=int_t, ndim=1, flags=FLAGS_RW)
 str_list_t   = C.POINTER(str_t)
 
 # THE ORDER OF THIS LIST IS IMPORTANT!
-hesaff_typed_params = [
+HESAFF_TYPED_PARAMS = [
     # Pyramid Params
     (int_t,   'numberOfScales', 3),           # number of scale per octave
     (float_t, 'threshold', 16.0 / 3.0),       # noise dependent threshold on the response (sensitivity)
@@ -89,10 +89,11 @@ hesaff_typed_params = [
     (float_t, 'scale_max', -1.0),
     (bool_t,  'rotation_invariance', False),
     (float_t, 'ori_maxima_thresh', .8),
+    (bool_t,  'affine_invariance', True),
 ]
 
-hesaff_param_dict = OrderedDict([(key, val) for (type_, key, val) in hesaff_typed_params])
-hesaff_param_types = [type_ for (type_, key, val) in hesaff_typed_params]
+HESAFF_PARAM_DICT = OrderedDict([(key, val) for (type_, key, val) in HESAFF_TYPED_PARAMS])
+HESAFF_PARAM_TYPES = [type_ for (type_, key, val) in HESAFF_TYPED_PARAMS]
 
 
 def build_typed_params_kwargs_docstr_block(typed_params):
@@ -107,7 +108,7 @@ def build_typed_params_kwargs_docstr_block(typed_params):
         >>> # DISABLE_DOCTEST
         >>> from pyhesaff._pyhesaff import *  # NOQA
         >>> # execute function
-        >>> typed_params = hesaff_typed_params
+        >>> typed_params = HESAFF_TYPED_PARAMS
         >>> result = build_typed_params_docstr(typed_params)
         >>> # verify results
         >>> print(result)
@@ -121,7 +122,7 @@ def build_typed_params_kwargs_docstr_block(typed_params):
         kwargs_lines.append(line)
     kwargs_docstr_block = ('Kwargs:\n' + ut.indent('\n'.join(kwargs_lines), '    '))
     return ut.indent(kwargs_docstr_block, '    ')
-hesaff_kwargs_docstr_block = build_typed_params_kwargs_docstr_block(hesaff_typed_params)
+hesaff_kwargs_docstr_block = build_typed_params_kwargs_docstr_block(HESAFF_TYPED_PARAMS)
 
 
 HESAFF_CLIB = None
@@ -170,10 +171,10 @@ def load_hesaff_clib(rebuild=None):
     def_cfunc(None,  'exportArrays',           [obj_t, int_t, kpts_t, vecs_t])
     def_cfunc(None,  'extractDesc',            [obj_t, int_t, kpts_t, vecs_t])
     def_cfunc(obj_t, 'new_hesaff',             [str_t])
-    def_cfunc(obj_t, 'new_hesaff_from_params', [str_t] + hesaff_param_types)
+    def_cfunc(obj_t, 'new_hesaff_from_params', [str_t] + HESAFF_PARAM_TYPES)
     def_cfunc(None,  'detectKeypointsList',    [int_t, str_list_t, kpts_array_t,
                                                 vecs_array_t, int_array_t] +
-                                                hesaff_param_types)
+                                                HESAFF_PARAM_TYPES)
     return clib, lib_fpath
 
 # Create a global interface to the hesaff lib
@@ -204,7 +205,7 @@ def _allocate_kpts_and_vecs(nKpts):
 
 
 def _make_hesaff_cpp_params(**kwargs):
-    hesaff_params = hesaff_param_dict.copy()
+    hesaff_params = HESAFF_PARAM_DICT.copy()
     for key, val in six.iteritems(kwargs):
         if key in hesaff_params:
             hesaff_params[key] = val
@@ -214,13 +215,13 @@ def _make_hesaff_cpp_params(**kwargs):
 
 def _new_hesaff(img_fpath, **kwargs):
     """ Creates new detector object which reads the image """
-    hesaff_params = hesaff_param_dict.copy()
+    hesaff_params = HESAFF_PARAM_DICT.copy()
     hesaff_params.update(kwargs)
     try:
-        assert len(hesaff_params) == len(hesaff_param_dict), (
-            'len(hesaff_params) = %d, len(hesaff_param_dict)=%d' % (len(hesaff_params), len(hesaff_param_dict)))
+        assert len(hesaff_params) == len(HESAFF_PARAM_DICT), (
+            'len(hesaff_params) = %d, len(HESAFF_PARAM_DICT)=%d' % (len(hesaff_params), len(HESAFF_PARAM_DICT)))
     except AssertionError as ex:
-        print('Unknown paramaters = %s' % (ut.dict_str(ut.dict_setdiff(kwargs, hesaff_param_dict.keys()))))
+        print('Unknown paramaters = %s' % (ut.dict_str(ut.dict_setdiff(kwargs, HESAFF_PARAM_DICT.keys()))))
         raise
 
     if __DEBUG__:
@@ -418,7 +419,7 @@ def detect_kpts_list(image_paths_list, **kwargs):
     nDetect_array = np.empty(nImgs, dtype=int_t)  # array of detections per image
 
     # Get algorithm parameters
-    hesaff_params = hesaff_param_dict.copy()
+    hesaff_params = HESAFF_PARAM_DICT.copy()
     hesaff_params.update(kwargs)
     hesaff_args = hesaff_params.values()  # pass all parameters to HESAFF_CLIB
 
@@ -441,7 +442,7 @@ def detect_kpts_list(image_paths_list, **kwargs):
 
 
 def get_hesaff_default_params():
-    return hesaff_param_dict.copy()
+    return HESAFF_PARAM_DICT.copy()
 
 
 #@profile
@@ -473,6 +474,7 @@ def detect_kpts(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kwa
         scale_min (float)            : default=-1.0
         scale_max (float)            : default=-1.0
         rotation_invariance (bool)   : default=False
+        affine_invariance (bool)     : default=True
 
     Returns:
         tuple : (kpts, vecs)
@@ -483,8 +485,28 @@ def detect_kpts(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kwa
         python -m pyhesaff._pyhesaff --test-detect_kpts --show --fname lena.png
         python -m pyhesaff._pyhesaff --test-detect_kpts --show --fname carl.jpg
 
+        python -m pyhesaff._pyhesaff --test-detect_kpts --show --fname lena.png --rotation_invariance
+        python -m pyhesaff._pyhesaff --test-detect_kpts --show --fname lena.png --affine_invariance
+
+        python -m pyhesaff._pyhesaff --test-detect_kpts --show --fname easy1.png --no-affine_invariance
+        python -m pyhesaff._pyhesaff --test-detect_kpts --show --fname easy1.png --no-affine_invariance --numberOfScales=1 --verbose
+        python -m pyhesaff._pyhesaff --test-detect_kpts --show --fname easy1.png --no-affine_invariance --scale-max=100 --verbose
+        python -m pyhesaff._pyhesaff --test-detect_kpts --show --fname easy1.png --no-affine_invariance --scale-min=20 --verbose
+        python -m pyhesaff._pyhesaff --test-detect_kpts --show --fname easy1.png --no-affine_invariance --scale-min=100 --verbose
+        python -m pyhesaff._pyhesaff --test-detect_kpts --show --fname easy1.png --no-affine_invariance --scale-max=20 --verbose
+
         python -m vtool.test_constrained_matching --test-visualize_matches --show
-        python -m vtool.tests.dummy --test-testdata_ratio_matches --show
+        python -m vtool.tests.dummy --test-testdata_ratio_matches --show --
+
+
+        python -m pyhesaff._pyhesaff --test-detect_kpts --show --fname easy1.png --affine_invariance --verbose --rebuild-hesaff --scale-min=35 --scale-max=40 --no-rmbuild
+
+        python -m pyhesaff._pyhesaff --test-detect_kpts --show --fname easy1.png --affine_invariance --verbose --scale-min=35 --scale-max=40&
+        python -m pyhesaff._pyhesaff --test-detect_kpts --show --fname easy1.png --no-affine_invariance --verbose --scale-min=35 --scale-max=40&
+        python -m pyhesaff._pyhesaff --test-detect_kpts --show --fname easy1.png --no-affine_invariance --verbose --scale-max=40 --darken .5
+        python -m pyhesaff._pyhesaff --test-detect_kpts --show --fname easy1.png --no-affine_invariance --verbose --scale-max=30 --darken .5
+        python -m pyhesaff._pyhesaff --test-detect_kpts --show --fname easy1.png --affine_invariance --verbose --scale-max=30 --darken .5
+
 
 
     Example0:
@@ -500,7 +522,8 @@ def detect_kpts(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kwa
         >>> fpath = ut.grab_test_imgpath(ut.get_argval('--fname', default='star.png'))
         >>> theta = ut.get_argval('--theta', float, 0)  # TAU * 3 / 8)
         >>> img_fpath = vt.rotate_image_on_disk(fpath, theta)
-        >>> (kpts_list, vecs_list) = detect_kpts(img_fpath, rotation_invariance=True)
+        >>> kwargs = ut.parse_dict_from_argv(get_hesaff_default_params())
+        >>> (kpts_list, vecs_list) = detect_kpts(img_fpath, **kwargs)
         >>> #print(kpts_list)
         >>> #print(vecs_list)
         >>> kpts = kpts_list
@@ -508,15 +531,15 @@ def detect_kpts(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kwa
         >>> pt.figure(fnum=1, doclf=True, docla=True)
         >>> imgBGR = vt.imread(img_fpath)
         >>> pt.imshow(imgBGR)
-        >>> pt.draw_kpts2(kpts, ori=True)
+        >>> pt.draw_kpts2(kpts, ori=True, ell_alpha=.4, color='distinct')
         >>> pt.show_if_requested()
     """
-    #Valid keyword arguments are: + str(hesaff_param_dict.keys())
+    #Valid keyword arguments are: + str(HESAFF_PARAM_DICT.keys())
     if __DEBUG__:
         print('[hes] Detecting Keypoints')
         print('[hes] use_adaptive_scale=%r' % (use_adaptive_scale,))
         print('[hes] nogravity_hack=%r' % (nogravity_hack,))
-        print('[hes] kwargs=%r' % (kwargs,))
+        print('[hes] kwargs=%s' % (ut.dict_str(kwargs),))
     hesaff_ptr = _new_hesaff(img_fpath, **kwargs)
     if __DEBUG__:
         print('[hes] detect')

@@ -62,6 +62,15 @@ CommandLine:
 #define R_GRAVITY_THETA 0
 #endif
 
+#define DEBUG_HESAFF 0
+
+#if DEBUG_HESAFF
+    #define printDBG(msg) std::cout << "[hesaff.c] " << msg << std::endl;
+    #define write(msg) std::cout << msg;
+#else
+    #define printDBG(msg);
+#endif
+
 
 #define USE_ORI 1  // developing rotational invariance
 
@@ -79,7 +88,7 @@ struct Keypoint
 {
     float x, y, s;
     float a11, a12, a21, a22;
-    #ifdef USE_ORI
+    #if USE_ORI
     float ori;
     #endif
     float response;
@@ -106,6 +115,7 @@ public:
                           const HesaffParams& hesParams):
         HessianDetector(par), AffineShape(ap), image(image), sift(sp), hesPar(hesParams)
     {
+        
         this->setHessianKeypointCallback(this); //Inherits from pyramid.h HessianDetector
         this->setAffineShapeCallback(this); // Inherits from affine.h AffineShape
     }
@@ -142,7 +152,7 @@ public:
             kpts[rowk + 2] = iv11;
             kpts[rowk + 3] = iv21;
             kpts[rowk + 4] = iv22;
-            #ifdef USE_ORI
+            #if USE_ORI
             kpts[rowk + 5] = k.ori;
             #endif
 
@@ -222,15 +232,15 @@ public:
             float e11 = invE.at<float>(0, 0);
             float e12 = invE.at<float>(0, 1); // also e12 because of E symetry
             float e22 = invE.at<float>(1, 1);
-#ifdef USE_ORI
+            #if USE_ORI
             float ori = k.ori;
             out << k.x << " " << k.y << " "
                 << e11 << " " << e12 << " "
                 << e22 << " " << ori;
-#else
+            #else
             out << k.x << " " << k.y << " "
                 << e11 << " " << e12 << " " << e22 ;
-#endif
+            #endif
             for(size_t i = 0; i < DESC_DIM; i++)
             {
                 out << " " << int(k.desc[i]);
@@ -244,8 +254,23 @@ public:
                                    float s, float pixelDistance,
                                    int type, float response)
     {
-        // A circular keypoint is detected. Adpat its shape to an ellipse
-        findAffineShape(blur, x, y, s, pixelDistance, type, response);
+        if (hesPar.affine_invariance)
+        {
+            // A circular keypoint is detected. Adpat its shape to an ellipse
+            findAffineShape(blur, x, y, s, pixelDistance, type, response);
+        }
+        else
+        {
+            // Otherwise just represent the circle as an ellipse
+            //float eigval1 = 1.0f, eigval2 = 1.0f;
+            //float lx = x / pixelDistance, ly = y / pixelDistance;
+            //float ratio = s / (par.initialSigma * pixelDistance);
+            float u11 = 1.0f, u12 = 0.0f, u21 = 0.0f, u22 = 1.0f;
+            int iters = 0;
+            // the callback is private to hack a call to onAffineShapeFound
+            // directly
+            this->onAffineShapeFound(blur, x, y, s, pixelDistance, u11, u12, u21, u22, type, response, iters); // Call Step 4
+        }
     }
 
     void extractDesc(int nKpts, float* kpts, uint8* desc)
@@ -278,7 +303,7 @@ public:
             iv12 = 0;
             iv21 = kpts[rowk + 3];
             iv22 = kpts[rowk + 4];
-#ifdef USE_ORI
+#if USE_ORI
             ori  = kpts[rowk + 5];
 #else
             ori  = R_GRAVITY_THETA
@@ -332,8 +357,8 @@ public:
             s - keypoint scale (specifies determinant of shape matrix)
             a11, a12, a21, a22 - shape matrix (force to have determinant 1)
             type - can be one of {HESSIAN_DARK = 0, HESSIAN_BRIGHT = 1, HESSIAN_SADDLE = 2,}
-            response - 
-            iters - 
+            response - hessian responce
+            iters - num iterations for shape estimation
 
          */
         // type can be one of:
@@ -347,11 +372,16 @@ public:
         // check if detected keypoint is within scale thresholds
         float scale_min = hesPar.scale_min;
         float scale_max = hesPar.scale_max;
-        float scale = AffineShape::par.mrSize * s;
+        //float scale = AffineShape::par.mrSize * s;
+        //float scale = s * AffineShape::par.mrSize / (AffineShape::par.initialSigma * pixelDistance);
+        float scale = s * AffineShape::par.mrSize;
         // negative thresholds turn the threshold test off
-        if((scale_min > 0 && scale < scale_min) || (scale_max > 0 && scale < scale_max))
+        if((scale_min > 0 && scale < scale_min) || (scale_max > 0 && scale > scale_max))
         {
             // failed scale threshold
+            //printDBG("[shape_found] Shape Found And Failed")
+            //printDBG("[shape_found]  * failed: " << scale)
+            //printDBG("[shape_found]  * scale_min: " << scale_min << "; scale_max: " << scale_max)
             return;
         }
         else
@@ -805,6 +835,7 @@ public:
     printDBG(" * hesPar.scale_max            = " << hesPar.scale_max);
     printDBG(" * hesPar.rotation_invariance  = " << hesPar.rotation_invariance);
     printDBG(" * hesPar.ori_maxima_thresh    = " << hesPar.ori_maxima_thresh);
+    printDBG(" * hesPar.affine_invariance    = " << hesPar.affine_invariance);
     }       
 
 
@@ -831,11 +862,11 @@ PYHESAFF int detect(AffineHessianDetector* detector)
 {
     printDBG("detector->detect");
     int nKpts = detector->detect();
-    printDBG("[detet] nKpts = " << nKpts);
-    printDBG("[detet] global_c1 = " << global_c1);
-    printDBG("[detet] global_c2 = " << global_c2);
-    printDBG("[detet] global_nkpts = " << global_nkpts);
-    printDBG("[detet] global_nmulti_ori = " << global_nmulti_ori);
+    printDBG("[detect] nKpts = " << nKpts);
+    printDBG("[detect] global_c1 = " << global_c1);
+    printDBG("[detect] global_c2 = " << global_c2);
+    printDBG("[detect] global_nkpts = " << global_nkpts);
+    printDBG("[detect] global_nmulti_ori = " << global_nmulti_ori);
     return nKpts;
 }
 
@@ -886,7 +917,8 @@ PYHESAFF AffineHessianDetector* new_hesaff_from_params(char* img_fpath,
         float scale_min,
         float scale_max,
         bool rotation_invariance,
-        float ori_maxima_thresh)
+        float ori_maxima_thresh,
+        bool affine_invariance)
 {
     printDBG("making detector for " << img_fpath);
     printDBG(" * img_fpath = " << img_fpath);
@@ -934,8 +966,10 @@ PYHESAFF AffineHessianDetector* new_hesaff_from_params(char* img_fpath,
     hesParams.scale_max            = scale_max;
     hesParams.rotation_invariance  = rotation_invariance;
     hesParams.ori_maxima_thresh    = ori_maxima_thresh;
+    hesParams.affine_invariance    = affine_invariance;
     // Create detector
     AffineHessianDetector* detector = new AffineHessianDetector(image, pyrParams, affShapeParams, siftParams, hesParams);
+    detector->DBG_params();
     return detector;
 }
 
@@ -965,12 +999,14 @@ PYHESAFF AffineHessianDetector* new_hesaff(char* img_fpath)
     float scale_max = -1;
     bool rotation_invariance = false;
     float ori_maxima_thresh = .8;
+    bool affine_invariance = true;
 
     AffineHessianDetector* detector = new_hesaff_from_params(img_fpath,
-                                      numberOfScales, threshold, edgeEigenValueRatio, border,
-                                      maxIterations, convergenceThreshold, smmWindowSize, mrSize,
-                                      spatialBins, orientationBins, maxBinValue, initialSigma, patchSize,
-                                      scale_min, scale_max, rotation_invariance, ori_maxima_thresh);
+            numberOfScales, threshold, edgeEigenValueRatio, border,
+            maxIterations, convergenceThreshold, smmWindowSize, mrSize,
+            spatialBins, orientationBins, maxBinValue, initialSigma, patchSize,
+            scale_min, scale_max, rotation_invariance, ori_maxima_thresh,
+            affine_invariance);
     return detector;
 }
 
@@ -1029,14 +1065,15 @@ void detectKeypoints(char* image_filename,
                      float scale_min,
                      float scale_max,
                      bool rotation_invariance,
-                     float ori_maxima_thresh)
+                     float ori_maxima_thresh,
+                     bool affine_invariance)
 {
     AffineHessianDetector* detector = new_hesaff_from_params(image_filename,
                                       numberOfScales, threshold, edgeEigenValueRatio, border,
                                       maxIterations, convergenceThreshold, smmWindowSize, mrSize,
                                       spatialBins, orientationBins, maxBinValue, initialSigma,
                                       patchSize, scale_min, scale_max, rotation_invariance,
-                                      ori_maxima_thresh);
+                                      ori_maxima_thresh, affine_invariance);
     detector->DBG_params();
     *length = detector->detect();
     *keypoints = new float[(*length)*KPTS_DIM];
@@ -1074,7 +1111,8 @@ PYHESAFF void detectKeypointsList(int num_filenames,
                                   float scale_min,
                                   float scale_max,
                                   bool rotation_invariance,
-                                  float ori_maxima_thresh)
+                                  float ori_maxima_thresh, 
+                                  bool affine_invariance)
 {
     // Maybe use this implimentation instead to be more similar to the way
     // pyhesaff calls this library?
@@ -1088,7 +1126,9 @@ PYHESAFF void detectKeypointsList(int num_filenames,
                                    threshold, edgeEigenValueRatio, border, maxIterations,
                                    convergenceThreshold, smmWindowSize, mrSize,
                                    spatialBins, orientationBins, maxBinValue, initialSigma,
-                                   patchSize, scale_min, scale_max, rotation_invariance, ori_maxima_thresh);
+                                   patchSize, scale_min, scale_max,
+                                   rotation_invariance, ori_maxima_thresh,
+                                   affine_invariance);
         detector->DBG_params();
         int length = detector->detect();
         length_array[index] = length;
@@ -1126,7 +1166,8 @@ PYHESAFF void detectKeypointsList1(int num_filenames,
                                    float scale_min,
                                    float scale_max,
                                    bool rotation_invariance,
-                                   float ori_maxima_thresh)
+                                   float ori_maxima_thresh,
+                                   bool affine_invariance)
 {
     int index;
     #pragma omp parallel for private(index)
@@ -1140,7 +1181,8 @@ PYHESAFF void detectKeypointsList1(int num_filenames,
                         edgeEigenValueRatio, border, maxIterations,
                         convergenceThreshold, smmWindowSize, mrSize, spatialBins,
                         orientationBins, maxBinValue, initialSigma, patchSize,
-                        scale_min, scale_max, rotation_invariance, ori_maxima_thresh);
+                        scale_min, scale_max, rotation_invariance, ori_maxima_thresh, 
+                        affine_invariance);
     }
 }
 #ifdef __cplusplus
@@ -1199,7 +1241,7 @@ int main(int argc, char **argv)
         char* img_fpath = argv[1];
         int nKpts;
         AffineHessianDetector* detector = new_hesaff(img_fpath);
-        detector->hesPar.rotation_invariance = true;
+        //detector->hesPar.rotation_invariance = true;
             //(argc > 2) ? atoi(argv[2]) : true;
         detector->DBG_params();
         nKpts = detect(detector);

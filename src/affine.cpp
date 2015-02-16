@@ -22,7 +22,7 @@
 //#define MYDEBUG
 
 #ifdef MYDEBUG
-#define printDBG(msg) std::cout << "[hesaff.c] " << msg << std::endl;
+#define printDBG(msg) std::cout << "[affine.c] " << msg << std::endl;
 #define write(msg) std::cout << msg;
 #else
 #define printDBG(msg);
@@ -44,35 +44,35 @@ bool AffineShape::findAffineShape(const Mat &blur, float x, float y, float s, fl
       2: void HessianDetector::localizeKeypoint(int r, int c, float curScale, float pixelDistance)
     */
     float eigen_ratio_act = 0.0f, eigen_ratio_bef = 0.0f;
-    float u11 = 1.0f, u12 = 0.0f, u21 = 0.0f, u22 = 1.0f, l1 = 1.0f, l2 = 1.0f;
+    float u11 = 1.0f, u12 = 0.0f, u21 = 0.0f, u22 = 1.0f, eigval1 = 1.0f, eigval2 = 1.0f;
     float lx = x / pixelDistance, ly = y / pixelDistance;
     float ratio = s / (par.initialSigma * pixelDistance);
     // kernel size...
     const int maskPixels = par.smmWindowSize * par.smmWindowSize;
 
-    for(int l = 0; l < par.maxIterations; l ++)
+    for(int iters = 0; iters < par.maxIterations; iters ++)
     {
         // warp input according to current shape matrix
-        interpolate(blur, lx, ly, u11 * ratio, u12 * ratio, u21 * ratio, u22 * ratio, img); //Helper function
+        interpolate(blur, lx, ly, u11 * ratio, u12 * ratio, u21 * ratio, u22 * ratio, this->img); // defined in helpers.cppp
 
         // compute SMM on the warped patch
         float a = 0, b = 0, c = 0;
         float *maskptr = mask.ptr<float>(0);
         float *pfx = fx.ptr<float>(0), *pfy = fy.ptr<float>(0);
 
-        computeGradient(img, fx, fy); // Defined in this file
+        computeGradient(this->img, fx, fy); // Defined in helpers, fx and fy are outvars
 
         // estimate SMM (second moment matrix)
         for(int i = 0; i < maskPixels; ++i)
         {
-            const float v = (*maskptr);
+            const float intensity = (*maskptr);
             const float gxx = *pfx;
             const float gyy = *pfy;
             const float gxy = gxx * gyy;
 
-            a += gxx * gxx * v;
-            b += gxy * v;
-            c += gyy * gyy * v;
+            a += gxx * gxx * intensity;
+            b += gxy * intensity;
+            c += gyy * gyy * intensity;
             pfx++;
             pfy++;
             maskptr++;
@@ -82,14 +82,15 @@ bool AffineShape::findAffineShape(const Mat &blur, float x, float y, float s, fl
         c /= maskPixels;
 
         // compute inverse sqrt of the SMM
-        invSqrt(a, b, c, l1, l2);
+        invSqrt(a, b, c, eigval1, eigval2);
 
         // update eigen ratios
         eigen_ratio_bef = eigen_ratio_act;
-        eigen_ratio_act = 1 - l2 / l1;
+        eigen_ratio_act = 1 - eigval2 / eigval1;
 
         // accumulate the affine shape matrix
-        float u11t = u11, u12t = u12;
+        float u11t = u11;
+        float u12t = u12;
 
         u11 = a * u11t + b * u21;
         u12 = a * u12t + b * u22;
@@ -97,13 +98,13 @@ bool AffineShape::findAffineShape(const Mat &blur, float x, float y, float s, fl
         u22 = b * u12t + c * u22;
 
         // compute the eigen values of the shape matrix
-        if(!getEigenvalues(u11, u12, u21, u22, l1, l2))
+        if(!getEigenvalues(u11, u12, u21, u22, eigval1, eigval2))
         {
             break;
         }
 
         // leave on too high anisotropy
-        if((l1 / l2 > 6) || (l2 / l1 > 6))
+        if((eigval1 / eigval2 > 6) || (eigval2 / eigval1 > 6))
         {
             break;
         }
@@ -112,7 +113,7 @@ bool AffineShape::findAffineShape(const Mat &blur, float x, float y, float s, fl
         {
             if(affineShapeCallback)
             {
-                affineShapeCallback->onAffineShapeFound(blur, x, y, s, pixelDistance, u11, u12, u21, u22, type, response, l); // Call Step 4
+                affineShapeCallback->onAffineShapeFound(blur, x, y, s, pixelDistance, u11, u12, u21, u22, type, response, iters); // Call Step 4
             }
             return true;
         }

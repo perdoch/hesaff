@@ -267,7 +267,7 @@ void computeCircularGaussMask(Mat &mask)
 }
 
 
-void invSqrt(float &a, float &b, float &c, float &l1, float &l2)
+void invSqrt(float &a, float &b, float &c, float &eigval1, float &eigval2)
 {
     // Inverse matrix square root
     // if Z = V.dot(V)
@@ -301,16 +301,16 @@ void invSqrt(float &a, float &b, float &c, float &l1, float &l2)
     d = sqrt(x * z);
     x /= d;
     z /= d;
-    // let l1 be the greater eigenvalue
+    // let eigval1 be the greater eigenvalue
     if(x < z)
     {
-        l1 = float(z);
-        l2 = float(x);
+        eigval1 = float(z);
+        eigval2 = float(x);
     }
     else
     {
-        l1 = float(x);
-        l2 = float(z);
+        eigval1 = float(x);
+        eigval2 = float(z);
     }
     // output square root
     a = float(r * r * x + t * t * z);
@@ -319,7 +319,7 @@ void invSqrt(float &a, float &b, float &c, float &l1, float &l2)
 }
 
 
-bool getEigenvalues(float a, float b, float c, float d, float &l1, float &l2)
+bool getEigenvalues(float a, float b, float c, float d, float &eigval1, float &eigval2)
 {
     float trace = a + d;
     float delta1 = (trace * trace - 4 * (a * d - b * c));
@@ -329,8 +329,8 @@ bool getEigenvalues(float a, float b, float c, float d, float &l1, float &l2)
     }
     float delta = sqrt(delta1);
 
-    l1 = (trace + delta) / 2.0f;
-    l2 = (trace - delta) / 2.0f;
+    eigval1 = (trace + delta) / 2.0f;
+    eigval2 = (trace - delta) / 2.0f;
     return true;
 }
 
