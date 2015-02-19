@@ -327,7 +327,7 @@ template <class T, class Iterator> Histogram<T> computeInterpolatedHistogram(
         int left_index = int(floor(fracBinIndex));
         int right_index = left_index + 1;
         T right_alpha = fracBinIndex - T(left_index);  // get interpolation weight between 0 and 1
-        // Wrap around indicies
+        // Wrap around indices
         //    static int nprint = 0;
         //    bool doprint = false && (left_index < 0 || right_index >= nbins);
         //    if (doprint) 
