@@ -893,32 +893,37 @@ PYHESAFF int get_desc_dim()
     return DESC_DIM;
 }
 
+
+// reduce redundant function signature arguments
+#define __HESAFF_PARAM_SIGNATURE_ARGS__ \
+ int   numberOfScales,\
+ float threshold,\
+ float edgeEigenValueRatio,\
+ int   border,\
+ int   maxIterations,\
+ float convergenceThreshold,\
+ int   smmWindowSize,\
+ float mrSize,\
+ int spatialBins,\
+ int orientationBins,\
+ float maxBinValue,\
+ float initialSigma,\
+ int patchSize,\
+ float scale_min,\
+ float scale_max,\
+ bool rotation_invariance,\
+ float ori_maxima_thresh,\
+ bool affine_invariance\
+
+#define __HESAFF_PARAM_CALL_ARGS__ \
+numberOfScales, threshold, edgeEigenValueRatio, border,\
+maxIterations, convergenceThreshold, smmWindowSize, mrSize,\
+spatialBins, orientationBins, maxBinValue, initialSigma,\
+patchSize, scale_min, scale_max, rotation_invariance,\
+ori_maxima_thresh, affine_invariance
+
 // new hessian affine detector
-PYHESAFF AffineHessianDetector* new_hesaff_from_params(char* img_fpath,
-        // Pyramid Params
-        int   numberOfScales,
-        float threshold,
-        float edgeEigenValueRatio,
-        int   border,
-        // Affine Params Shape
-        int   maxIterations,
-        float convergenceThreshold,
-        int   smmWindowSize,
-        float mrSize,
-        // SIFT params
-        int spatialBins,
-        int orientationBins,
-        float maxBinValue,
-        // Shared Pyramid + Affine
-        float initialSigma,
-        // Shared SIFT + Affine
-        int patchSize,
-        // My Params
-        float scale_min,
-        float scale_max,
-        bool rotation_invariance,
-        float ori_maxima_thresh,
-        bool affine_invariance)
+PYHESAFF AffineHessianDetector* new_hesaff_from_params(char* img_fpath, __HESAFF_PARAM_SIGNATURE_ARGS__)
 {
     printDBG("making detector for " << img_fpath);
     printDBG(" * img_fpath = " << img_fpath);
@@ -1001,12 +1006,7 @@ PYHESAFF AffineHessianDetector* new_hesaff(char* img_fpath)
     float ori_maxima_thresh = .8;
     bool affine_invariance = true;
 
-    AffineHessianDetector* detector = new_hesaff_from_params(img_fpath,
-            numberOfScales, threshold, edgeEigenValueRatio, border,
-            maxIterations, convergenceThreshold, smmWindowSize, mrSize,
-            spatialBins, orientationBins, maxBinValue, initialSigma, patchSize,
-            scale_min, scale_max, rotation_invariance, ori_maxima_thresh,
-            affine_invariance);
+    AffineHessianDetector* detector = new_hesaff_from_params(img_fpath, __HESAFF_PARAM_CALL_ARGS__);
     return detector;
 }
 
@@ -1043,37 +1043,10 @@ void detectKeypoints(char* image_filename,
                      float** keypoints,
                      uint8** descriptors,
                      int* length,
-                     // Pyramid Params
-                     int   numberOfScales,
-                     float threshold,
-                     float edgeEigenValueRatio,
-                     int   border,
-                     // Affine Params Shape
-                     int   maxIterations,
-                     float convergenceThreshold,
-                     int   smmWindowSize,
-                     float mrSize,
-                     // SIFT params
-                     int spatialBins,
-                     int orientationBins,
-                     float maxBinValue,
-                     // Shared Pyramid + Affine
-                     float initialSigma,
-                     // Shared SIFT + Affine
-                     int patchSize,
-                     // My Params
-                     float scale_min,
-                     float scale_max,
-                     bool rotation_invariance,
-                     float ori_maxima_thresh,
-                     bool affine_invariance)
+                     __HESAFF_PARAM_SIGNATURE_ARGS__
+                     )
 {
-    AffineHessianDetector* detector = new_hesaff_from_params(image_filename,
-                                      numberOfScales, threshold, edgeEigenValueRatio, border,
-                                      maxIterations, convergenceThreshold, smmWindowSize, mrSize,
-                                      spatialBins, orientationBins, maxBinValue, initialSigma,
-                                      patchSize, scale_min, scale_max, rotation_invariance,
-                                      ori_maxima_thresh, affine_invariance);
+    AffineHessianDetector* detector = new_hesaff_from_params(image_filename, __HESAFF_PARAM_CALL_ARGS__);
     detector->DBG_params();
     *length = detector->detect();
     *keypoints = new float[(*length)*KPTS_DIM];
@@ -1089,30 +1062,8 @@ PYHESAFF void detectKeypointsList(int num_filenames,
                                   float** keypoints_array,
                                   uint8** descriptors_array,
                                   int* length_array,
-                                  // Pyramid Params
-                                  int   numberOfScales,
-                                  float threshold,
-                                  float edgeEigenValueRatio,
-                                  int   border,
-                                  // Affine Params Shape
-                                  int   maxIterations,
-                                  float convergenceThreshold,
-                                  int   smmWindowSize,
-                                  float mrSize,
-                                  // SIFT params
-                                  int spatialBins,
-                                  int orientationBins,
-                                  float maxBinValue,
-                                  // Shared Pyramid + Affine
-                                  float initialSigma,
-                                  // Shared SIFT + Affine
-                                  int patchSize,
-                                  // My Params
-                                  float scale_min,
-                                  float scale_max,
-                                  bool rotation_invariance,
-                                  float ori_maxima_thresh, 
-                                  bool affine_invariance)
+                                  __HESAFF_PARAM_SIGNATURE_ARGS__
+                                  )
 {
     // Maybe use this implimentation instead to be more similar to the way
     // pyhesaff calls this library?
@@ -1122,13 +1073,7 @@ PYHESAFF void detectKeypointsList(int num_filenames,
     {
         char* image_filename = image_filename_list[index];
         AffineHessianDetector* detector =
-            new_hesaff_from_params(image_filename, numberOfScales,
-                                   threshold, edgeEigenValueRatio, border, maxIterations,
-                                   convergenceThreshold, smmWindowSize, mrSize,
-                                   spatialBins, orientationBins, maxBinValue, initialSigma,
-                                   patchSize, scale_min, scale_max,
-                                   rotation_invariance, ori_maxima_thresh,
-                                   affine_invariance);
+            new_hesaff_from_params(image_filename, __HESAFF_PARAM_CALL_ARGS__);
         detector->DBG_params();
         int length = detector->detect();
         length_array[index] = length;
@@ -1144,30 +1089,8 @@ PYHESAFF void detectKeypointsList1(int num_filenames,
                                    float** keypoints_array,
                                    uint8** descriptors_array,
                                    int* length_array,
-                                   // Pyramid Params
-                                   int   numberOfScales,
-                                   float threshold,
-                                   float edgeEigenValueRatio,
-                                   int   border,
-                                   // Affine Params Shape
-                                   int   maxIterations,
-                                   float convergenceThreshold,
-                                   int   smmWindowSize,
-                                   float mrSize,
-                                   // SIFT params
-                                   int spatialBins,
-                                   int orientationBins,
-                                   float maxBinValue,
-                                   // Shared Pyramid + Affine
-                                   float initialSigma,
-                                   // Shared SIFT + Affine
-                                   int patchSize,
-                                   // My Params
-                                   float scale_min,
-                                   float scale_max,
-                                   bool rotation_invariance,
-                                   float ori_maxima_thresh,
-                                   bool affine_invariance)
+                                   __HESAFF_PARAM_SIGNATURE_ARGS__
+                                   )
 {
     int index;
     #pragma omp parallel for private(index)
@@ -1177,12 +1100,7 @@ PYHESAFF void detectKeypointsList1(int num_filenames,
                         &(keypoints_array[index]),
                         &(descriptors_array[index]),
                         &(length_array[index]),
-                        numberOfScales, threshold,
-                        edgeEigenValueRatio, border, maxIterations,
-                        convergenceThreshold, smmWindowSize, mrSize, spatialBins,
-                        orientationBins, maxBinValue, initialSigma, patchSize,
-                        scale_min, scale_max, rotation_invariance, ori_maxima_thresh, 
-                        affine_invariance);
+                        __HESAFF_PARAM_CALL_ARGS__);
     }
 }
 #ifdef __cplusplus
