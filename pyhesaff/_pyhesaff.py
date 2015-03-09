@@ -88,6 +88,7 @@ HESAFF_TYPED_PARAMS = [
     (float_t, 'scale_min', -1.0),
     (float_t, 'scale_max', -1.0),
     (bool_t,  'rotation_invariance', False),
+    (bool_t,  'augment_orientation', False),
     (float_t, 'ori_maxima_thresh', .8),
     (bool_t,  'affine_invariance', True),
 ]

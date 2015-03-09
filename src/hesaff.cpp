@@ -417,6 +417,12 @@ public:
         {
             // Just use one gravity orientation
             submaxima_oris.push_back(R_GRAVITY_THETA);
+            if (hesPar.augment_orientation)
+            {
+                // +- 15 degrees or tau/24 ~= 0.26 radians
+                submaxima_oris.push_back(R_GRAVITY_THETA + M_TAU / 24.0);
+                submaxima_oris.push_back(R_GRAVITY_THETA - M_TAU / 24.0);
+            }
         }
 
         //printDBG("[onAffShapeFound] Found " << submaxima_oris.size() << " orientations")
@@ -834,6 +840,7 @@ public:
     printDBG(" * hesPar.scale_min            = " << hesPar.scale_min);
     printDBG(" * hesPar.scale_max            = " << hesPar.scale_max);
     printDBG(" * hesPar.rotation_invariance  = " << hesPar.rotation_invariance);
+    printDBG(" * hesPar.augment_orientation  = " << hesPar.augment_orientation);
     printDBG(" * hesPar.ori_maxima_thresh    = " << hesPar.ori_maxima_thresh);
     printDBG(" * hesPar.affine_invariance    = " << hesPar.affine_invariance);
     }       
@@ -912,15 +919,16 @@ PYHESAFF int get_desc_dim()
  float scale_min,\
  float scale_max,\
  bool rotation_invariance,\
+ bool augment_orientation,\
  float ori_maxima_thresh,\
  bool affine_invariance\
 
 #define __HESAFF_PARAM_CALL_ARGS__ \
-numberOfScales, threshold, edgeEigenValueRatio, border,\
-maxIterations, convergenceThreshold, smmWindowSize, mrSize,\
-spatialBins, orientationBins, maxBinValue, initialSigma,\
-patchSize, scale_min, scale_max, rotation_invariance,\
-ori_maxima_thresh, affine_invariance
+numberOfScales, threshold, edgeEigenValueRatio, border, maxIterations,\
+convergenceThreshold, smmWindowSize, mrSize, spatialBins, orientationBins,\
+maxBinValue, initialSigma, patchSize, scale_min, scale_max,\
+rotation_invariance, augment_orientation, ori_maxima_thresh,\
+affine_invariance
 
 // new hessian affine detector
 PYHESAFF AffineHessianDetector* new_hesaff_from_params(char* img_fpath, __HESAFF_PARAM_SIGNATURE_ARGS__)
@@ -970,6 +978,7 @@ PYHESAFF AffineHessianDetector* new_hesaff_from_params(char* img_fpath, __HESAFF
     hesParams.scale_min            = scale_min;
     hesParams.scale_max            = scale_max;
     hesParams.rotation_invariance  = rotation_invariance;
+    hesParams.augment_orientation  = augment_orientation;
     hesParams.ori_maxima_thresh    = ori_maxima_thresh;
     hesParams.affine_invariance    = affine_invariance;
     // Create detector
@@ -1003,6 +1012,7 @@ PYHESAFF AffineHessianDetector* new_hesaff(char* img_fpath)
     float scale_min = -1;
     float scale_max = -1;
     bool rotation_invariance = false;
+    bool augment_orientation = false;
     float ori_maxima_thresh = .8;
     bool affine_invariance = true;
 
