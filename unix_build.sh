@@ -13,7 +13,7 @@ echo "[hesaff.unix_build] checking if build dir should be removed"
 #if [[ "$RMBUILD" == "1" ]]; then
     #rm -rf build
 #fi
-python -c "import utool as ut; print('keeping build dir' if ut.get_argflag('--no-rmbuild') else ut.delete('build'))" $@
+python2.7 -c "import utool as ut; print('keeping build dir' if ut.get_argflag('--no-rmbuild') else ut.delete('build'))" $@
 
 # +==================================================
 # SIMPLE WAY OF EXECUTING MULTILINE PYTHON FROM BASH
