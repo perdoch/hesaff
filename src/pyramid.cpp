@@ -302,7 +302,7 @@ void HessianDetector::localizeKeypoint(int r, int c, float curScale, float pixel
     // point is now scale and translation invariant, add it...
     if(hessianKeypointCallback)
         hessianKeypointCallback->onHessianKeypointDetected(
-                prevBlur, 
+                this->prevBlur, 
                 pixelDistance * (c + b[0]), 
                 pixelDistance * (r + b[1]), 
                 pixelDistance * scale, 
@@ -351,10 +351,10 @@ void HessianDetector::detectOctaveKeypoints(const Mat &firstLevel, float pixelDi
     octaveMap = Mat::zeros(firstLevel.rows, firstLevel.cols, CV_8UC1);
     float sigmaStep = pow(2.0f, 1.0f / (float) par.numberOfScales);
     float curSigma = par.initialSigma;
-    blur = firstLevel;
+    this->blur = firstLevel;
     // Calculate hessian Responce at this level
     //print("  hessianResponce lvl: 0");
-    cur = hessianResponse(blur, curSigma * curSigma);
+    cur = hessianResponse(this->blur, curSigma * curSigma);
     int numLevels = 1;
 
     for(int i = 1; i < par.numberOfScales + 2; i++)
@@ -362,7 +362,7 @@ void HessianDetector::detectOctaveKeypoints(const Mat &firstLevel, float pixelDi
         // compute the increase necessary for the next level and compute the next level
         float sigma = curSigma * sqrt(sigmaStep * sigmaStep - 1.0f);
         // DO BLURING
-        Mat nextBlur = gaussianBlur(blur, sigma); //Helper function
+        Mat nextBlur = gaussianBlur(this->blur, sigma); //Helper function
         sigma = curSigma * sigmaStep; // the next level sigma
         // compute response for current level
         //print("  hessianResponce lvl: " << i);
@@ -380,8 +380,8 @@ void HessianDetector::detectOctaveKeypoints(const Mat &firstLevel, float pixelDi
             // downsample the right level for the next octave
             nextOctaveFirstLevel = halfImage(nextBlur);    // Helper Function
         }
-        prevBlur = blur;
-        blur = nextBlur;
+        this->prevBlur = this->blur;
+        this->blur = nextBlur;
         // shift to the next response
         low = cur;
         cur = high;
@@ -415,13 +415,19 @@ void HessianDetector::detectPyramidKeypoints(const Mat &image)
     // we downsample the image in this loop and procede to check the octaves in that scale
     int minSize = 2 * par.border + 2;
     int num_blurs = 0;
+    int current_pyramid_level = 0;
     while(firstLevel.rows > minSize && firstLevel.cols > minSize)
     {
         Mat nextOctaveFirstLevel; //Outvar
         detectOctaveKeypoints(firstLevel, pixelDistance, nextOctaveFirstLevel); //Call Step 1
-        pixelDistance *= 2.0; // Artificially increase sigma by varying the pixel step size
+        pixelDistance *= 2.0; // Effectively increase sigma by varying the pixel step size
         // Overwrite firstlevel with the next level blur
         firstLevel = nextOctaveFirstLevel; // Overwrite firstLevel in place
         //cout << "num blurs: " << ++num_blurs << std::endl;
+        current_pyramid_level++;
+        if (par.maxPyramidLevels != -1 && par.maxPyramidLevels <= current_pyramid_level)
+        {
+            break;
+        }
     }
 }

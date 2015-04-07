@@ -826,6 +826,7 @@ public:
     //printDBG("pyrParams.threshold           = " << pyrParams.threshold);
     //printDBG("pyrParams.edgeEigenValueRatio = " << pyrParams.edgeEigenValueRatio);
     //printDBG("pyrParams.border              = " << pyrParams.border);
+    //printDBG("pyrParams.maxPyramidLevels    = " << pyrParams.maxPyramidLevels);
     //printDBG("pyrParams.initialSigma        = " << pyrParams.initialSigma);
     //printDBG("affShapeParams.maxIterations        = " << affShapeParams.maxIterations);
     //printDBG("affShapeParams.convergenceThreshold = " << affShapeParams.convergenceThreshold);
@@ -907,6 +908,7 @@ PYHESAFF int get_desc_dim()
  float threshold,\
  float edgeEigenValueRatio,\
  int   border,\
+ int   maxPyramidLevels,\
  int   maxIterations,\
  float convergenceThreshold,\
  int   smmWindowSize,\
@@ -924,7 +926,7 @@ PYHESAFF int get_desc_dim()
  bool affine_invariance\
 
 #define __HESAFF_PARAM_CALL_ARGS__ \
-numberOfScales, threshold, edgeEigenValueRatio, border, maxIterations,\
+numberOfScales, threshold, edgeEigenValueRatio, border, maxPyramidLevels, maxIterations,\
 convergenceThreshold, smmWindowSize, mrSize, spatialBins, orientationBins,\
 maxBinValue, initialSigma, patchSize, scale_min, scale_max,\
 rotation_invariance, augment_orientation, ori_maxima_thresh,\
@@ -958,6 +960,7 @@ PYHESAFF AffineHessianDetector* new_hesaff_from_params(char* img_fpath, __HESAFF
     pyrParams.threshold                 = threshold;
     pyrParams.edgeEigenValueRatio       = edgeEigenValueRatio;
     pyrParams.border                    = border;
+    pyrParams.maxPyramidLevels          = maxPyramidLevels;
     pyrParams.initialSigma              = initialSigma;
 
     // Copy Affine Shape params
@@ -995,6 +998,7 @@ PYHESAFF AffineHessianDetector* new_hesaff(char* img_fpath)
     float threshold = 16.0f / 3.0f;
     float edgeEigenValueRatio = 10.0f;
     int   border = 5;
+    int   maxPyramidLevels = -1;
     // Affine Params Shape
     int   maxIterations = 16;
     float convergenceThreshold = 0.05;

@@ -1,10 +1,23 @@
 #!/usr/bin/env python2.7
 """
-the python hessian affine keypoint module
+The python hessian affine keypoint module
 
-idea: dropout several pixels?
+Command Line:
+    python -c "import utool as ut; ut.write_modscript_alias('Fshow.sh', 'pyhesaff._pyhesaff --test-detect_kpts --fname easy1.png --verbose  --show')"
+    Fshow.sh --no-affine_invariance --scale-max=150 --darken .5
+    Fshow.sh --no-affine_invariance --scale-max=100 --darken .5
+    Fshow.sh --no-affine_invariance --scale-max=100
+    Fshow.sh --no-affine_invariance --scale-max=100
 
-TODO: redo in cyth
+    sh Fshow.sh --no-affine_invariance --numberOfScales=3 --maxPyramidLevels=-1 --darken .5
+    sh Fshow.sh --no-affine_invariance --numberOfScales=1 --maxPyramidLevels=1 --darken .5
+    sh Fshow.sh --affine_invariance --numberOfScales=1 --maxPyramidLevels=1 --darken .5
+    sh Fshow.sh --affine_invariance --numberOfScales=1 --maxPyramidLevels=1 --darken .5
+    sh Fshow.sh --no-affine_invariance --numberOfScales=3 --border=5
+
+    sh Fshow.sh --affine_invariance --numberOfScales=1 --maxPyramidLevels=1 --darken .5 --edgeEigenValueRatio=1.1
+    sh Fshow.sh --no-affine_invariance --numberOfScales=3 --maxPyramidLevels=2 --border=5
+
 """
 # TODO: it would be nice to be able to pass around an image
 # already in memory instead of having to pass around its path
@@ -72,6 +85,7 @@ HESAFF_TYPED_PARAMS = [
     (float_t, 'threshold', 16.0 / 3.0),       # noise dependent threshold on the response (sensitivity)
     (float_t, 'edgeEigenValueRatio', 10.0),   # ratio of the eigenvalues
     (int_t,   'border', 5),                   # number of pixels ignored at the border of image
+    (int_t,   'maxPyramidLevels', -1),        # maximum number of pyramid divisions. -1 is no limit
     # Affine Shape Params
     (int_t,   'maxIterations', 16),           # number of affine shape interations
     (float_t, 'convergenceThreshold', 0.05),  # maximum deviation from isotropic shape at convergence

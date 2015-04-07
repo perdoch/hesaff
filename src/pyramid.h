@@ -28,6 +28,7 @@ struct PyramidParams
     float edgeEigenValueRatio;
     // number of pixels ignored at the border of image
     int  border;
+    int  maxPyramidLevels;
     PyramidParams()
     {
         numberOfScales = 3;
@@ -35,6 +36,7 @@ struct PyramidParams
         threshold = 16.0f/3.0f; //0.04f * 256 / 3;
         edgeEigenValueRatio = 10.0f;
         border = 5;
+        maxPyramidLevels = -1;
     }
 };
 
