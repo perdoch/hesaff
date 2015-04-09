@@ -81,11 +81,12 @@ def TEST_keypoint(imgBGR, img_fpath, kpts, desc, sel):
 
     # Get orientation histogram
     print('[rotinvar] 2) Get orientation histogram')
-    hist, centers = ptool.get_orientation_histogram(gori)
+    gori_weights = ptool.gaussian_weight_patch(gmag)
+    hist, centers = ptool.get_orientation_histogram(gori, gori_weights)
 
     # Get dominant direction in radians
     kpts2 = TEST_ptool_find_kpts_direction(imgBGR, kpts)
-    kpts2, desc2 = pyhesaff.adapt_rotation(img_fpath, kpts)
+    kpts2, desc2 = pyhesaff.vtool_adapt_rotation(img_fpath, kpts)
 
     #----------------------#
     # --- Draw Results --- #
