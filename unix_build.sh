@@ -57,5 +57,5 @@ else
     make -j$NCPUS || { echo "FAILED MAKE" ; exit 1; }
 fi
 
-cp libhesaff* ../pyhesaff --verbose
+cp -v libhesaff* ../pyhesaff
 cd ..
