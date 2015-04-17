@@ -99,13 +99,15 @@ def test_simple_parallel():
         for count, (img_fpath, kpts, desc) in enumerate(zip(img_fpaths,
                                                             kpts_array,
                                                             desc_array)):
+            if count > 3:
+                break
             ax = fig.add_subplot(2, 2, count + 1)
             img = mpl.image.imread(img_fpath)
             plt.imshow(img)
             _xs, _ys = kpts.T[0:2]
             ax.plot(_xs, _ys, 'ro', alpha=.5)
 
-        plt.show()
+        ut.show_if_requested()
 
 
 if __name__ == '__main__':
