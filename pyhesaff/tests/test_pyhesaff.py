@@ -1,24 +1,44 @@
 #!/usr/bin/env python2.7
 from __future__ import absolute_import, division, print_function
-import pyhestest  # NOQA
-# Scientific
 import cv2
-# Tools
-from plottool import draw_func2 as df2
-from plottool.interact_keypoints import ishow_keypoints
-from vtool.tests import grabdata
-# Pyhesaff
-import pyhesaff
+import utool as ut
 
 
 def test_pyheaff(img_fpath):
+    r"""
+    This show is interactive in this test!
+
+    Args:
+        img_fpath (str):
+
+    CommandLine:
+        python -m pyhesaff.tests.test_pyhesaff --test-test_pyheaff
+        python -m pyhesaff.tests.test_pyhesaff --test-test_pyheaff --show
+
+    Example:
+        >>> # ENABLE_DOCTEST
+        >>> from pyhesaff.tests.test_pyhesaff import *  # NOQA
+        >>> img_fpath = ut.grab_test_imgpath('jeff.png')
+        >>> test_pyheaff(img_fpath)
+        >>> ut.show_if_requested()
+    """
+    import pyhesaff
     kpts, desc = pyhesaff.detect_kpts(img_fpath)
     rchip = cv2.imread(img_fpath)
-    ishow_keypoints(rchip, kpts, desc)
+    if ut.show_was_requested():
+        from plottool.interact_keypoints import ishow_keypoints
+        ishow_keypoints(rchip, kpts, desc)
     return locals()
 
 
 if __name__ == '__main__':
-    img_fpath = grabdata.get_testimg_path('jeff.png')
-    test_pyheaff(img_fpath)
-    exec(df2.present())
+    """
+    CommandLine:
+        python -m pyhesaff.tests.test_pyhesaff
+        python -m pyhesaff.tests.test_pyhesaff --allexamples
+        python -m pyhesaff.tests.test_pyhesaff --allexamples --noface --nosrc
+    """
+    import multiprocessing
+    multiprocessing.freeze_support()  # for win32
+    import utool as ut  # NOQA
+    ut.doctest_funcs()

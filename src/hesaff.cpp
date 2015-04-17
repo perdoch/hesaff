@@ -362,12 +362,12 @@ public:
 
          */
         // type can be one of:
-        #if DEBUG_ROTINVAR 
-        if (std::abs(response) > 1000 || std::abs(response) < 800)
-        {
-            return;
-        }
-        #endif
+        //#if DEBUG_ROTINVAR 
+        //if (std::abs(response) > 1000 || std::abs(response) < 800)
+        //{
+        //    return;
+        //}
+        //#endif
 
         // check if detected keypoint is within scale thresholds
         float scale_min = hesPar.scale_min;

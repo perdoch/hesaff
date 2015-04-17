@@ -1,14 +1,10 @@
 #!/usr/bin/env python2.7
 from __future__ import absolute_import, division, print_function
-#import os
-import sys
-#sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-#sys.path.append(os.getcwd())
-import pyhesaff
 import matplotlib as mpl
 import numpy as np
 from six.moves import zip
 from matplotlib import pyplot as plt
+import utool as ut
 import time
 
 #sample_data_fpath = join(dirname(mpl.__file__), 'mpl-data', 'sample_data')
@@ -22,7 +18,17 @@ import time
 #mpl.cbook.get_sample_data('ada.png', False)
 
 
-if __name__ == '__main__':
+def test_simple_parallel():
+    r"""
+    CommandLine:
+        python -m pyhesaff.tests.test_pyhesaff_simple_parallel --test-test_simple_parallel
+
+    Example:
+        >>> # ENABLE_DOCTEST
+        >>> from pyhesaff.tests.test_pyhesaff_simple_parallel import *  # NOQA
+        >>> test_simple_parallel()
+    """
+    import pyhesaff
     lena_fpath  = mpl.cbook.get_sample_data('lena.jpg', False)
     logo_fpath  = mpl.cbook.get_sample_data('logo2.png', False)
     grace_fpath = mpl.cbook.get_sample_data('grace_hopper.jpg', False)
@@ -44,6 +50,7 @@ if __name__ == '__main__':
         print('shape(kpts, kpts_, desc, desc_) = %9r, %9r, %11r, %11r' %
               (kpts.shape, kpts_.shape, desc.shape, desc_.shape))
         try:
+            assert len(kpts_) > 0, 'no kpts detected'
             assert np.all(kpts_ == kpts), 'parallel computation inconsistent'
             assert np.all(desc_ == desc), 'parallel computation inconsistent'
             #assert False, 'deliberate triggering to see printouts'
@@ -79,14 +86,13 @@ if __name__ == '__main__':
             #    print(d1)
             #    print(d2)
             #    print('-----')
-            import utool
-            utool.printex(ex)
+            ut.printex(ex)
             raise
         itertime += time.time() - start
     print('Iterative ran in %r seconds' % itertime)
     print('Keypoints seem consistent')
 
-    if '--show' in sys.argv:
+    if ut.show_was_requested():
         # Do not plot by default
         fig = plt.figure()
 
@@ -100,3 +106,16 @@ if __name__ == '__main__':
             ax.plot(_xs, _ys, 'ro', alpha=.5)
 
         plt.show()
+
+
+if __name__ == '__main__':
+    """
+    CommandLine:
+        python -m pyhesaff.tests.test_pyhesaff_simple_parallel
+        python -m pyhesaff.tests.test_pyhesaff_simple_parallel --allexamples
+        python -m pyhesaff.tests.test_pyhesaff_simple_parallel --allexamples --noface --nosrc
+    """
+    import multiprocessing
+    multiprocessing.freeze_support()  # for win32
+    import utool as ut  # NOQA
+    ut.doctest_funcs()

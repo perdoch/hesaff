@@ -1,25 +1,43 @@
 #!/usr/bin/env python2.7
-# ALREADY PORTED FIXME DELETE
 from __future__ import absolute_import, division, print_function
-import __sysreq__  # NOQA
 import numpy as np
-from plottool import draw_func2 as df2
-from plottool.viz_keypoints import show_keypoints
-#from hsdev import dev_consistency
-# TPL
-import pyhesaff
-# VTool
-import vtool  # NOQA
-import vtool.image as gtool
-import vtool.keypoint as ktool
-from vtool.tests import grabdata
+import utool as ut
 
-if __name__ == '__main__':
+
+def double_detect(img_fpath, **kw):
+    import pyhesaff
+    # Checks to make sure computation is determinsitc
+    _kpts, _vecs = pyhesaff.detect_kpts(img_fpath, **kw)
+    kpts_, vecs_ = pyhesaff.detect_kpts(img_fpath, **kw)
+    assert np.all(kpts_ == _kpts)
+    assert np.all(vecs_ == _vecs)
+    print('double detect ok')
+    return kpts_, vecs_
+
+
+def test_ori_extract_main():
+    """
+    CommandLine:
+        python -m pyhesaff.tests.test_exhaustive_ori_extract --test-test_ori_extract_main
+        python -m pyhesaff.tests.test_exhaustive_ori_extract --test-test_ori_extract_main --show
+
+    Example:
+        >>> # ENABLE_DOCTEST
+        >>> from pyhesaff.tests.test_exhaustive_ori_extract import *  # NOQA
+        >>> test_ori_extract_main()
+        >>> ut.show_if_requested()
+    """
+    import pyhesaff
+    from plottool import draw_func2 as df2
+    from plottool.viz_keypoints import show_keypoints
+    import vtool  # NOQA
+    import vtool.image as gtool
+    import vtool.keypoint as ktool
     np.set_printoptions(threshold=5000, linewidth=5000, precision=3)
     # Read data
     print('[rotinvar] loading test data')
 
-    img_fpath = grabdata.get_testimg_path('jeff.png')
+    img_fpath = ut.grab_test_imgpath('jeff.png')
     imgL = gtool.cvt_BGR2L(gtool.imread(img_fpath))
     detect_kw0 = {
     }
@@ -35,15 +53,6 @@ if __name__ == '__main__':
         'scale_min': 45,
         'scale_max': 49
     }
-    def double_detect(img_fpath, **kw):
-        # Checks to make sure computation is determinsitc
-        _kpts, _vecs = pyhesaff.detect_kpts(img_fpath, **kw)
-        kpts_, vecs_ = pyhesaff.detect_kpts(img_fpath, **kw)
-        assert np.all(kpts_ == _kpts)
-        assert np.all(vecs_ == _vecs)
-        print('double detect ok')
-        return kpts_, vecs_
-
     # Remove skew and anisotropic scaling
     def force_isotropic(kpts):
         kpts_ = kpts.copy()
@@ -105,7 +114,20 @@ if __name__ == '__main__':
     show_kpts_(2, (2, 3, 4), kpts8, vecs8, 'kpts8: shift + reorient')
     show_kpts_(2, (2, 3, 5), kpts9, vecs9, 'kpts9: reorient')
     show_kpts_(2, (2, 3, 6), kpts10, vecs10, 'kpts10: reorient')
-    df2.iup()
+    #df2.iup()
 
     #pinteract.interact_keypoints(imgBGR, kpts2, vecs, arrow=True, rect=True)
-    exec(df2.present(wh=800))
+    #exec(df2.present(wh=800))
+
+
+if __name__ == '__main__':
+    """
+    CommandLine:
+        python -m pyhesaff.tests.test_exhaustive_ori_extract
+        python -m pyhesaff.tests.test_exhaustive_ori_extract --allexamples
+        python -m pyhesaff.tests.test_exhaustive_ori_extract --allexamples --noface --nosrc
+    """
+    import multiprocessing
+    multiprocessing.freeze_support()  # for win32
+    import utool as ut  # NOQA
+    ut.doctest_funcs()

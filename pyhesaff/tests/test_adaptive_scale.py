@@ -1,14 +1,8 @@
 #!/usr/bin/env python2.7
 from __future__ import absolute_import, division, print_function
-# Standard
-import multiprocessing
 from six.moves import zip
-# Scientific
+import utool as ut
 import numpy as np
-# TPL
-import pyhesaff
-from pyhesaff.tests import pyhestest
-# VTool
 from plottool import draw_func2 as df2
 from plottool.viz_keypoints import show_keypoints
 import vtool.ellipse as vtellipse
@@ -18,6 +12,7 @@ def test_hesaff_kpts(img_fpath, **kwargs):
     if 'kwargs' not in vars():
         kwargs = {}
     # Make detector and read image
+    import pyhesaff
     hesaff_ptr = pyhesaff.new_hesaff(img_fpath, **kwargs)
     # Return the number of keypoints detected
     nKpts = pyhesaff.hesaff_lib.detect(hesaff_ptr)
@@ -43,6 +38,7 @@ def test_adaptive_scale():
     exec(open('vtellipse.py').read())
     """
     print('test_adaptive_scale()')
+    from pyhesaff.tests import pyhestest
     test_data = pyhestest.load_test_data(short=True, n=4)
     img_fpath = test_data['img_fpath']
     imgL = test_data['imgL']
@@ -124,7 +120,7 @@ def test_adaptive_scale():
     adapted_kpts = np.array(subscale_kpts[isvalid], dtype=np.float32)
     show_kpts(adapted_kpts, 3, 'adapted keypoint')
 
-    df2.update()
+    #df2.update()
 
     scales = 2 ** np.linspace(low, high, nScales)
     adapted_kpts = vtellipse.adaptive_scale(img_fpath, kpts, nScales, low, high, nSamples)
@@ -140,12 +136,21 @@ def test_adaptive_scale():
     return locals()
 
 
-if __name__ == '__main__':
-    """
+def test_adaptive_scale_main():
+    r"""
     CommandLine:
-        python -m pyhesaff.tests.test_adaptive_scale
+        python -m pyhesaff.tests.test_adaptive_scale --test-test_adaptive_scale_main
+        python -m pyhesaff.tests.test_adaptive_scale --test-test_adaptive_scale_main --show
+
+    Example:
+        >>> # ENABLE_DOCTEST
+        >>> from pyhesaff.tests.test_adaptive_scale import *  # NOQA
+        >>> # build test data
+        >>> # execute function
+        >>> result = test_adaptive_scale_main()
+        >>> # verify results
+        >>> print(result)
     """
-    multiprocessing.freeze_support()
     print('__main__ = test_adaptive_scale.py')
     np.set_printoptions(threshold=5000, linewidth=5000, precision=3)
 
@@ -153,4 +158,18 @@ if __name__ == '__main__':
     # They seem to work
     test_adaptive_scale()
 
-    exec(df2.present())
+    if ut.show_was_requested():
+        exec(df2.present())
+
+
+if __name__ == '__main__':
+    """
+    CommandLine:
+        python -m pyhesaff.tests.test_adaptive_scale
+        python -m pyhesaff.tests.test_adaptive_scale --allexamples
+        python -m pyhesaff.tests.test_adaptive_scale --allexamples --noface --nosrc
+    """
+    import multiprocessing
+    multiprocessing.freeze_support()  # for win32
+    import utool as ut  # NOQA
+    ut.doctest_funcs()

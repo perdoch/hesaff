@@ -1,15 +1,12 @@
 #!/usr/bin/env python2.7
 from __future__ import absolute_import, division, print_function
 import numpy as np
-# Hesaff
-import pyhestest
-import pyhesaff
-# Tools
 import utool
 from plottool import draw_func2 as df2
 from plottool.viz_keypoints import _annotate_kpts, show_keypoints
 from plottool.viz_featrow import draw_feat_row
 import plottool
+import utool as ut
 import vtool.patch as ptool
 
 
@@ -68,6 +65,7 @@ def TEST_figure2(imgBGR, kpts, desc, sel, fnum=2):
 
 
 def TEST_keypoint(imgBGR, img_fpath, kpts, desc, sel):
+    import pyhesaff
     #----------------------#
     # --- Extract Data --- #
     #----------------------#
@@ -108,14 +106,23 @@ def TEST_keypoint(imgBGR, img_fpath, kpts, desc, sel):
     return locals()
 
 
-if __name__ == '__main__':
-    """
+def test_patch_ori_main():
+    r"""
+    Returns:
+        ?: locals_
+
     CommandLine:
-        python -m pyhesaff.tests.test_patch_orientation
-        python ~/code/hesaff/pyhesaff/tests/test_patch_orientation.py
+        python -m pyhesaff.tests.test_patch_orientation --test-test_patch_ori_main
+        python -m pyhesaff.tests.test_patch_orientation --test-test_patch_ori_main --show
+
+    Example:
+        >>> # ENABLE_DOCTEST
+        >>> from pyhesaff.tests.test_patch_orientation import *  # NOQA
+        >>> test_patch_ori_main()
+        >>> ut.show_if_requested()
     """
-    # Read data
     print('[rotinvar] loading test data')
+    import pyhesaff.tests.pyhestest as pyhestest
     test_data = pyhestest.load_test_data(short=True, n=3)
     img_fpath = test_data['img_fpath']
     kpts = test_data['kpts']
@@ -124,8 +131,16 @@ if __name__ == '__main__':
     sel = min(len(kpts) - 1, 3)
 
     locals_ = TEST_keypoint(imgBGR, img_fpath, kpts, desc, sel)
-    exec(utool.execstr_dict(locals_, 'locals_'))
-    exec(utool.execstr_dict(f1_loc, 'f1_loc'))  # NOQA
+    return locals_
 
-    #pinteract.interact_keypoints(imgBGR, kpts2, desc, arrow=True, rect=True)
-    exec(df2.present())
+if __name__ == '__main__':
+    """
+    CommandLine:
+        python -m pyhesaff.tests.test_patch_orientation
+        python -m pyhesaff.tests.test_patch_orientation --allexamples
+        python -m pyhesaff.tests.test_patch_orientation --allexamples --noface --nosrc
+    """
+    import multiprocessing
+    multiprocessing.freeze_support()  # for win32
+    import utool as ut  # NOQA
+    ut.doctest_funcs()

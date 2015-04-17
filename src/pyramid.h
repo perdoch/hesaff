@@ -76,6 +76,7 @@ protected:
     void detectOctaveKeypoints(const Mat &firstLevel, float pixelDistance, Mat &nextOctaveFirstLevel);
     void localizeKeypoint(int r, int c, float curScale, float pixelDistance);
     void findLevelKeypoints(float curScale, float pixelDistance);
+    void findDenseLevelKeypoints(float curScale, float pixelDistance); // hacked in
     Mat hessianResponse(const Mat &inputImage, float norm);
 
 private:

@@ -3,11 +3,10 @@ from __future__ import absolute_import, division, print_function
 #----------------
 # Test Functions
 #----------------
-import pyhestest
 from six.moves import zip, range
-import utool
 from plottool import draw_func2 as df2
 from plottool.viz_keypoints import show_keypoints
+import utool as ut
 import matplotlib as mpl
 import numpy as np
 import vtool.linalg as ltool
@@ -42,7 +41,7 @@ def draw_expanded_scales(imgL, sel_kpts, exkpts, exdesc_):
             pnum = (nRows + nPreRows, nCols, px + nPreCols)
             draw_keypoint_patch(imgL, kp, sift, warped=True, fnum=fnum, pnum=pnum)
             px += 1
-    df2.draw()
+    #df2.draw()
 
     print('nRows = %r' % nRows)
     print('nCols = %r' % nCols)
@@ -63,7 +62,7 @@ def in_depth_ellipse(kp):
     def _plotpts(data, px, color=df2.BLUE, label='', marker='.'):
         #df2.figure(9003, docla=True, pnum=(1, 1, px))
         df2.plot2(data.T[0], data.T[1], marker, '', color=color, label=label)
-        df2.update()
+        #df2.update()
 
     def _plotarrow(x, y, dx, dy, color=df2.BLUE, label=''):
         ax = df2.gca()
@@ -72,7 +71,7 @@ def in_depth_ellipse(kp):
         arrow.set_edgecolor(color)
         arrow.set_facecolor(color)
         ax.add_patch(arrow)
-        df2.update()
+        #df2.update()
 
     #-----------------------
     # INPUT
@@ -96,15 +95,15 @@ def in_depth_ellipse(kp):
     Z = (V.T).dot(V)
 
     print('invV is a transform from points on a unit-circle to the ellipse')
-    utool.horiz_print('invV = ', invV)
+    ut.horiz_print('invV = ', invV)
     print('--------------------------------')
     print('V is a transformation from points on the ellipse to a unit circle')
-    utool.horiz_print('V = ', V)
+    ut.horiz_print('V = ', V)
     print('--------------------------------')
     print('An ellipse is a special case of a conic. For any ellipse:')
     print('Points on the ellipse satisfy (x_ - x_0).T.dot(Z).dot(x_ - x_0) = 1')
     print('where Z = (V.T).dot(V)')
-    utool.horiz_print('Z = ', Z)
+    ut.horiz_print('Z = ', Z)
 
     # Define points on a unit circle
     nSamples = 12
@@ -120,14 +119,14 @@ def in_depth_ellipse(kp):
     try:
         # HELP: The phase is off here. in 3x3 version I'm not sure why
         #assert all([almost_eq(1, check) for check in checks1])
-        is_almost_eq_pos1 = [utool.almost_eq(1, check) for check in checks]
-        is_almost_eq_neg1 = [utool.almost_eq(-1, check) for check in checks]
+        is_almost_eq_pos1 = [ut.almost_eq(1, check) for check in checks]
+        is_almost_eq_neg1 = [ut.almost_eq(-1, check) for check in checks]
         assert all(is_almost_eq_pos1)
     except AssertionError as ex:
         print('circle pts = %r ' % cicrle_pts)
         print(ex)
         print(checks)
-        print([utool.almost_eq(-1, check, 1E-9) for check in checks])
+        print([ut.almost_eq(-1, check, 1E-9) for check in checks])
         raise
     else:
         #assert all([abs(1 - check) < 1E-11 for check in checks2])
@@ -159,14 +158,14 @@ def in_depth_ellipse(kp):
     con = np.array((('    A', 'B / 2', 'D / 2'),
                     ('B / 2', '    C', 'E / 2'),
                     ('D / 2', 'E / 2', '    F')))
-    utool.horiz_print('A matrix A_Q = ', con)
+    ut.horiz_print('A matrix A_Q = ', con)
 
     # A_Q is our conic section (aka ellipse matrix)
     A_Q = np.array(((    A, B / 2, D / 2),
                     (B / 2,     C, E / 2),
                     (D / 2, E / 2,     F)))
 
-    utool.horiz_print('A_Q = ', A_Q)
+    ut.horiz_print('A_Q = ', A_Q)
 
     #-----------------------
     # DEGENERATE CONICS
@@ -178,7 +177,7 @@ def in_depth_ellipse(kp):
     assert np.linalg.det(A_Q) != 0, 'degenerate conic'
     A_33 = np.array(((    A, B / 2),
                      (B / 2,     C)))
-    utool.horiz_print('A_33 = ', A_33)
+    ut.horiz_print('A_33 = ', A_33)
 
     #-----------------------
     # CONIC CLASSIFICATION
@@ -204,8 +203,8 @@ def in_depth_ellipse(kp):
     # shits and giggles
     x_center = (B * E - (2 * C * D)) / (4 * A * C - B ** 2)
     y_center = (D * B - (2 * A * E)) / (4 * A * C - B ** 2)
-    utool.horiz_print('x_center = ', x_center)
-    utool.horiz_print('y_center = ', y_center)
+    ut.horiz_print('x_center = ', x_center)
+    ut.horiz_print('y_center = ', y_center)
 
     #-----------------------
     # MAJOR AND MINOR AXES
@@ -237,8 +236,8 @@ def in_depth_ellipse(kp):
     print('theta = ' + str(theta[0] / TAU) + ' * 2pi')
     # The warped eigenvects should have the same magintude
     # As the axis lengths
-    assert utool.almost_eq(a, major.dot(ltool.rotation_mat2x2(theta))[0])
-    assert utool.almost_eq(b, minor.dot(ltool.rotation_mat2x2(theta))[1])
+    assert ut.almost_eq(a, major.dot(ltool.rotation_mat2x2(theta))[0])
+    assert ut.almost_eq(b, minor.dot(ltool.rotation_mat2x2(theta))[1])
     try:
         # HACK
         if len(theta) == 1:
@@ -266,7 +265,7 @@ def in_depth_ellipse(kp):
     # Eccentricity is a little easier in axis aligned coordinates
     # Make sure they aggree
     ecc2 = np.sqrt(1 - (b ** 2) / (a ** 2))
-    assert utool.almost_eq(ecc, ecc2)
+    assert ut.almost_eq(ecc, ecc2)
 
     #-----------------------
     # APPROXIMATE UNIFORM SAMPLING
@@ -438,23 +437,48 @@ def in_depth_ellipse(kp):
     #assert (a * (x ** 2)) + (b * (x * y)) + (c * (y ** 2)) + (d * x) + (e * y) + (f) == 0
 
 
-if __name__ == '__main__':
-    """
-    python pyhesaff/tests/test_ellipse.py
+def test_ellipse_main():
+    r"""
+    CommandLine:
+        python -m pyhesaff.tests.test_ellipse --test-test_ellipse_main
+        python -m pyhesaff.tests.test_ellipse --test-test_ellipse_main --show
+
+    Example:
+        >>> # ENABLE_DOCTEST
+        >>> from pyhesaff.tests.test_ellipse import *  # NOQA
+        >>> # build test data
+        >>> # execute function
+        >>> result = test_ellipse_main()
+        >>> # verify results
+        >>> print(result)
     """
     print('__main__ = test_ellipse.py')
     np.set_printoptions(threshold=5000, linewidth=5000, precision=3)
-
+    import pyhesaff.tests.pyhestest as pyhestest
     test_data = pyhestest.load_test_data(short=True)
     kpts = test_data['kpts']
     kp = kpts[0]
     #kp = np.array([0, 0, 10, 10, 10, 0])
     print('Testing kp=%r' % (kp,))
     test_locals = in_depth_ellipse(kp)
-    exec(utool.execstr_dict(test_locals, 'test_locals'))
+    exec(ut.execstr_dict(test_locals, 'test_locals'))
     #if '--cmd' in sys.argv:
     #exec(helpers.execstr_dict(adaptive_locals, 'adaptive_locals'))
     #in_depth_locals = adaptive_locals['in_depth_locals']
     #exec(helpers.execstr_dict(in_depth_locals, 'in_depth_locals'))
     #exec(df2.present(override1=True))
-    exec(df2.present())
+    if ut.show_was_requested():
+        exec(df2.present())
+
+
+if __name__ == '__main__':
+    """
+    CommandLine:
+        python -m pyhesaff.tests.test_ellipse
+        python -m pyhesaff.tests.test_ellipse --allexamples
+        python -m pyhesaff.tests.test_ellipse --allexamples --noface --nosrc
+    """
+    import multiprocessing
+    multiprocessing.freeze_support()  # for win32
+    import utool as ut  # NOQA
+    ut.doctest_funcs()

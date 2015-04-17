@@ -2,8 +2,7 @@
 from __future__ import absolute_import, division, print_function
 import numpy as np
 # Hesaff
-from pyhesaff.tests import pyhestest
-import pyhesaff
+import utool as ut
 # Tools
 import utool
 from plottool import draw_func2 as df2
@@ -77,10 +76,11 @@ def TEST_keypoint(imgBGR, img_fpath, kpts, desc, sel, fnum=1, figtitle=''):
     gradx, grady = ptool.patch_gradient(wpatch)
     gmag         = ptool.patch_mag(gradx, grady)
     gori         = ptool.patch_ori(gradx, grady)
+    gori_weights = ptool.gaussian_weight_patch(gmag)
 
     # Get orientation histogram
     print('[rotinvar] 2) Get orientation histogram')
-    hist, centers = ptool.get_orientation_histogram(gori)
+    hist, centers = ptool.get_orientation_histogram(gori, gori_weights)
 
     #----------------------#
     # --- Draw Results --- #
@@ -102,13 +102,27 @@ def TEST_keypoint(imgBGR, img_fpath, kpts, desc, sel, fnum=1, figtitle=''):
     return locals()
 
 
-if __name__ == '__main__':
-    # Read data
-    """
+#if __name__ == '__main__':
+
+def test_cpp_rotinvar_main():
+    r"""
     CommandLine:
-        python pyhesaff/tests/test_cpp_rotation_invariance.py
-        python -m pyhesaff.tests.test_cpp_rotation_invariance
+        python -m pyhesaff.tests.test_cpp_rotation_invariance --test-test_cpp_rotinvar_main
+        python -m pyhesaff.tests.test_cpp_rotation_invariance --test-test_cpp_rotinvar_main --show
+
+
+    Example:
+        >>> # ENABLE_DOCTEST
+        >>> from pyhesaff.tests.test_cpp_rotation_invariance import *  # NOQA
+        >>> # build test data
+        >>> # execute function
+        >>> result = test_cpp_rotinvar_main()
+        >>> # verify results
+        >>> print(result)
     """
+    from pyhesaff.tests import pyhestest
+    import pyhesaff
+    # Read data
     print('[rotinvar] loading test data')
     img_fpath = pyhestest.get_test_image()
     [kpts1], [desc1] = pyhesaff.detect_kpts_list([img_fpath], rotation_invariance=False)
@@ -124,8 +138,11 @@ if __name__ == '__main__':
     print('\n----\n'.join([str(k1) + '\n' + str(k2) for k1, k2 in zip(kpts1[0:10], kpts2[0:10])]))
 
     n = 4
-    clip = min(len(kpts1), n)
-    fxs = np.array(pyhestest.spaced_elements2(kpts2, n).tolist())
+    #clip = min(len(kpts1), n)
+
+    # HACK FIXME
+    fxs = np.array(pyhestest.spaced_elements2(kpts2, n).tolist()[0:3])
+
     print('fxs=%r' % fxs)
     kpts1 = kpts1[fxs]
     kpts2 = kpts2[fxs]
@@ -145,7 +162,8 @@ if __name__ == '__main__':
     #exec(utool.execstr_dict(f1_loc, 'f1_loc'))  # NOQA
 
     #pinteract.interact_keypoints(imgBGR, kpts2, desc, arrow=True, rect=True)
-    exec(df2.present())
+    if ut.show_was_requested():
+        exec(df2.present())
 
 
 #if __name__ == '__main__':
@@ -160,3 +178,16 @@ if __name__ == '__main__':
 #    multiprocessing.freeze_support()  # for win32
 #    import utool as ut  # NOQA
 #    ut.doctest_funcs()
+
+
+if __name__ == '__main__':
+    """
+    CommandLine:
+        python -m pyhesaff.tests.test_cpp_rotation_invariance
+        python -m pyhesaff.tests.test_cpp_rotation_invariance --allexamples
+        python -m pyhesaff.tests.test_cpp_rotation_invariance --allexamples --noface --nosrc
+    """
+    import multiprocessing
+    multiprocessing.freeze_support()  # for win32
+    import utool as ut  # NOQA
+    ut.doctest_funcs()

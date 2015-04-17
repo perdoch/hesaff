@@ -69,6 +69,9 @@ bool isMax(float val, const Mat &pix, int row, int col)
 
 bool isMin(float val, const Mat &pix, int row, int col)
 {
+    /*
+     Checks to see if pixel is a minima in the 8 connected region
+     */
     for(int r = row - 1; r <= row + 1; r++)
     {
         const float *row = pix.ptr<float>(r);
@@ -248,46 +251,30 @@ void HessianDetector::localizeKeypoint(int r, int c, float curScale, float pixel
         if(b[0] >  MAX_SUBPIXEL_SHIFT)
         {
             if(c < cols - POINT_SAFETY_BORDER)
-            {
-                nc++;
-            }
+            { nc++; }
             else
-            {
-                return;
-            }
+            { return; }
         }
         if(b[1] >  MAX_SUBPIXEL_SHIFT)
         {
             if(r < rows - POINT_SAFETY_BORDER)
-            {
-                nr++;
-            }
+            { nr++; }
             else
-            {
-                return;
-            }
+            { return; }
         }
         if(b[0] < -MAX_SUBPIXEL_SHIFT)
         {
             if(c > POINT_SAFETY_BORDER)
-            {
-                nc--;
-            }
+            { nc--; }
             else
-            {
-                return;
-            }
+            { return; }
         }
         if(b[1] < -MAX_SUBPIXEL_SHIFT)
         {
             if(r > POINT_SAFETY_BORDER)
-            {
-                nr--;
-            }
+            { nr--; }
             else
-            {
-                return;
-            }
+            { return; }
         }
         if(nr == r && nc == c)
         {
@@ -310,16 +297,46 @@ void HessianDetector::localizeKeypoint(int r, int c, float curScale, float pixel
     // set point type according to final location
     int type = getHessianPointType(blur.ptr<float>(r) + c, val);
     // point is now scale and translation invariant, add it...
-    if(hessianKeypointCallback)
-        hessianKeypointCallback->onHessianKeypointDetected(
-                this->prevBlur, 
-                pixelDistance * (c + b[0]), 
-                pixelDistance * (r + b[1]), 
-                pixelDistance * scale, 
-                pixelDistance, 
-                type, val); // Call Step 3. in hessaff.cpp
-    // Effectively calls:
-    // findAffineShape(blur, x, y, s, pixelDistance, type, response);
+    if(this->hessianKeypointCallback)
+    {
+        // Define subpixel and subscale location
+        const float x = pixelDistance * (c + b[0]);
+        const float y = pixelDistance * (r + b[1]);
+        const float s = pixelDistance * scale;
+        // Callback is connected to:
+        // findAffineShape(blur, x, y, s, pixelDistance, type, response);
+        // Call Step 3. in hessaff.cpp
+        this->hessianKeypointCallback->onHessianKeypointDetected(
+                this->prevBlur, x, y, s, pixelDistance, type, val); 
+    }
+}
+
+
+void HessianDetector::findDenseLevelKeypoints(float curScale, float pixelDistance)
+{
+    // HACKED IN FUNCTION
+    const bool DENSE_KEYPOINTS = false;
+    const int rows = this->cur.rows;
+    const int cols = this->cur.cols;
+    const float scale = curScale * pow(2.0f, 1.0f / par.numberOfScales);
+    int type = -1;
+    float val = 0;
+    for(int r = par.border; r < (rows - par.border); r++)
+    {
+        for(int c = par.border; c < (cols - par.border); c++)
+        {
+            // HACK: this is not a hessian keypoint, these are
+            // determenistic computed grid keypoints, but we are going to use this
+            // callback to hack in dense keypoint generation
+            const float x = pixelDistance * c;
+            const float y = pixelDistance * r;
+            const float s = pixelDistance * scale;
+            // Callback is connected to:
+            // findAffineShape(blur, x, y, s, pixelDistance, type, response);
+            this->hessianKeypointCallback->onHessianKeypointDetected(
+                    this->prevBlur, x, y, s, pixelDistance, type, val); // Call Step 3. in hessaff.cpp
+        }
+    }
 }
 
 void HessianDetector::findLevelKeypoints(float curScale, float pixelDistance)
@@ -341,11 +358,18 @@ void HessianDetector::findLevelKeypoints(float curScale, float pixelDistance)
             //If current val is an extreme point in (x,y,sigma)
             // either positive -> local max. or negative -> local min.
             const bool pass_pos_thresh = (val > this->positiveThreshold &&
-                (isMax(val, this->cur, r, c) && isMax(val, this->low, r, c) && isMax(val, this->high, r, c)));
+                (isMax(val, this->cur, r, c) && 
+                 isMax(val, this->low, r, c) && 
+                 isMax(val, this->high, r, c))
+                );
             const bool pass_neg_thresh = (val < this->negativeThreshold && 
-                (isMin(val, this->cur, r, c) && isMin(val, this->low, r, c) && isMin(val, this->high, r, c)));
+                (isMin(val, this->cur, r, c) && 
+                 isMin(val, this->low, r, c) && 
+                 isMin(val, this->high, r, c))
+                );
             if(pass_pos_thresh || pass_neg_thresh)
             {
+                // Localize extreme point to subpixel and subscale accuracy
                 this->localizeKeypoint(r, c, curScale, pixelDistance);    // Call Step 2
             }
         }
@@ -362,8 +386,7 @@ void HessianDetector::detectOctaveKeypoints(const Mat &firstLevel, float pixelDi
     float sigmaStep = pow(2.0f, 1.0f / (float) par.numberOfScales);
     float curSigma = par.initialSigma;
     this->blur = firstLevel;
-    // Calculate hessian Responce at this level
-    //print("  hessianResponce lvl: 0");
+    // Calculate hessian responce at the octave's base level
     this->cur = hessianResponse(this->blur, curSigma * curSigma);
     int numLevels = 1;
 
@@ -371,11 +394,9 @@ void HessianDetector::detectOctaveKeypoints(const Mat &firstLevel, float pixelDi
     {
         // compute the increase necessary for the next level and compute the next level
         float sigma = curSigma * sqrt(sigmaStep * sigmaStep - 1.0f);
-        // DO BLURING
         Mat nextBlur = gaussianBlur(this->blur, sigma); //Helper function
         sigma = curSigma * sigmaStep; // the next level sigma
-        // compute response for current level
-        //print("  hessianResponce lvl: " << i);
+        // compute hessian response for current (scale) level
         this->high = this->hessianResponse(nextBlur, sigma * sigma); //Call Step 1.1
         numLevels++;
         // if we have three consecutive responses
