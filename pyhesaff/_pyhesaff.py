@@ -211,6 +211,26 @@ if __DEBUG__:
 #============================
 
 
+def get_cpp_version():
+    r"""
+    Returns:
+        int: cpp_version
+
+    CommandLine:
+        python -m pyhesaff._pyhesaff --test-get_cpp_version
+
+    Example:
+        >>> # ENABLE_DOCTEST
+        >>> from pyhesaff._pyhesaff import *  # NOQA
+        >>> cpp_version = get_cpp_version()
+        >>> result = str(cpp_version)
+        >>> print(result)
+        >>> ut.assert_eq(cpp_version, 2, 'cpp version mimatch')
+    """
+    cpp_version = HESAFF_CLIB.get_cpp_version()
+    return cpp_version
+
+
 def _alloc_vecs(nKpts):
     vecs = np.empty((nKpts, DESC_DIM), vecs_dtype)
     return vecs
@@ -557,6 +577,7 @@ def detect_kpts(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kwa
         >>> #pt.figure(fnum=1, doclf=True, docla=True)
         >>> imgBGR = vt.imread(img_fpath)
         >>> #pt.imshow(imgBGR)
+        >>> ut.quit_if_noshow()
         >>> #pt.draw_kpts2(kpts,
         >>> pt.interact_keypoints.ishow_keypoints(imgBGR, kpts, vecs, ori=True, ell_alpha=.4, color='distinct')
         >>> pt.show_if_requested()

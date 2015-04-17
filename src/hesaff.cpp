@@ -881,7 +881,7 @@ PYHESAFF int detect(AffineHessianDetector* detector)
 
 PYHESAFF int get_cpp_version()
 {
-    return 1;
+    return 2;
 }
 
 
