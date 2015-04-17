@@ -29,6 +29,11 @@ struct PyramidParams
     // number of pixels ignored at the border of image
     int  border;
     int  maxPyramidLevels;
+
+    // DENSE DETECTION PARAMS
+    bool use_dense;
+    int dense_stride;
+
     PyramidParams()
     {
         numberOfScales = 3;
@@ -37,6 +42,9 @@ struct PyramidParams
         edgeEigenValueRatio = 10.0f;
         border = 5;
         maxPyramidLevels = -1;
+
+        use_dense = false;
+        dense_stride = 32;
     }
 };
 
@@ -73,7 +81,8 @@ public:
     void detectPyramidKeypoints(const Mat &image);
 
 protected:
-    void detectOctaveKeypoints(const Mat &firstLevel, float pixelDistance, Mat &nextOctaveFirstLevel);
+    void detectOctaveHessianKeypoints(const Mat &firstLevel, float pixelDistance, Mat &nextOctaveFirstLevel);
+    void detectOctaveDenseKeypoints(const Mat &firstLevel, float pixelDistance, Mat &nextOctaveFirstLevel);
     void localizeKeypoint(int r, int c, float curScale, float pixelDistance);
     void findLevelKeypoints(float curScale, float pixelDistance);
     void findDenseLevelKeypoints(float curScale, float pixelDistance); // hacked in

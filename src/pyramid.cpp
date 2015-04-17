@@ -92,7 +92,7 @@ Mat HessianDetector::hessianResponse(const Mat &inputImage, float norm)
     
     Step 1.1: Called from: main
     void HessianDetector::detectPyramidKeypoints(const Mat &image)
-    void HessianDetector::detectOctaveKeypoints(const Mat &firstLevel, float pixelDistance, 
+    void HessianDetector::detectOctaveHessianKeypoints(const Mat &firstLevel, float pixelDistance, 
                                                 Mat &nextOctaveFirstLevel)
     RETURNS output_image
     */
@@ -176,7 +176,7 @@ void HessianDetector::localizeKeypoint(int r, int c, float curScale, float pixel
     Step 2:
     main
     0: void HessianDetector::detectPyramidKeypoints(const Mat &image)
-    1: void HessianDetector::detectOctaveKeypoints(const Mat &firstLevel, float pixelDistance, 
+    1: void HessianDetector::detectOctaveHessianKeypoints(const Mat &firstLevel, float pixelDistance, 
                                                    Mat &nextOctaveFirstLevel)
     1.2: void HessianDetector::findLevelKeypoints(float curScale, float pixelDistance)
     */
@@ -315,15 +315,18 @@ void HessianDetector::localizeKeypoint(int r, int c, float curScale, float pixel
 void HessianDetector::findDenseLevelKeypoints(float curScale, float pixelDistance)
 {
     // HACKED IN FUNCTION
-    const bool DENSE_KEYPOINTS = false;
-    const int rows = this->cur.rows;
-    const int cols = this->cur.cols;
+    const int rows = this->octaveMap.rows;
+    const int cols = this->octaveMap.cols;
     const float scale = curScale * pow(2.0f, 1.0f / par.numberOfScales);
     int type = -1;
     float val = 0;
-    for(int r = par.border; r < (rows - par.border); r++)
+
+    const int dense_stride = par.dense_stride;
+
+    //std::cout << "here" << std::endl;
+    for(int r = par.border; r < (rows - par.border); r+=dense_stride)
     {
-        for(int c = par.border; c < (cols - par.border); c++)
+        for(int c = par.border; c < (cols - par.border); c+=dense_stride)
         {
             // HACK: this is not a hessian keypoint, these are
             // determenistic computed grid keypoints, but we are going to use this
@@ -339,12 +342,49 @@ void HessianDetector::findDenseLevelKeypoints(float curScale, float pixelDistanc
     }
 }
 
+void HessianDetector::detectOctaveDenseKeypoints(const Mat &firstLevel, float pixelDistance, Mat &nextOctaveFirstLevel)
+{
+    //CV_8UC1 means an 8-bit unsigned single-channel matrix
+    this->octaveMap = Mat::zeros(firstLevel.rows, firstLevel.cols, CV_8UC1);
+    float sigmaStep = pow(2.0f, 1.0f / (float) par.numberOfScales);
+    float curSigma = par.initialSigma;
+    this->blur = firstLevel;
+    int numLevels = 1;
+
+    for(int i = 1; i < par.numberOfScales + 2; i++)
+    {
+        // compute the increase necessary for the next level and compute the next level
+        float sigma = curSigma * sqrt(sigmaStep * sigmaStep - 1.0f);
+        Mat nextBlur = gaussianBlur(this->blur, sigma); //Helper function
+        sigma = curSigma * sigmaStep; // the next level sigma
+        numLevels++;
+        // if we have three consecutive responses
+        if(numLevels == 3)
+        {
+            // find keypoints in this part of octave for curLevel
+            this->findDenseLevelKeypoints(curSigma, pixelDistance); //Call Step 1.2
+            numLevels--;
+        }
+        if(i == par.numberOfScales)
+        {
+            // downsample the right level for the next octave
+            nextOctaveFirstLevel = halfImage(nextBlur);    // Helper Function
+        }
+        this->prevBlur = this->blur;
+        this->blur = nextBlur;
+        // shift to the next response
+        this->low = this->cur;
+        this->cur = this->high;
+        curSigma *= sigmaStep;
+    }
+}
+
 void HessianDetector::findLevelKeypoints(float curScale, float pixelDistance)
 {
     /*
     Step 1.2: Called from main
     0: void HessianDetector::detectPyramidKeypoints(const Mat &image)
-    1: void HessianDetector::detectOctaveKeypoints(const Mat &firstLevel, float pixelDistance,
+    1: void HessianDetector::detectOctaveHessianKeypoints(const Mat &firstLevel, float pixelDistance,
                                                     Mat &nextOctaveFirstLevel)
     */
     assert(par.border >= 2);
@@ -379,7 +419,7 @@ void HessianDetector::findLevelKeypoints(float curScale, float pixelDistance)
 //Step1: Called from:
 // main
 // void HessianDetector::detectPyramidKeypoints(const Mat &image)
-void HessianDetector::detectOctaveKeypoints(const Mat &firstLevel, float pixelDistance, Mat &nextOctaveFirstLevel)
+void HessianDetector::detectOctaveHessianKeypoints(const Mat &firstLevel, float pixelDistance, Mat &nextOctaveFirstLevel)
 {
     //CV_8UC1 means an 8-bit unsigned single-channel matrix
     this->octaveMap = Mat::zeros(firstLevel.rows, firstLevel.cols, CV_8UC1);
@@ -447,10 +487,19 @@ void HessianDetector::detectPyramidKeypoints(const Mat &image)
     int minSize = 2 * par.border + 2;
     int num_blurs = 0;
     int current_pyramid_level = 0;
+    const bool use_dense = par.use_dense;
     while(firstLevel.rows > minSize && firstLevel.cols > minSize)
     {
         Mat nextOctaveFirstLevel; //Outvar
-        detectOctaveKeypoints(firstLevel, pixelDistance, nextOctaveFirstLevel); //Call Step 1
+        if (use_dense)
+        {
+            // # hacked in step
+            detectOctaveDenseKeypoints(firstLevel, pixelDistance, nextOctaveFirstLevel);
+        }
+        else
+        {
+            detectOctaveHessianKeypoints(firstLevel, pixelDistance, nextOctaveFirstLevel); //Call Step 1
+        }
         pixelDistance *= 2.0; // Effectively increase sigma by varying the pixel step size
         // Overwrite firstlevel with the next level blur
         firstLevel = nextOctaveFirstLevel; // Overwrite firstLevel in place

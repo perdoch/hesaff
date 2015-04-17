@@ -334,7 +334,7 @@ public:
     // * Callback for when an affine shape is found.
     // * This is the stack traceback for this function:
     // * {detectPyramidKeypoints ->
-    // *  detectOctaveKeypoints ->
+    // *  detectOctaveHessianKeypoints ->
     // *  localizeKeypoint ->
     // *  findAffineShape -> onAffineShapeFound}
     // * This function:
@@ -923,14 +923,16 @@ PYHESAFF int get_desc_dim()
  bool rotation_invariance,\
  bool augment_orientation,\
  float ori_maxima_thresh,\
- bool affine_invariance\
+ bool affine_invariance,\
+ bool use_dense,\
+ int dense_stride\
 
 #define __HESAFF_PARAM_CALL_ARGS__ \
 numberOfScales, threshold, edgeEigenValueRatio, border, maxPyramidLevels, maxIterations,\
 convergenceThreshold, smmWindowSize, mrSize, spatialBins, orientationBins,\
 maxBinValue, initialSigma, patchSize, scale_min, scale_max,\
 rotation_invariance, augment_orientation, ori_maxima_thresh,\
-affine_invariance
+affine_invariance, use_dense, dense_stride
 
 // new hessian affine detector
 PYHESAFF AffineHessianDetector* new_hesaff_from_params(char* img_fpath, __HESAFF_PARAM_SIGNATURE_ARGS__)
@@ -984,6 +986,10 @@ PYHESAFF AffineHessianDetector* new_hesaff_from_params(char* img_fpath, __HESAFF
     hesParams.augment_orientation  = augment_orientation;
     hesParams.ori_maxima_thresh    = ori_maxima_thresh;
     hesParams.affine_invariance    = affine_invariance;
+    //
+    pyrParams.use_dense                 = use_dense;
+    pyrParams.dense_stride              = dense_stride;
+
     // Create detector
     AffineHessianDetector* detector = new AffineHessianDetector(image, pyrParams, affShapeParams, siftParams, hesParams);
     detector->DBG_params();
@@ -1019,6 +1025,9 @@ PYHESAFF AffineHessianDetector* new_hesaff(char* img_fpath)
     bool augment_orientation = false;
     float ori_maxima_thresh = .8;
     bool affine_invariance = true;
+    //
+    bool  use_dense = false;
+    int   dense_stride = 32;
 
     AffineHessianDetector* detector = new_hesaff_from_params(img_fpath, __HESAFF_PARAM_CALL_ARGS__);
     return detector;

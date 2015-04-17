@@ -105,6 +105,9 @@ HESAFF_TYPED_PARAMS = [
     (bool_t,  'augment_orientation', False),
     (float_t, 'ori_maxima_thresh', .8),
     (bool_t,  'affine_invariance', True),
+    #
+    (bool_t,  'use_dense', False),
+    (int_t,   'dense_stride', 32),
 ]
 
 HESAFF_PARAM_DICT = OrderedDict([(key, val) for (type_, key, val) in HESAFF_TYPED_PARAMS])
@@ -523,6 +526,13 @@ def detect_kpts(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kwa
         python -m pyhesaff._pyhesaff --test-detect_kpts --show --fname easy1.png --affine_invariance --verbose --scale-max=30 --darken .5
 
 
+        # DENSE KEYPOINTS
+        python -m pyhesaff._pyhesaff --test-detect_kpts --show --fname lena.png --no-affine-invariance --numberOfScales=1 --maxPyramidLevels=1 --use_dense --dense_stride=64
+        python -m pyhesaff._pyhesaff --test-detect_kpts --show --fname lena.png --no-affine-invariance --numberOfScales=1 --maxPyramidLevels=1 --use_dense --dense_stride=64 --rotation-invariance
+        python -m pyhesaff._pyhesaff --test-detect_kpts --show --fname lena.png --affine-invariance --numberOfScales=1 --maxPyramidLevels=1 --use_dense --dense_stride=64
+        python -m pyhesaff._pyhesaff --test-detect_kpts --show --fname lena.png --no-affine-invariance --numberOfScales=3 --maxPyramidLevels=2 --use_dense --dense_stride=64
+
+
 
     Example0:
         >>> # ENABLE_DOCTEST
@@ -542,11 +552,13 @@ def detect_kpts(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kwa
         >>> #print(kpts_list)
         >>> #print(vecs_list)
         >>> kpts = kpts_list
+        >>> vecs = vecs_list
         >>> # Show keypoints
-        >>> pt.figure(fnum=1, doclf=True, docla=True)
+        >>> #pt.figure(fnum=1, doclf=True, docla=True)
         >>> imgBGR = vt.imread(img_fpath)
-        >>> pt.imshow(imgBGR)
-        >>> pt.draw_kpts2(kpts, ori=True, ell_alpha=.4, color='distinct')
+        >>> #pt.imshow(imgBGR)
+        >>> #pt.draw_kpts2(kpts,
+        >>> pt.interact_keypoints.ishow_keypoints(imgBGR, kpts, vecs, ori=True, ell_alpha=.4, color='distinct')
         >>> pt.show_if_requested()
     """
     #Valid keyword arguments are: + str(HESAFF_PARAM_DICT.keys())

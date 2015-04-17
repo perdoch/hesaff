@@ -38,7 +38,7 @@ bool AffineShape::findAffineShape(const Mat &blur, float x, float y, float s, fl
 
     Step 3: main
     0: void HessianDetector::detectPyramidKeypoints(const Mat &image)
-    1: void HessianDetector::detectOctaveKeypoints(const Mat &firstLevel, float pixelDistance,
+    1: void HessianDetector::detectOctaveHessianKeypoints(const Mat &firstLevel, float pixelDistance,
                                                     Mat &nextOctaveFirstLevel)
     1.2: void HessianDetector::findLevelKeypoints(float curScale, float pixelDistance)
       2: void HessianDetector::localizeKeypoint(int r, int c, float curScale, float pixelDistance)
