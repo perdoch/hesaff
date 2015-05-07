@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function
 from utool import util_cplat
 from utool import util_setup
 import utool as ut
+from os.path import dirname
 from setuptools import setup
 
 
@@ -41,7 +42,7 @@ if __name__ == '__main__':
         author_email='erotemic@gmail.com',
         install_requires=INSTALL_REQUIRES,
         package_data={'build': util_cplat.get_dynamic_lib_globstrs()},
-        build_command=ut.std_build_command,
+        build_command=lambda: ut.std_build_command(dirname(__file__)),
         setup_fpath=__file__,
     )
     kwargs = util_setup.setuptools_setup(**setup_dict)
