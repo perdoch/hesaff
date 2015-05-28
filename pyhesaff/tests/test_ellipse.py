@@ -48,6 +48,28 @@ def draw_expanded_scales(imgL, sel_kpts, exkpts, exdesc_):
 
 
 def in_depth_ellipse(kp):
+    """
+    Makes sure that I understand how the ellipse is created form a keypoint
+    representation. Walks through the steps I took in coming to an
+    understanding.
+
+    CommandLine:
+        python -m pyhesaff.tests.test_ellipse --test-in_depth_ellipse --show --num-samples=12
+
+    Example:
+        >>> from pyhesaff.tests.test_ellipse import *  # NOQA
+        >>> import pyhesaff.tests.pyhestest as pyhestest
+        >>> test_data = pyhestest.load_test_data(short=True)
+        >>> kpts = test_data['kpts']
+        >>> kp = kpts[0]
+        >>> #kp = np.array([0, 0, 10, 10, 10, 0])
+        >>> print('Testing kp=%r' % (kp,))
+        >>> test_locals = in_depth_ellipse(kp)
+        >>> ut.quit_if_noshow()
+        >>> ut.show_if_requested()
+    """
+    #nSamples = 12
+    nSamples = ut.get_argval('--num-samples', type_=int, default=12)
     kp = np.array(kp, dtype=np.float64)
     print('kp = %r' % kp)
     #-----------------------
@@ -59,9 +81,9 @@ def in_depth_ellipse(kp):
     ax = df2.gca()
     ax.invert_yaxis()
 
-    def _plotpts(data, px, color=df2.BLUE, label='', marker='.'):
+    def _plotpts(data, px, color=df2.BLUE, label='', marker='.', **kwargs):
         #df2.figure(9003, docla=True, pnum=(1, 1, px))
-        df2.plot2(data.T[0], data.T[1], marker, '', color=color, label=label)
+        df2.plot2(data.T[0], data.T[1], marker, '', color=color, label=label, **kwargs)
         #df2.update()
 
     def _plotarrow(x, y, dx, dy, color=df2.BLUE, label=''):
@@ -106,7 +128,6 @@ def in_depth_ellipse(kp):
     ut.horiz_print('Z = ', Z)
 
     # Define points on a unit circle
-    nSamples = 12
     theta_list = np.linspace(0, TAU, nSamples)
     cicrle_pts = np.array([(np.cos(t_), np.sin(t_), 1) for t_ in theta_list])
 
@@ -137,8 +158,9 @@ def in_depth_ellipse(kp):
     #=======================
     # All of this was from the Perdoch paper, now lets move into conic sections
     # We will use the notation from wikipedia
-    # http://en.wikipedia.org/wiki/Conic_section
-    # http://en.wikipedia.org/wiki/Matrix_representation_of_conic_sections
+    # References:
+    #     http://en.wikipedia.org/wiki/Conic_section
+    #     http://en.wikipedia.org/wiki/Matrix_representation_of_conic_sections
 
     #-----------------------
     # MATRIX REPRESENTATION
@@ -169,7 +191,8 @@ def in_depth_ellipse(kp):
 
     #-----------------------
     # DEGENERATE CONICS
-    #---http://individual.utoronto.ca/somody/quiz.html--------------------
+    # References:
+    #    http://individual.utoronto.ca/somody/quiz.html
     print('----------------------------------')
     print('As long as det(A_Q) != it is not degenerate.')
     print('If the conic is not degenerate, we can use the 2x2 minor: A_33')
@@ -275,6 +298,7 @@ def in_depth_ellipse(kp):
     print('Approximate uniform points an inscribed polygon bondary')
 
     #def next_xy(x, y, d):
+    #    # References:
     #    # http://gamedev.stackexchange.com/questions/1692/what-is-a-simple-algorithm-for-calculating-evenly-distributed-points-on-an-ellip
     #    num = (b ** 2) * (x ** 2)
     #    den = ((a ** 2) * ((a ** 2) - (x ** 2)))
@@ -404,7 +428,7 @@ def in_depth_ellipse(kp):
     #               ell_color=df2.DEEP_PINK, ell_alpha=1, arrow=True, rect=True)
 
     # Plot ellipse points
-    _plotpts(ellipse_pts1, 0, df2.PURPLE, label='invV.dot(cicrle_pts.T).T', marker='x-')
+    _plotpts(ellipse_pts1, 0, df2.LIGHT_BLUE, label='invV.dot(cicrle_pts.T).T', marker='o-')
 
     _plotarrow(x_center, y_center, dx1, -dy1, color=df2.GRAY, label='minor axis')
     _plotarrow(x_center, y_center, dx2, -dy2, color=df2.GRAY, label='major axis')
@@ -432,43 +456,69 @@ def in_depth_ellipse(kp):
     df2.legend()
     df2.dark_background(doubleit=3)
     df2.gca().invert_yaxis()
+
+    # Hack in another view
+    # It seems like the even points are not actually that even.
+    # there must be a bug
+
+    df2.figure(fnum=9003 + 1, docla=True, doclf=True, pnum=(1, 3, 1))
+    _plotpts(ellipse_pts1, 0, df2.LIGHT_BLUE, label='invV.dot(cicrle_pts.T).T', marker='o-', title='even')
+    df2.plt.gca().set_xlim(xmin, xmax)
+    df2.plt.gca().set_ylim(ymin, ymax)
+    df2.dark_background(doubleit=3)
+    df2.gca().invert_yaxis()
+    df2.figure(fnum=9003 + 1, pnum=(1, 3, 2))
+
+    _plotpts(approx_pts, 0, df2.YELLOW, label='approx points', marker='o-', title='approx')
+    df2.plt.gca().set_xlim(xmin, xmax)
+    df2.plt.gca().set_ylim(ymin, ymax)
+    df2.dark_background(doubleit=3)
+    df2.gca().invert_yaxis()
+
+    df2.figure(fnum=9003 + 1, pnum=(1, 3, 3))
+    _plotpts(uniform_ell_pts, 0, df2.RED, label='uniform points', marker='o-', title='uniform')
+    df2.plt.gca().set_xlim(xmin, xmax)
+    df2.plt.gca().set_ylim(ymin, ymax)
+    df2.dark_background(doubleit=3)
+    df2.gca().invert_yaxis()
+
     return locals()
     # Algebraic form of connic
     #assert (a * (x ** 2)) + (b * (x * y)) + (c * (y ** 2)) + (d * x) + (e * y) + (f) == 0
 
 
-def test_ellipse_main():
-    r"""
-    CommandLine:
-        python -m pyhesaff.tests.test_ellipse --test-test_ellipse_main
-        python -m pyhesaff.tests.test_ellipse --test-test_ellipse_main --show
+#def test_ellipse_main():
+#    r"""
+#    CommandLine:
+#        python -m pyhesaff.tests.test_ellipse --test-test_ellipse_main
+#        python -m pyhesaff.tests.test_ellipse --test-test_ellipse_main --show
 
-    Example:
-        >>> # ENABLE_DOCTEST
-        >>> from pyhesaff.tests.test_ellipse import *  # NOQA
-        >>> # build test data
-        >>> # execute function
-        >>> result = test_ellipse_main()
-        >>> # verify results
-        >>> print(result)
-    """
-    print('__main__ = test_ellipse.py')
-    np.set_printoptions(threshold=5000, linewidth=5000, precision=3)
-    import pyhesaff.tests.pyhestest as pyhestest
-    test_data = pyhestest.load_test_data(short=True)
-    kpts = test_data['kpts']
-    kp = kpts[0]
-    #kp = np.array([0, 0, 10, 10, 10, 0])
-    print('Testing kp=%r' % (kp,))
-    test_locals = in_depth_ellipse(kp)
-    exec(ut.execstr_dict(test_locals, 'test_locals'))
-    #if '--cmd' in sys.argv:
-    #exec(helpers.execstr_dict(adaptive_locals, 'adaptive_locals'))
-    #in_depth_locals = adaptive_locals['in_depth_locals']
-    #exec(helpers.execstr_dict(in_depth_locals, 'in_depth_locals'))
-    #exec(df2.present(override1=True))
-    if ut.show_was_requested():
-        exec(df2.present())
+#    Example:
+#        >>> # ENABLE_DOCTEST
+#        >>> from pyhesaff.tests.test_ellipse import *  # NOQA
+#        >>> # build test data
+#        >>> # execute function
+#        >>> result = test_ellipse_main()
+#        >>> # verify results
+#        >>> print(result)
+#    """
+#    print('__main__ = test_ellipse.py')
+#    np.set_printoptions(threshold=5000, linewidth=5000, precision=3)
+#    import pyhesaff.tests.pyhestest as pyhestest
+#    test_data = pyhestest.load_test_data(short=True)
+#    kpts = test_data['kpts']
+#    kp = kpts[0]
+#    #kp = np.array([0, 0, 10, 10, 10, 0])
+#    print('Testing kp=%r' % (kp,))
+#    test_locals = in_depth_ellipse(kp)
+#    exec(ut.execstr_dict(test_locals, 'test_locals'))
+#    #if '--cmd' in sys.argv:
+#    #exec(helpers.execstr_dict(adaptive_locals, 'adaptive_locals'))
+#    #in_depth_locals = adaptive_locals['in_depth_locals']
+#    #exec(helpers.execstr_dict(in_depth_locals, 'in_depth_locals'))
+#    #exec(df2.present(override1=True))
+#    if ut.show_was_requested():
+#        exec(df2.present())
 
 
 if __name__ == '__main__':
