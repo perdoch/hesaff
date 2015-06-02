@@ -57,7 +57,7 @@ bool AffineShape::findAffineShape(const Mat &blur, float x, float y, float s, fl
 
         // compute SMM on the warped patch
         float a = 0, b = 0, c = 0;
-        float *maskptr = mask.ptr<float>(0);
+        float *maskptr = this->mask.ptr<float>(0);
         float *pfx = fx.ptr<float>(0), *pfy = fy.ptr<float>(0);
 
         computeGradient(this->img, fx, fy); // Defined in helpers, fx and fy are outvars

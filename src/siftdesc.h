@@ -40,16 +40,7 @@ struct SIFTDescriptor
 
 public:
     // top level interface
-    SIFTDescriptor(const SIFTDescriptorParams &par) :
-        mask(par.patchSize, par.patchSize, CV_32FC1),
-        grad(par.patchSize, par.patchSize, CV_32FC1),
-        ori(par.patchSize, par.patchSize, CV_32FC1)
-    {
-        this->par = par;
-        this->vec.resize(par.spatialBins * par.spatialBins * par.orientationBins);
-        computeCircularGaussMask(this->mask);  // defined in helpers.cpp
-        this->precomputeBinsAndWeights();
-    }
+    SIFTDescriptor(const SIFTDescriptorParams &par); 
 
     void computeSiftDescriptor(cv::Mat &patch);
 

@@ -257,6 +257,7 @@ void computeCircularGaussMask(Mat &mask)
     float disq;
     float *mp = mask.ptr<float>(0);
     for(int i = 0; i < mask.rows; i++)
+    {
         for(int j = 0; j < mask.cols; j++)
         {
             // The mask is populated with Gaussian values
@@ -264,6 +265,7 @@ void computeCircularGaussMask(Mat &mask)
             disq = float((i - halfSize) * (i - halfSize) + (j - halfSize) * (j - halfSize));
             *mp++ = (disq < r2) ? exp(-disq / sigma2) : 0;
         }
+    }
 }
 
 

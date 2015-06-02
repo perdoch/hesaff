@@ -19,6 +19,18 @@ using namespace cv;
 
 // The SIFT descriptor is subject to US Patent 6,711,293
 
+SIFTDescriptor::SIFTDescriptor(const SIFTDescriptorParams &par) :
+    mask(par.patchSize, par.patchSize, CV_32FC1),
+    grad(par.patchSize, par.patchSize, CV_32FC1),
+    ori(par.patchSize, par.patchSize, CV_32FC1)
+{
+    this->par = par;
+    this->vec.resize(par.spatialBins * par.spatialBins * par.orientationBins);
+    computeCircularGaussMask(this->mask);  // defined in helpers.cpp
+    this->precomputeBinsAndWeights();
+}
+
+
 void SIFTDescriptor::precomputeBinsAndWeights()
 {
     int halfSize = this->par.patchSize >> 1;
@@ -192,6 +204,7 @@ void SIFTDescriptor::computeSiftDescriptor(Mat &patch)
     const int height = patch.rows;
     // photometrically normalize with weights as in SIFT gradient magnitude falloff
     float mean, var;
+    // this->mask is computed in the constructor
     photometricallyNormalize(patch, this->mask, mean, var);
     // prepare gradients
     for(int r = 0; r < height; ++r)

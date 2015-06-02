@@ -1079,6 +1079,36 @@ void detectKeypoints(char* image_filename,
     delete detector;
 }
 
+PYHESAFF void extractDescFromPatches(int num_patches,
+                                     int patch_w, 
+                                     int patch_h,
+                                     uint8** patches_array,
+                                     uint8** descriptors_array)
+{
+    // Function to extract SIFT descriptors from an array of patches
+    // TODO: paramatarize
+    SIFTDescriptorParams siftParams;
+    SIFTDescriptor sift(siftParams);
+    cv::Mat patch(patch_w, patch_h, CV_8U);
+    uint8 *pp = patch.ptr<uint8>(0);
+
+    for(int i = 0; i < num_patches; i++)
+    {
+        for(int r = 0; r < patch_h; r++)
+        { 
+            for(int c = 0; c < patch_w; c++)
+            {
+                *pp = patches_array[i][r * patch_h + c];
+            }
+        }
+        sift.computeSiftDescriptor(patch);
+        for(int ix = 0; ix < DESC_DIM; ix++)
+        {
+            descriptors_array[i][ix] = (uint8) sift.vec[ix];  // populate outvar
+        }
+    }
+
+}
 
 PYHESAFF void detectKeypointsList(int num_filenames,
                                   char** image_filename_list,
