@@ -27,6 +27,7 @@ CommandLine:
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <assert.h>
 #include <opencv2/core/core.hpp>
 //#include <opencv2/core/utility.hpp>
 
@@ -1088,6 +1089,8 @@ PYHESAFF void extractDescFromPatches(int num_patches,
     // Function to extract SIFT descriptors from an array of patches
     // TODO: paramatarize
     SIFTDescriptorParams siftParams;
+    siftParams.patchSize = patch_h;
+
     SIFTDescriptor sift(siftParams);
 
     //cv::Mat patch(patch_w, patch_h, CV_8U);

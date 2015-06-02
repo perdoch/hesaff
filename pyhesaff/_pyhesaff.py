@@ -433,7 +433,7 @@ def extract_desc_from_patches(patch_list):
         >>> (kpts_list, vecs_list) = detect_kpts(img_fpath)
         >>> img = vt.imread(img_fpath)
         >>> kpts_list = kpts_list[1::len(kpts_list) // 9]
-        >>> patch_list_ = np.array([vt.get_warped_patch(img, kp)[0] for kp in kpts_list])
+        >>> patch_list_ = np.array(vt.get_warped_patches(img, kpts_list, patch_size=64)[0])
         >>> patch_list = np.array(vt.convert_image_list_colorspace(patch_list_, 'gray'))
         >>> vecs_array = extract_desc_from_patches(patch_list)
         >>> ut.quit_if_noshow()
@@ -441,7 +441,14 @@ def extract_desc_from_patches(patch_list):
         >>> pt.draw_patches_and_sifts(patch_list, vecs_array)
         >>> ut.show_if_requested()
     """
+    ndims = patch_list.shape
+    if ndims == 4 and patch_list.shape[-1] == 1:
+        print('[pyhesaff] warning need to reshape patch_list')
+        # need to remove grayscale dimension, maybe it should be included
+        patch_list = patch_list.reshape(patch_list.shape[0:3])
+    assert patch_list.flags['C_CONTIGUOUS'], 'patch_list must be contiguous array'
     num_patches, patch_h, patch_w = patch_list.shape[0:3]
+    assert patch_h == patch_w, 'must be square patches'
     vecs_array = _alloc_vecs(num_patches)
     #vecs_array[:] = 0
     #print('vecs_array = %r' % (vecs_array,))
