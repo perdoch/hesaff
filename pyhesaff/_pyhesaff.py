@@ -28,7 +28,7 @@ import six
 #from six.moves import zip, builtins
 from os.path import realpath, dirname
 try:
-    from . import ctypes_interface
+    from pyhesaff import ctypes_interface
 except ValueError:
     import ctypes_interface
 import ctypes as C
@@ -54,6 +54,7 @@ __DEBUG__ = '--debug-pyhesaff' in sys.argv or '--debug' in sys.argv
 # numpy dtypes
 kpts_dtype = np.float32
 vecs_dtype = np.uint8
+img_dtype  = np.uint8
 # scalar ctypes
 obj_t     = C.c_void_p
 str_t     = C.c_char_p
@@ -73,6 +74,7 @@ FLAGS_RW = 'aligned, c_contiguous, writeable'
 #FLAGS_RW = 'aligned, writeable'
 kpts_t       = np.ctypeslib.ndpointer(dtype=kpts_dtype, ndim=2, flags=FLAGS_RW)
 vecs_t       = np.ctypeslib.ndpointer(dtype=vecs_dtype, ndim=2, flags=FLAGS_RW)
+img_t        = np.ctypeslib.ndpointer(dtype=img_dtype, ndim=3, flags=FLAGS_RW)
 kpts_array_t = np.ctypeslib.ndpointer(dtype=kpts_t, ndim=1, flags=FLAGS_RW)
 vecs_array_t = np.ctypeslib.ndpointer(dtype=vecs_t, ndim=1, flags=FLAGS_RW)
 int_array_t  = np.ctypeslib.ndpointer(dtype=int_t, ndim=1, flags=FLAGS_RW)
@@ -175,7 +177,7 @@ def load_hesaff_clib(rebuild=None):
         rebuild = ut.get_argflag('--rebuild-hesaff')
         if rebuild:
             print('REBUILDING HESAFF')
-            repo_dir = dirname(root_dir)
+            repo_dir = realpath(dirname(root_dir))
             ut.std_build_command(repo_dir)
 
     libname = 'hesaff'
@@ -188,6 +190,7 @@ def load_hesaff_clib(rebuild=None):
     def_cfunc(int_t, 'get_desc_dim',           [])
     def_cfunc(None,  'exportArrays',           [obj_t, int_t, kpts_t, vecs_t])
     def_cfunc(None,  'extractDesc',            [obj_t, int_t, kpts_t, vecs_t])
+    def_cfunc(None,  'extractDescFromPatches', [int_t, int_t, int_t, img_t, vecs_t])
     def_cfunc(obj_t, 'new_hesaff',             [str_t])
     def_cfunc(obj_t, 'new_hesaff_from_params', [str_t] + HESAFF_PARAM_TYPES)
     def_cfunc(None,  'detectKeypointsList',    [int_t, str_list_t, kpts_array_t,
@@ -205,30 +208,9 @@ if __DEBUG__:
     print('[hes] %r KPTS_DIM = %r' % (type(KPTS_DIM), KPTS_DIM))
     print('[hes] %r DESC_DIM = %r' % (type(KPTS_DIM), DESC_DIM))
 
-
 #============================
-# hesaff python interface
+# helpers
 #============================
-
-
-def get_cpp_version():
-    r"""
-    Returns:
-        int: cpp_version
-
-    CommandLine:
-        python -m pyhesaff._pyhesaff --test-get_cpp_version
-
-    Example:
-        >>> # ENABLE_DOCTEST
-        >>> from pyhesaff._pyhesaff import *  # NOQA
-        >>> cpp_version = get_cpp_version()
-        >>> result = str(cpp_version)
-        >>> print(result)
-        >>> ut.assert_eq(cpp_version, 2, 'cpp version mimatch')
-    """
-    cpp_version = HESAFF_CLIB.get_cpp_version()
-    return cpp_version
 
 
 def _alloc_vecs(nKpts):
@@ -249,48 +231,6 @@ def _make_hesaff_cpp_params(**kwargs):
             hesaff_params[key] = val
         else:
             print('[pyhesaff] WARNING: key=%r is not known' % key)
-
-
-def _new_hesaff(img_fpath, **kwargs):
-    """ Creates new detector object which reads the image """
-    hesaff_params = HESAFF_PARAM_DICT.copy()
-    hesaff_params.update(kwargs)
-    try:
-        assert len(hesaff_params) == len(HESAFF_PARAM_DICT), (
-            'len(hesaff_params) = %d, len(HESAFF_PARAM_DICT)=%d' % (len(hesaff_params), len(HESAFF_PARAM_DICT)))
-    except AssertionError as ex:
-        print('Unknown paramaters = %s' % (ut.dict_str(ut.dict_setdiff(kwargs, HESAFF_PARAM_DICT.keys()))))
-        raise
-
-    if __DEBUG__:
-        print('[hes] New Hesaff')
-        print('[hes] hesaff_params=%r' % (hesaff_params,))
-    hesaff_args = hesaff_params.values()  # pass all parameters to HESAFF_CLIB
-    img_realpath = realpath(img_fpath)
-    if six.PY3:
-        # convert out of unicode
-        img_realpath = img_realpath.encode('ascii')
-    try:
-        hesaff_ptr = HESAFF_CLIB.new_hesaff_from_params(img_realpath, *hesaff_args)
-    except Exception as ex:
-        msg = 'hesaff_ptr = HESAFF_CLIB.new_hesaff_from_params(img_realpath, *hesaff_args)',
-        print(msg)
-        print('hesaff_args = ')
-        print(hesaff_args)
-        import utool
-        utool.printex(ex, msg, keys=['hesaff_args'])
-        raise
-    return hesaff_ptr
-
-
-def extract_vecs(img_fpath, kpts, **kwargs):
-    hesaff_ptr = _new_hesaff(img_fpath, **kwargs)
-    nKpts = len(kpts)
-    vecs = _alloc_vecs(nKpts)  # allocate memory for new vecsriptors
-    kpts = np.ascontiguousarray(kpts)  # kpts might not be contiguous
-    # extract vecsriptors at given locations
-    HESAFF_CLIB.extractDesc(hesaff_ptr, nKpts, kpts, vecs)
-    return vecs
 
 
 def _cast_strlist_to_C(py_strlist):
@@ -404,13 +344,119 @@ def extract_2darr_list(size_list, ptr_list, arr_t, arr_dtype,
     return arr_list
 
 
+def get_hesaff_default_params():
+    return HESAFF_PARAM_DICT.copy()
+
+
+#============================
+# hesaff python interface
+#============================
+
+
+def get_cpp_version():
+    r"""
+    Returns:
+        int: cpp_version
+
+    CommandLine:
+        python -m pyhesaff._pyhesaff --test-get_cpp_version
+
+    Example:
+        >>> # ENABLE_DOCTEST
+        >>> from pyhesaff._pyhesaff import *  # NOQA
+        >>> cpp_version = get_cpp_version()
+        >>> result = str(cpp_version)
+        >>> print(result)
+        >>> ut.assert_eq(cpp_version, 2, 'cpp version mimatch')
+    """
+    cpp_version = HESAFF_CLIB.get_cpp_version()
+    return cpp_version
+
+
+def _new_hesaff(img_fpath, **kwargs):
+    """ Creates new detector object which reads the image """
+    hesaff_params = HESAFF_PARAM_DICT.copy()
+    hesaff_params.update(kwargs)
+    try:
+        assert len(hesaff_params) == len(HESAFF_PARAM_DICT), (
+            'len(hesaff_params) = %d, len(HESAFF_PARAM_DICT)=%d' % (len(hesaff_params), len(HESAFF_PARAM_DICT)))
+    except AssertionError as ex:
+        print('Unknown paramaters = %s' % (ut.dict_str(ut.dict_setdiff(kwargs, HESAFF_PARAM_DICT.keys()))))
+        raise
+
+    if __DEBUG__:
+        print('[hes] New Hesaff')
+        print('[hes] hesaff_params=%r' % (hesaff_params,))
+    hesaff_args = hesaff_params.values()  # pass all parameters to HESAFF_CLIB
+    img_realpath = realpath(img_fpath)
+    if six.PY3:
+        # convert out of unicode
+        img_realpath = img_realpath.encode('ascii')
+    try:
+        hesaff_ptr = HESAFF_CLIB.new_hesaff_from_params(img_realpath, *hesaff_args)
+    except Exception as ex:
+        msg = 'hesaff_ptr = HESAFF_CLIB.new_hesaff_from_params(img_realpath, *hesaff_args)',
+        print(msg)
+        print('hesaff_args = ')
+        print(hesaff_args)
+        import utool
+        utool.printex(ex, msg, keys=['hesaff_args'])
+        raise
+    return hesaff_ptr
+
+
+def extract_vecs(img_fpath, kpts, **kwargs):
+    hesaff_ptr = _new_hesaff(img_fpath, **kwargs)
+    nKpts = len(kpts)
+    vecs = _alloc_vecs(nKpts)  # allocate memory for new decsriptors
+    kpts = np.ascontiguousarray(kpts)  # kpts might not be contiguous
+    # extract decsriptors at given locations
+    HESAFF_CLIB.extractDesc(hesaff_ptr, nKpts, kpts, vecs)
+    return vecs
+
+
+def extract_desc_from_patches(patch_list):
+    r"""
+    Args:
+        patch_list (list):
+
+    CommandLine:
+        python -m pyhesaff._pyhesaff --test-extract_desc_from_patches  --rebuild-hesaff --no-rmbuild
+        python -m pyhesaff._pyhesaff --test-extract_desc_from_patches  --rebuild-hesaff --no-rmbuild --show
+
+    Example:
+        >>> # DISABLE_DOCTEST
+        >>> from pyhesaff._pyhesaff import *  # NOQA
+        >>> from pyhesaff._pyhesaff import _alloc_vecs
+        >>> import vtool as vt
+        >>> img_fpath = ut.grab_test_imgpath(ut.get_argval('--fname', default='lena.png'))
+        >>> (kpts_list, vecs_list) = detect_kpts(img_fpath)
+        >>> img = vt.imread(img_fpath)
+        >>> kpts_list = kpts_list[1::len(kpts_list) // 9]
+        >>> patch_list_ = np.array([vt.get_warped_patch(img, kp)[0] for kp in kpts_list])
+        >>> patch_list = np.array(vt.convert_image_list_colorspace(patch_list_, 'gray'))
+        >>> vecs_array = extract_desc_from_patches(patch_list)
+        >>> ut.quit_if_noshow()
+        >>> import plottool as pt
+        >>> pt.draw_patches_and_sifts(patch_list, vecs_array)
+        >>> ut.show_if_requested()
+    """
+    num_patches, patch_h, patch_w = patch_list.shape[0:3]
+    vecs_array = _alloc_vecs(num_patches)
+    #vecs_array[:] = 0
+    #print('vecs_array = %r' % (vecs_array,))
+    HESAFF_CLIB.extractDescFromPatches(num_patches, patch_h, patch_w, patch_list, vecs_array)
+    #print('vecs_array = %r' % (vecs_array,))
+    return vecs_array
+
+
 def detect_kpts_list(image_paths_list, **kwargs):
     """
     Args:
         image_paths_list (list): A list of image paths
 
     Returns:
-        tuple: (kpts_list, vecs_list) A tuple of lists of keypoints and vecsriptors
+        tuple: (kpts_list, vecs_list) A tuple of lists of keypoints and decsriptors
 
     Kwargs:
         numberOfScales (int)         : default=3
@@ -468,7 +514,7 @@ def detect_kpts_list(image_paths_list, **kwargs):
 
     # Cast keypoint array to list of numpy keypoints
     kpts_list = extract_2darr_list(nDetect_array, kpts_ptr_array, kpts_t, kpts_dtype, KPTS_DIM)
-    # Cast vecsriptor array to list of numpy vecsriptors
+    # Cast decsriptor array to list of numpy decsriptors
     vecs_list = extract_2darr_list(nDetect_array, vecs_ptr_array, vecs_t, vecs_dtype, DESC_DIM)
 
     #kpts_list = [arrptr_to_np(kpts_ptr, (len_, KPTS_DIM), kpts_t, kpts_dtype)
@@ -477,10 +523,6 @@ def detect_kpts_list(image_paths_list, **kwargs):
     #             for (vecs_ptr, len_) in zip(vecs_ptr_array, nDetect_array)]
 
     return kpts_list, vecs_list
-
-
-def get_hesaff_default_params():
-    return HESAFF_PARAM_DICT.copy()
 
 
 #@profile

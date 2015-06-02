@@ -7,6 +7,7 @@ import utool as ut
 ut.noinject(__name__, '[pyhesaff.__init__]')
 
 
+from pyhesaff import ctypes_interface
 from pyhesaff._pyhesaff import (extract_vecs, detect_kpts, detect_kpts_list,
                                 adapt_scale, vtool_adapt_rotation, kpts_dtype, vecs_dtype,
                                 get_hesaff_default_params,

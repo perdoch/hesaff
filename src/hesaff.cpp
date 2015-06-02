@@ -1080,31 +1080,40 @@ void detectKeypoints(char* image_filename,
 }
 
 PYHESAFF void extractDescFromPatches(int num_patches,
-                                     int patch_w, 
-                                     int patch_h,
-                                     uint8** patches_array,
-                                     uint8** descriptors_array)
+                                     int patch_h, 
+                                     int patch_w,
+                                     uint8* patches_array,
+                                     uint8* descriptors_array)
 {
     // Function to extract SIFT descriptors from an array of patches
     // TODO: paramatarize
     SIFTDescriptorParams siftParams;
     SIFTDescriptor sift(siftParams);
-    cv::Mat patch(patch_w, patch_h, CV_8U);
-    uint8 *pp = patch.ptr<uint8>(0);
+
+    //cv::Mat patch(patch_w, patch_h, CV_8U);
+    cv::Mat patch(patch_w, patch_h, CV_32F);
+
+    //printDBG("num_patches=" << num_patches);
+    //printDBG("patch_h=" << patch_h);
+    //printDBG("patch_w=" << patch_w);
+    //printf("patches_array[-16]=%016x\n", patches_array[-16]);
+    float *pp;
 
     for(int i = 0; i < num_patches; i++)
     {
+        pp = patch.ptr<float>(0);
         for(int r = 0; r < patch_h; r++)
         { 
             for(int c = 0; c < patch_w; c++)
             {
-                *pp = patches_array[i][r * patch_h + c];
+                *pp = (float) patches_array[(i * patch_h * patch_w) + (r * patch_w) + c];
+                pp++;
             }
         }
         sift.computeSiftDescriptor(patch);
         for(int ix = 0; ix < DESC_DIM; ix++)
         {
-            descriptors_array[i][ix] = (uint8) sift.vec[ix];  // populate outvar
+            descriptors_array[(i * DESC_DIM) + ix] = (uint8) sift.vec[ix];  // populate outvar
         }
     }
 
