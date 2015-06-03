@@ -71,10 +71,11 @@ float_t   = C.c_float
 #byte_t    = C.c_char
 # array ctypes
 FLAGS_RW = 'aligned, c_contiguous, writeable'
+FLAGS_RO = 'aligned, c_contiguous'
 #FLAGS_RW = 'aligned, writeable'
 kpts_t       = np.ctypeslib.ndpointer(dtype=kpts_dtype, ndim=2, flags=FLAGS_RW)
 vecs_t       = np.ctypeslib.ndpointer(dtype=vecs_dtype, ndim=2, flags=FLAGS_RW)
-img_t        = np.ctypeslib.ndpointer(dtype=img_dtype, ndim=3, flags=FLAGS_RW)
+img_t        = np.ctypeslib.ndpointer(dtype=img_dtype, ndim=3, flags=FLAGS_RO)
 kpts_array_t = np.ctypeslib.ndpointer(dtype=kpts_t, ndim=1, flags=FLAGS_RW)
 vecs_array_t = np.ctypeslib.ndpointer(dtype=vecs_t, ndim=1, flags=FLAGS_RW)
 int_array_t  = np.ctypeslib.ndpointer(dtype=int_t, ndim=1, flags=FLAGS_RW)
