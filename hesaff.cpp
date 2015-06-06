@@ -132,7 +132,7 @@ public:
 
 int main(int argc, char **argv)
 {
-   if (argc>1)
+   if (argc>2)
    {
       Mat tmp = imread(argv[1]);
       Mat image(tmp.rows, tmp.cols, CV_32FC1, Scalar(0));
@@ -167,11 +167,7 @@ int main(int argc, char **argv)
          detector.detectPyramidKeypoints(image);
          cout << "Detected " << g_numberOfPoints << " keypoints and " << g_numberOfAffinePoints << " affine shapes in " << getTime()-t1 << " sec." << endl;
 
-         char suffix[] = ".hesaff.sift";
-         int len = strlen(argv[1])+strlen(suffix)+1;
-         char buf[len];
-         snprintf(buf, len, "%s%s", argv[1], suffix); buf[len-1]=0;      
-         ofstream out(buf);
+         ofstream out(argv[2]);
          detector.exportKeypoints(out);
       }
    } else {
