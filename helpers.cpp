@@ -22,13 +22,13 @@ using namespace std;
 
 double getTime()
 {     
-#ifdef _POSIX_CPUTIME                                                                                                                                         
+#ifdef _POSIX_CPUTIME
    struct timespec ts;
    if (!clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts))
    {
       return (double)(ts.tv_sec) + (double)(ts.tv_nsec)/1.0e9;
    } else
-#endif                                                                                                                                                 
+#endif
    {
       // fall back to standard unix time
       struct timeval tv;
