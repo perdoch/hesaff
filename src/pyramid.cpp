@@ -157,7 +157,7 @@ Mat HessianDetector::hessianResponse(const Mat &inputImage, float norm)
     return outputImage;
 }
 
-// it seems 0.6 works better than 0.5 (as in DL paper)
+// it seems 0.6 works better than 0.5 (as in DL --- David Lowe --- paper)
 #define MAX_SUBPIXEL_SHIFT 0.6
 
 // we don't care about border effects
