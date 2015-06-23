@@ -87,6 +87,8 @@ bool isMin(float val, const Mat &pix, int row, int col)
 Mat HessianDetector::hessianResponse(const Mat &inputImage, float norm)
 {
     /*
+     Does 3x3 convolution to produce responce map 
+     
      Computes the scale normalized determanant of the hessian matrix for a
      given image image (which is a level of the Gaussian pyramid).
     
@@ -108,6 +110,84 @@ Mat HessianDetector::hessianResponse(const Mat &inputImage, float norm)
     const float *in =  inputImage.ptr<float>(1);
     float      *out = outputImage.ptr<float>(1) + 1;
 
+
+    /*
+    Image:
+      [(-1,-1)] [(-1 ,0)] [(-1, 1)] [(-1, 2)] 
+
+      [( 0,-1)] [( 0, 0)] [( 0, 1)] [( 0, 2)] 
+              
+      [( 1,-1)] [( 1, 0)] [( 1, 1)] [( 1, 2)] 
+             
+      [( 2,-1)] [( 2, 0)] [( 2, 1)] [( 2, 2)]
+             
+      [( 3,-1)] [( 3, 0)] [( 3, 1)] [( 3, 2)]
+
+    -----
+      [(-1,-1)] [(-1 ,0)] [(-1, 1)] [(-1, 2)] 
+               +-----------------------------
+      [( 0,-1)]|[( 0, 0)] [( 0, 1)] [( 0, 2)] 
+               |
+      [( 1,-1)]|[    *in] [   *out] [( 1, 2)] 
+               |
+      [( 2,-1)]|[( 2, 0)] [( 2, 1)] [( 2, 2)]
+               |
+      [( 3,-1)]|[( 3, 0)] [( 3, 1)] [( 3, 2)]
+
+    -----
+      [(-1,-1)] [(-1 ,0)] [(-1, 1)] [(-1, 2)] 
+               +-----------------------------
+      [( 0,-1)]|[( 0, 0)] [( 0, 1)] [( 0, 2)] 
+               |
+      [    v11]|[    v21] [    v31] [( 1, 2)] 
+               |
+      [    v12]|[    v22] [    v32] [( 2, 2)]
+               |
+      [    v13]|[    v23] [    v33] [( 3, 2)]
+
+    -----
+      [(-1,-1)] [(-1 ,0)] [(-1, 1)] [(-1, 2)] 
+               +-----------------------------
+      [( 0,-1)]|[( 0, 0)] [( 0, 1)] [( 0, 2)] 
+               |
+      [    v11]|[    v21] [    v31] [( 1, 2)] 
+               |
+      [    v12]|[    v22] [    v32] [( 2, 2)]
+               |
+      [    v13]|[    v23] [    v33] [( 3, 2)]
+
+
+      ----------
+      Lxx and Lyy might be inverted 
+
+      Lxx - turns out this does compute a 2nd derivative
+      
+        [v11] [v21] [v31]
+              
+        [v12] [v22] [v32]    1  -2  1
+                               
+        [v13] [v23] [v33]
+
+      ----------
+      Lyy
+      
+        [v11] [v21] [v31]      1
+              
+        [v12] [v22] [v32]     -2
+                               
+        [v13] [v23] [v33]      1
+
+      ----------
+      Lxy
+      
+        [v11] [v21] [v31]   -1/4        1/4
+              
+        [v12] [v22] [v32]         
+                               
+        [v13] [v23] [v33]    1/4       -1/4
+     
+     */
+
     float norm2 = norm * norm;
 
     /* move 3x3 window and convolve */
@@ -115,12 +195,10 @@ Mat HessianDetector::hessianResponse(const Mat &inputImage, float norm)
     {
         float v11, v12, v21, v22, v31, v32;
         /* fill in shift registers at the beginning of the row */
-        v11 = in[-stride];
-        v12 = in[1 - stride];
-        v21 = in[0];
-        v22 = in[1];
-        v31 = in[+stride];
-        v32 = in[1 + stride];
+        // seems to perform wraparound at left and right edges
+        v11 = in[-stride];   v12 = in[1 - stride];
+        v21 = in[      0];   v22 = in[1         ];
+        v31 = in[+stride];   v32 = in[1 + stride];
         /* move input pointer to (1,2) of the 3x3 square */
         in += 2;
         for(int c = 1; c < cols - 1; ++c)
@@ -132,12 +210,14 @@ Mat HessianDetector::hessianResponse(const Mat &inputImage, float norm)
 
             // compute 3x3 Hessian values from symmetric differences.
             // L(pt, scale) = [[Lxx, Lxy], [Lxy, Lyy]]
-            float Lxx = (v21 - 2 * v22 + v23);
-            float Lyy = (v12 - 2 * v22 + v32);
+            // Lxx = (v21 - 2*v22 + v23) = ((v23 - v22) - (v22 - v21))  # 2nd derivative in x
+            float Lxx = (v21 - (2 * v22) + v23);
+            float Lyy = (v12 - (2 * v22) + v32);
             float Lxy = (v13 - v11 + v31 - v33) / 4.0f;
 
             // Compute the scale normalized hessian determanant and 
             // write to the ouptut image.
+            // normalize and write out
             *out = (Lxx * Lyy - Lxy * Lxy) * norm2;
 
             /* move window */
@@ -383,6 +463,9 @@ void HessianDetector::findLevelKeypoints(float curScale, float pixelDistance)
 {
     /*
     Step 1.2: Called from main
+
+    Finds extreme points in space and scale
+
     0: void HessianDetector::detectPyramidKeypoints(const Mat &image)
     1: void HessianDetector::detectOctaveHessianKeypoints(const Mat &firstLevel, float pixelDistance,
                                                     Mat &nextOctaveFirstLevel)

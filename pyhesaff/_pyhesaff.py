@@ -455,7 +455,28 @@ def extract_desc_from_patches(patch_list):
     vecs_array = _alloc_vecs(num_patches)
     #vecs_array[:] = 0
     #print('vecs_array = %r' % (vecs_array,))
-    HESAFF_CLIB.extractDescFromPatches(num_patches, patch_h, patch_w, patch_list, vecs_array)
+    # If the input array list is memmaped it is a good idea to process in chunks
+    CHUNKS = isinstance(patch_list, np.memmap)
+    if not CHUNKS:
+        HESAFF_CLIB.extractDescFromPatches(num_patches, patch_h, patch_w, patch_list, vecs_array)
+    else:
+        from six.moves import range
+        chunksize = 2048
+        _iter = range(num_patches // chunksize)
+        _progiter = ut.ProgressIter(_iter, lbl='extracting sift chunk')
+        for ix in _progiter:
+            lx = ix * chunksize
+            rx = (ix + 1) * chunksize
+            patch_sublist = np.array(patch_list[lx:rx])
+            sublist_size = rx - lx
+            HESAFF_CLIB.extractDescFromPatches(sublist_size, patch_h, patch_w, patch_sublist, vecs_array[lx:rx])
+        last_size = num_patches - rx
+        if last_size > 0:
+            lx = rx
+            rx = lx + last_size
+            patch_sublist = np.array(patch_list[lx:rx])
+            sublist_size = rx - lx
+            HESAFF_CLIB.extractDescFromPatches(sublist_size, patch_h, patch_w, patch_sublist, vecs_array[lx:rx])
     #print('vecs_array = %r' % (vecs_array,))
     return vecs_array
 

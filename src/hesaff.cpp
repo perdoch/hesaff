@@ -1096,9 +1096,9 @@ PYHESAFF void extractDescFromPatches(int num_patches,
     //cv::Mat patch(patch_w, patch_h, CV_8U);
     cv::Mat patch(patch_w, patch_h, CV_32F);
 
-    //printDBG("num_patches=" << num_patches);
-    //printDBG("patch_h=" << patch_h);
-    //printDBG("patch_w=" << patch_w);
+    printDBG("num_patches=" << num_patches);
+    printDBG("patch_h=" << patch_h);
+    printDBG("patch_w=" << patch_w);
     //printf("patches_array[-16]=%016x\n", patches_array[-16]);
     float *pp;
 
