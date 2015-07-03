@@ -935,23 +935,31 @@ maxBinValue, initialSigma, patchSize, scale_min, scale_max,\
 rotation_invariance, augment_orientation, ori_maxima_thresh,\
 affine_invariance, use_dense, dense_stride
 
-// new hessian affine detector
-PYHESAFF AffineHessianDetector* new_hesaff_from_params(char* img_fpath, __HESAFF_PARAM_SIGNATURE_ARGS__)
-{
-    printDBG("making detector for " << img_fpath);
-    printDBG(" * img_fpath = " << img_fpath);
-    // Read in image and convert to uint8
-    cv::Mat tmp = cv::imread(img_fpath);
-    cv::Mat image(tmp.rows, tmp.cols, CV_32FC1, Scalar(0));
-    float *imgout = image.ptr<float>(0);
-    uint8 *imgin  = tmp.ptr<uint8>(0);
-    for(size_t i = tmp.rows * tmp.cols; i > 0; i--)
-    {
-        *imgout = (float(imgin[0]) + imgin[1] + imgin[2]) / 3.0f;
-        imgout++;
-        imgin += 3;
-    }
 
+PYHESAFF AffineHessianDetector* new_hesaff_from_image_and_params(uint8 *imgin, int rows, int cols, int channels, __HESAFF_PARAM_SIGNATURE_ARGS__)
+{
+    // Convert input image to float32
+    cv::Mat image(rows, cols, CV_32FC1, Scalar(0));
+    float *imgout = image.ptr<float>(0);
+    if (channels == 3)
+    {
+        for(size_t i = rows * cols; i > 0; i--)
+        {
+            *imgout = (float(imgin[0]) + imgin[1] + imgin[2]) / 3.0f;
+            imgout++;
+            imgin += 3;
+        }
+    }
+    else if (channels == 1)
+    {
+        for(size_t i = rows * cols; i > 0; i--)
+        {
+            *imgout = float(imgin[0]);
+            imgout++;
+            imgin += 1;
+        }
+    }
+    
     // Define params
     SIFTDescriptorParams siftParams;
     PyramidParams pyrParams;
@@ -997,7 +1005,24 @@ PYHESAFF AffineHessianDetector* new_hesaff_from_params(char* img_fpath, __HESAFF
     return detector;
 }
 
-// new hessian affine detector WRAPPER
+// new hessian affine detector
+PYHESAFF AffineHessianDetector* new_hesaff_from_fpath_and_params(char* img_fpath, __HESAFF_PARAM_SIGNATURE_ARGS__)
+{
+    printDBG("making detector for " << img_fpath);
+    printDBG(" * img_fpath = " << img_fpath);
+    // Read in image
+    cv::Mat tmp = cv::imread(img_fpath);
+    int rows = tmp.rows;
+    int cols = tmp.cols;
+    int channels = 3;
+    uint8 *imgin  = tmp.ptr<uint8>(0);
+    // Create detector
+    AffineHessianDetector* detector = new_hesaff_from_image_and_params(imgin, rows, cols, channels, __HESAFF_PARAM_CALL_ARGS__);
+    return detector;
+}
+
+
+// new default hessian affine detector WRAPPER
 PYHESAFF AffineHessianDetector* new_hesaff(char* img_fpath)
 {
     // Pyramid Params
@@ -1030,7 +1055,7 @@ PYHESAFF AffineHessianDetector* new_hesaff(char* img_fpath)
     bool  use_dense = false;
     int   dense_stride = 32;
 
-    AffineHessianDetector* detector = new_hesaff_from_params(img_fpath, __HESAFF_PARAM_CALL_ARGS__);
+    AffineHessianDetector* detector = new_hesaff_from_fpath_and_params(img_fpath, __HESAFF_PARAM_CALL_ARGS__);
     return detector;
 }
 
@@ -1070,7 +1095,7 @@ void detectKeypoints(char* image_filename,
                      __HESAFF_PARAM_SIGNATURE_ARGS__
                      )
 {
-    AffineHessianDetector* detector = new_hesaff_from_params(image_filename, __HESAFF_PARAM_CALL_ARGS__);
+    AffineHessianDetector* detector = new_hesaff_from_fpath_and_params(image_filename, __HESAFF_PARAM_CALL_ARGS__);
     detector->DBG_params();
     *length = detector->detect();
     *keypoints = new float[(*length)*KPTS_DIM];
@@ -1138,7 +1163,7 @@ PYHESAFF void detectKeypointsList(int num_filenames,
     {
         char* image_filename = image_filename_list[index];
         AffineHessianDetector* detector =
-            new_hesaff_from_params(image_filename, __HESAFF_PARAM_CALL_ARGS__);
+            new_hesaff_from_fpath_and_params(image_filename, __HESAFF_PARAM_CALL_ARGS__);
         detector->DBG_params();
         int length = detector->detect();
         length_array[index] = length;

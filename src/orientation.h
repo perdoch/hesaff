@@ -7,6 +7,7 @@
 #include <cmath>
 #include <vector>
 #include <numeric>
+#include <iostream>
 #include "helpers.h"
 
 #ifndef M_TAU

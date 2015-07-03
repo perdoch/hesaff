@@ -193,7 +193,8 @@ def load_hesaff_clib(rebuild=None):
     def_cfunc(None,  'extractDesc',            [obj_t, int_t, kpts_t, vecs_t])
     def_cfunc(None,  'extractDescFromPatches', [int_t, int_t, int_t, img_t, vecs_t])
     def_cfunc(obj_t, 'new_hesaff',             [str_t])
-    def_cfunc(obj_t, 'new_hesaff_from_params', [str_t] + HESAFF_PARAM_TYPES)
+    def_cfunc(obj_t, 'new_hesaff_from_fpath_and_params', [str_t] + HESAFF_PARAM_TYPES)
+    def_cfunc(obj_t, 'new_hesaff_from_image_and_params', [img_t, int_t, int_t, int_t] + HESAFF_PARAM_TYPES)
     def_cfunc(None,  'detectKeypointsList',    [int_t, str_list_t, kpts_array_t,
                                                 vecs_array_t, int_array_t] +
                                                 HESAFF_PARAM_TYPES)
@@ -374,7 +375,7 @@ def get_cpp_version():
     return cpp_version
 
 
-def _new_hesaff(img_fpath, **kwargs):
+def _new_fpath_hesaff(img_fpath, **kwargs):
     """ Creates new detector object which reads the image """
     hesaff_params = HESAFF_PARAM_DICT.copy()
     hesaff_params.update(kwargs)
@@ -394,9 +395,42 @@ def _new_hesaff(img_fpath, **kwargs):
         # convert out of unicode
         img_realpath = img_realpath.encode('ascii')
     try:
-        hesaff_ptr = HESAFF_CLIB.new_hesaff_from_params(img_realpath, *hesaff_args)
+        hesaff_ptr = HESAFF_CLIB.new_hesaff_from_fpath_and_params(img_realpath, *hesaff_args)
     except Exception as ex:
-        msg = 'hesaff_ptr = HESAFF_CLIB.new_hesaff_from_params(img_realpath, *hesaff_args)',
+        msg = 'hesaff_ptr = HESAFF_CLIB.new_hesaff_from_fpath_and_params(img_realpath, *hesaff_args)',
+        print(msg)
+        print('hesaff_args = ')
+        print(hesaff_args)
+        import utool
+        utool.printex(ex, msg, keys=['hesaff_args'])
+        raise
+    return hesaff_ptr
+
+
+def _new_image_hesaff(img, **kwargs):
+    """ Creates new detector object which reads the image """
+    hesaff_params = HESAFF_PARAM_DICT.copy()
+    hesaff_params.update(kwargs)
+    try:
+        assert len(hesaff_params) == len(HESAFF_PARAM_DICT), (
+            'len(hesaff_params) = %d, len(HESAFF_PARAM_DICT)=%d' % (len(hesaff_params), len(HESAFF_PARAM_DICT)))
+    except AssertionError as ex:
+        print('Unknown paramaters = %s' % (ut.dict_str(ut.dict_setdiff(kwargs, HESAFF_PARAM_DICT.keys()))))
+        raise
+
+    if __DEBUG__:
+        print('[hes] New Hesaff')
+        print('[hes] hesaff_params=%r' % (hesaff_params,))
+    hesaff_args = hesaff_params.values()  # pass all parameters to HESAFF_CLIB
+    rows, cols = img.shape[0:2]
+    if len(img.shape) == 2:
+        channels = 1
+    else:
+        channels = img.shape[2]
+    try:
+        hesaff_ptr = HESAFF_CLIB.new_hesaff_from_image_and_params(img, rows, cols, channels, *hesaff_args)
+    except Exception as ex:
+        msg = 'hesaff_ptr = HESAFF_CLIB.new_hesaff_from_image_and_params(img_realpath, *hesaff_args)',
         print(msg)
         print('hesaff_args = ')
         print(hesaff_args)
@@ -407,7 +441,30 @@ def _new_hesaff(img_fpath, **kwargs):
 
 
 def extract_vecs(img_fpath, kpts, **kwargs):
-    hesaff_ptr = _new_hesaff(img_fpath, **kwargs)
+    r"""
+    Extract SIFT descriptors at keypoint locations
+
+    Args:
+        img_fpath (?):
+        kpts (ndarray[float32_t, ndim=2]):  keypoints
+
+    Returns:
+        ndarray[uint8_t, ndim=2]: vecs -  descriptor vectors
+
+    CommandLine:
+        python -m pyhesaff._pyhesaff --test-extract_vecs
+
+    Example:
+        >>> # ENABLE_DOCTEST
+        >>> from pyhesaff._pyhesaff import *  # NOQA
+        >>> import vtool as vt
+        >>> img_fpath = ut.grab_test_imgpath('carl.jpg')
+        >>> kpts = vt.dummy.get_dummy_kpts()
+        >>> vecs = extract_vecs(img_fpath, kpts)
+        >>> result = ('vecs = %s' % (str(vecs),))
+        >>> print(result)
+    """
+    hesaff_ptr = _new_fpath_hesaff(img_fpath, **kwargs)
     nKpts = len(kpts)
     vecs = _alloc_vecs(nKpts)  # allocate memory for new decsriptors
     kpts = np.ascontiguousarray(kpts)  # kpts might not be contiguous
@@ -426,7 +483,7 @@ def extract_desc_from_patches(patch_list):
         python -m pyhesaff._pyhesaff --test-extract_desc_from_patches  --rebuild-hesaff --no-rmbuild --show
 
     Example:
-        >>> # DISABLE_DOCTEST
+        >>> # ENABLE_DOCTEST
         >>> from pyhesaff._pyhesaff import *  # NOQA
         >>> from pyhesaff._pyhesaff import _alloc_vecs
         >>> import vtool as vt
@@ -556,6 +613,57 @@ def detect_kpts_list(image_paths_list, **kwargs):
     return kpts_list, vecs_list
 
 
+def detect_kpts_in_image(img, **kwargs):
+    r"""
+    Takes a preloaded image and detects keypoints
+
+    Args:
+        img (ndarray[uint8_t, ndim=2]):  image data, should be in BGR or grayscale
+
+    Returns:
+        tuple: (kpts, vecs)
+
+    CommandLine:
+        python -m pyhesaff._pyhesaff --test-detect_kpts_in_image --show
+        python -m pyhesaff._pyhesaff --test-detect_kpts --show
+        python -m pyhesaff._pyhesaff --test-detect_kpts_in_image --rebuild-hesaff --show --no-rmbuild
+
+    Example:
+        >>> # ENABLE_DOCTEST
+        >>> from pyhesaff._pyhesaff import *  # NOQA
+        >>> import vtool as vt
+        >>> img_fpath = ut.grab_test_imgpath('lena.png')
+        >>> img= vt.imread(img_fpath)
+        >>> (kpts, vecs) = detect_kpts_in_image(img)
+        >>> ut.quit_if_noshow()
+        >>> import plottool as pt
+        >>> pt.interact_keypoints.ishow_keypoints(img, kpts, vecs, ori=True, ell_alpha=.4, color='distinct')
+        >>> pt.set_figtitle('Detect Kpts in Image')
+        >>> ut.show_if_requested()
+    """
+    #Valid keyword arguments are: + str(HESAFF_PARAM_DICT.keys())
+    hesaff_ptr = _new_image_hesaff(img, **kwargs)
+    if __DEBUG__:
+        print('[hes] detect')
+    nKpts = HESAFF_CLIB.detect(hesaff_ptr)  # Get num detected
+    if __DEBUG__:
+        print('[hes] allocate')
+    kpts, vecs = _allocate_kpts_and_vecs(nKpts)  # Allocate arrays
+    if __DEBUG__:
+        print('[hes] export')
+    HESAFF_CLIB.exportArrays(hesaff_ptr, nKpts, kpts, vecs)  # Populate arrays
+    return kpts, vecs
+
+# detect_kpts_in_fpath = detect_kpts
+
+
+def detect_kpts2(img_or_fpath, **kwargs):
+    if isinstance(img_or_fpath, six.string_types):
+        return detect_kpts(img_or_fpath, **kwargs)
+    else:
+        return detect_kpts_in_image(img_or_fpath, **kwargs)
+
+
 #@profile
 def detect_kpts(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kwargs):
     r"""
@@ -593,6 +701,7 @@ def detect_kpts(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kwa
     CommandLine:
         python -m pyhesaff._pyhesaff --test-detect_kpts
         python -m pyhesaff._pyhesaff --test-detect_kpts --show
+        python -m pyhesaff._pyhesaff --test-detect_kpts --show --fname star.png
         python -m pyhesaff._pyhesaff --test-detect_kpts --show --fname lena.png
         python -m pyhesaff._pyhesaff --test-detect_kpts --show --fname carl.jpg
 
@@ -626,7 +735,6 @@ def detect_kpts(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kwa
         python -m pyhesaff._pyhesaff --test-detect_kpts --show --fname lena.png --no-affine-invariance --numberOfScales=3 --maxPyramidLevels=2 --use_dense --dense_stride=64
 
 
-
     Example0:
         >>> # ENABLE_DOCTEST
         >>> # Test simple detect
@@ -637,7 +745,7 @@ def detect_kpts(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kwa
         >>> #img_fpath = make_small_test_img_fpath()
         >>> #img_fpath = ut.grab_test_imgpath('lena.png')
         >>> TAU = 2 * np.pi
-        >>> fpath = ut.grab_test_imgpath(ut.get_argval('--fname', default='star.png'))
+        >>> fpath = ut.grab_test_imgpath(ut.get_argval('--fname', default='lena.png'))
         >>> theta = ut.get_argval('--theta', float, 0)  # TAU * 3 / 8)
         >>> img_fpath = vt.rotate_image_on_disk(fpath, theta)
         >>> kwargs = ut.parse_dict_from_argv(get_hesaff_default_params())
@@ -653,6 +761,7 @@ def detect_kpts(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kwa
         >>> ut.quit_if_noshow()
         >>> #pt.draw_kpts2(kpts,
         >>> pt.interact_keypoints.ishow_keypoints(imgBGR, kpts, vecs, ori=True, ell_alpha=.4, color='distinct')
+        >>> pt.set_figtitle('Detect Kpts in Image')
         >>> pt.show_if_requested()
     """
     #Valid keyword arguments are: + str(HESAFF_PARAM_DICT.keys())
@@ -661,7 +770,7 @@ def detect_kpts(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kwa
         print('[hes] use_adaptive_scale=%r' % (use_adaptive_scale,))
         print('[hes] nogravity_hack=%r' % (nogravity_hack,))
         print('[hes] kwargs=%s' % (ut.dict_str(kwargs),))
-    hesaff_ptr = _new_hesaff(img_fpath, **kwargs)
+    hesaff_ptr = _new_fpath_hesaff(img_fpath, **kwargs)
     if __DEBUG__:
         print('[hes] detect')
     nKpts = HESAFF_CLIB.detect(hesaff_ptr)  # Get num detected
@@ -781,13 +890,26 @@ def adapt_scale(img_fpath, kpts):
     return kpts2, vecs2
 
 
+#if __name__ == '__main__':
+#    """
+#    CommandLine:
+#        python -c "import utool, pyhesaff._pyhesaff; utool.doctest_funcs(pyhesaff._pyhesaff, allexamples=True)"
+#        python -c "import utool, pyhesaff._pyhesaff; utool.doctest_funcs(pyhesaff._pyhesaff)"
+#        python pyhesaff\_pyhesaff.py
+#        python pyhesaff\_pyhesaff.py --allexamples
+#    """
+#    import multiprocessing
+#    multiprocessing.freeze_support()  # for win32
+#    import utool as ut  # NOQA
+#    ut.doctest_funcs()
+
+
 if __name__ == '__main__':
     """
     CommandLine:
-        python -c "import utool, pyhesaff._pyhesaff; utool.doctest_funcs(pyhesaff._pyhesaff, allexamples=True)"
-        python -c "import utool, pyhesaff._pyhesaff; utool.doctest_funcs(pyhesaff._pyhesaff)"
-        python pyhesaff\_pyhesaff.py
-        python pyhesaff\_pyhesaff.py --allexamples
+        python -m pyhesaff._pyhesaff
+        python -m pyhesaff._pyhesaff --allexamples
+        python -m pyhesaff._pyhesaff --allexamples --noface --nosrc
     """
     import multiprocessing
     multiprocessing.freeze_support()  # for win32
