@@ -1,7 +1,7 @@
 # flake8: noqa
 from __future__ import absolute_import, print_function, division
 
-__version__ = '1.1.0.dev1'
+__version__ = '1.1.1.dev1'
 
 import utool as ut
 ut.noinject(__name__, '[pyhesaff.__init__]')
