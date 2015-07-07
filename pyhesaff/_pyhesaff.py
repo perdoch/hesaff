@@ -220,12 +220,14 @@ if __DEBUG__:
 
 
 def _alloc_vecs(nKpts):
-    vecs = np.empty((nKpts, DESC_DIM), vecs_dtype)
+    #vecs = np.empty((nKpts, DESC_DIM), vecs_dtype)
+    vecs = np.zeros((nKpts, DESC_DIM), vecs_dtype)
     return vecs
 
 
 def _allocate_kpts_and_vecs(nKpts):
-    kpts = np.empty((nKpts, KPTS_DIM), kpts_dtype)  # array of floats
+    #kpts = np.empty((nKpts, KPTS_DIM), kpts_dtype)  # array of floats
+    kpts = np.zeros((nKpts, KPTS_DIM), kpts_dtype) - 1.0  # array of floats
     vecs = _alloc_vecs(nKpts)  # array of bytes
     return kpts, vecs
 
@@ -571,11 +573,33 @@ def detect_kpts_list(image_paths_list, **kwargs):
         >>> from pyhesaff._pyhesaff import *  # NOQA
         >>> import utool as ut
         >>> lena_fpath = ut.grab_test_imgpath('lena.png')  # ut.grab_file_url('http://i.imgur.com/JGrqMnV.png', fname='lena.png')
-        >>> carl_fpath = ut.grab_test_imgpath('carl.jpg')
-        >>> image_paths_list = [lena_fpath, carl_fpath, ut.grab_test_imgpath('star.png')]
+        >>> image_paths_list = [ut.grab_test_imgpath('carl.jpg'), ut.grab_test_imgpath('star.png'), lena_fpath]  #, ut.grab_test_imgpath('carl.jpg')]
         >>> (kpts_list, vecs_list) = detect_kpts_list(image_paths_list)
         >>> #print((kpts_list, vecs_list))
-        >>> print(ut.depth_profile(vecs_list))
+        >>> print(ut.depth_profile(kpts_list))
+        >>> # Assert that the normal version agrees
+        >>> serial_list = [detect_kpts(fpath) for fpath in image_paths_list]
+        >>> kpts_list2 = ut.get_list_column(serial_list, 0)
+        >>> vecs_list2 = ut.get_list_column(serial_list, 1)
+        >>> print(ut.depth_profile(kpts_list2))
+        >>> diff_kpts = [kpts - kpts2 for kpts, kpts2 in zip(kpts_list, kpts_list2)]
+        >>> diff_vecs = [vecs - vecs2 for vecs, vecs2 in zip(vecs_list, vecs_list2)]
+        >>> #diff_kpts_xs = [np.nonzero(d.sum(axis=1))[0] for d in diff_kpts]
+        >>> #diff_vecs_xs = [np.nonzero(d.sum(axis=1))[0] for d in diff_vecs]
+        >>> #print('+---- kpts_list')
+        >>> #print(ut.list_str(kpts_list, precision=1, suppress_small=True))
+        >>> #print('+---- kpts_list2')
+        >>> #print(ut.list_str(kpts_list2, precision=1, suppress_small=True))
+        >>> #print('+---- diff_kpts')
+        >>> #print(ut.list_str(diff_kpts_xs, precision=1, suppress_small=True))
+        >>> #print('+---- vecs_list')
+        >>> #print(ut.list_str(vecs_list, precision=1, suppress_small=True))
+        >>> #print('+---- vecs_list2')
+        >>> #print(ut.list_str(vecs_list2, precision=1, suppress_small=True))
+        >>> #print('+---- diff_vecs')
+        >>> #print(ut.list_str(diff_vecs_xs, precision=1, suppress_small=True))
+        >>> assert all([x.sum() == 0 for x in diff_kpts]), 'inconsistent results'
+        >>> assert all([x.sum() == 0 for x in diff_vecs]), 'inconsistent results'
 
     """
     # Get Num Images
@@ -633,7 +657,8 @@ def detect_kpts_list(image_paths_list, **kwargs):
         total_pts = length_array.sum()
         flat_kpts_ptr, flat_vecs_ptr = _allocate_kpts_and_vecs(nImgs * total_pts)
         # TODO: get this working
-        offset_array = length_array.cumsum().astype(int_t) - length_array[0]
+        offset_array = np.roll(length_array.cumsum(), 1).astype(int_t)  # np.array([0] + length_array.cumsum().tolist()[0:-1], int_t)
+        offset_array[0] = 0
         HESAFF_CLIB.detectKeypointsListStep3(nImgs, detector_array, length_array, offset_array, flat_kpts_ptr, flat_vecs_ptr)
 
         # reshape into jagged arrays

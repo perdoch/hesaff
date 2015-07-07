@@ -1155,6 +1155,7 @@ PYHESAFF void detectKeypointsList(int num_filenames,
                                   __HESAFF_PARAM_SIGNATURE_ARGS__
                                   )
 {
+    assert(0);  // do not use
     // Maybe use this implimentation instead to be more similar to the way
     // pyhesaff calls this library?
     int index;
@@ -1179,16 +1180,17 @@ PYHESAFF AffineHessianDetector** detectKeypointsListStep1(int num_filenames,
                                                           char** image_filename_list,
                                                           __HESAFF_PARAM_SIGNATURE_ARGS__)
 {
+    printDBG("detectKeypointsListStep1()");
     // Create all of the detector_array
     AffineHessianDetector** detector_array = new AffineHessianDetector*[num_filenames];
     int index;
-    #pragma omp parallel for private(index)
+    //#pragma omp parallel for private(index)
     for(index = 0; index < num_filenames; ++index)
     {
         char* image_filename = image_filename_list[index];
         AffineHessianDetector* detector =
             new_hesaff_from_fpath_and_params(image_filename, __HESAFF_PARAM_CALL_ARGS__);
-        detector->DBG_params();
+        //detector->DBG_params();
         detector_array[index] = detector;
     }
     return detector_array;
@@ -1196,13 +1198,13 @@ PYHESAFF AffineHessianDetector** detectKeypointsListStep1(int num_filenames,
 
 PYHESAFF void detectKeypointsListStep2(int num_filenames, AffineHessianDetector** detector_array, int* length_array)
 {
+    printDBG("detectKeypointsListStep2()");
     // Run Detection
     int index;
-    #pragma omp parallel for private(index)
+    //#pragma omp parallel for private(index)
     for(index = 0; index < num_filenames; ++index)
     {
         AffineHessianDetector* detector = detector_array[index];
-        detector->DBG_params();
         int length = detector->detect();
         length_array[index] = length;
     }
@@ -1212,21 +1214,28 @@ PYHESAFF void detectKeypointsListStep3(int num_filenames,
                                        AffineHessianDetector** detector_array, 
                                        int* length_array,
                                        int* offset_array,
-                                       float* keypoints_array, 
-                                       uint8* descriptors_array)
+                                       float* flat_keypoints, 
+                                       uint8* flag_descriptors)
 {
+    printDBG("detectKeypointsListStep3()");
     // Export the results
     int index;
-    #pragma omp parallel for private(index)
+    //#pragma omp parallel for private(index)
     for(index = 0; index < num_filenames; ++index)
     {
         AffineHessianDetector* detector = detector_array[index];
         int length = length_array[index];
         int offset = offset_array[index];
-        float *keypoints = &keypoints_array[offset * KPTS_DIM];
-        uint8 *descriptors = &descriptors_array[offset * DESC_DIM];
+        printDBG("offset " << offset)
+        printDBG("length " << length)
+        float *keypoints = &flat_keypoints[offset * KPTS_DIM];
+        uint8 *descriptors = &flag_descriptors[offset * DESC_DIM];
         exportArrays(detector, length, keypoints, descriptors);
-        delete detector;
+    }
+    // Clean up 
+    for(index = 0; index < num_filenames; ++index)
+    {
+        delete detector_array[index];
     }
     delete detector_array;
 }
@@ -1240,6 +1249,7 @@ PYHESAFF void detectKeypointsList1(int num_filenames,
                                    __HESAFF_PARAM_SIGNATURE_ARGS__
                                    )
 {
+    assert(0);   // do not use
     int index;
     #pragma omp parallel for private(index)
     for(index = 0; index < num_filenames; ++index)
