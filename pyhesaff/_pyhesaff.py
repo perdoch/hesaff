@@ -31,6 +31,7 @@ try:
     from pyhesaff import ctypes_interface
 except ValueError:
     import ctypes_interface
+import ctypes
 import ctypes as C
 from collections import OrderedDict
 # Scientific
@@ -198,6 +199,9 @@ def load_hesaff_clib(rebuild=None):
     def_cfunc(None,  'detectKeypointsList',    [int_t, str_list_t, kpts_array_t,
                                                 vecs_array_t, int_array_t] +
                                                 HESAFF_PARAM_TYPES)
+    def_cfunc(obj_t, 'detectKeypointsListStep1',   [int_t, str_list_t] + HESAFF_PARAM_TYPES)
+    def_cfunc(None,  'detectKeypointsListStep2',    [int_t, obj_t, int_array_t])
+    def_cfunc(None,  'detectKeypointsListStep3',    [int_t, obj_t, int_array_t, int_array_t, kpts_t, vecs_t])
     return clib, lib_fpath
 
 # Create a global interface to the hesaff lib
@@ -246,16 +250,24 @@ def _cast_strlist_to_C(py_strlist):
     return c_strarr
 
 
-def arrptr_to_np(c_arrptr, shape, arr_t, dtype):
+def arrptr_to_np_OLD(c_arrptr, shape, arr_t, dtype):
     """
     Casts an array pointer from C to numpy
-    Input:
-        c_arrpt - an array pointer returned from C
-        shape   - shape of that array pointer
-        arr_t   - the ctypes datatype of c_arrptr
+
+    Args:
+        c_arrptr (uint64): a pointer to an array returned from C
+        shape (tuple): shape of the underlying array being pointed to
+        arr_t (PyCSimpleType): the ctypes datatype of c_arrptr
+        dtype (dtype): numpy datatype the array will be to cast into
+
+    CommandLine:
+        python2 -m pyhesaff._pyhesaff --test-detect_kpts_list:0 --rebuild-hesaff
+        python2 -m pyhesaff._pyhesaff --test-detect_kpts_list:0
+        python3 -m pyhesaff._pyhesaff --test-detect_kpts_list:0
+
     """
     try:
-        byte_t = C.c_char
+        byte_t = ctypes.c_char
         itemsize_ = dtype().itemsize
         #import utool
         #utool.printvar2('itemsize_')
@@ -264,10 +276,11 @@ def arrptr_to_np(c_arrptr, shape, arr_t, dtype):
         #dtype_ptr_t1 = C.POINTER(dtype_t1)  # size of each item
         #dtype_ptr_t = dtype_ptr_t1
         ###---------
-        if six.PY2:
+        if True or six.PY2:
+            # datatype of array elements
             dtype_t = byte_t * itemsize_
             dtype_ptr_t = C.POINTER(dtype_t)  # size of each item
-            #typed_c_arrptr = c_arrptr.astype(int)
+            #typed_c_arrptr = c_arrptr.astype(C.c_long)
             typed_c_arrptr = c_arrptr.astype(int)
             c_arr = C.cast(typed_c_arrptr, dtype_ptr_t)   # cast to ctypes
             #raise Exception('fuuu. Why does 2.7 work? Why does 3.4 not!?!!!')
@@ -277,6 +290,9 @@ def arrptr_to_np(c_arrptr, shape, arr_t, dtype):
             #typed_c_arrptr = c_arrptr.astype(int)
             #typed_c_arrptr = c_arrptr.astype(C.c_size_t)
             typed_c_arrptr = c_arrptr.astype(int)
+            c_arr = C.cast(c_arrptr.astype(C.c_size_t), dtype_ptr_t)   # cast to ctypes
+            c_arr = C.cast(c_arrptr.astype(int), dtype_ptr_t)   # cast to ctypes
+            c_arr = C.cast(c_arrptr, dtype_ptr_t)   # cast to ctypes
             #typed_c_arrptr = c_arrptr.astype(int)
             #, order='C', casting='safe')
             #utool.embed()
@@ -307,12 +323,14 @@ def arrptr_to_np(c_arrptr, shape, arr_t, dtype):
         np_arr = np.ctypeslib.as_array(c_arr, shape)       # cast to numpy
         np_arr.dtype = dtype                               # fix numpy dtype
     except Exception as ex:
-        import utool
+        import utool as ut
         #utool.embed()
         varnames = sorted(list(locals().keys()))
         vartypes = [(type, name) for name in varnames]
         spaces    = [None for name in varnames]
-        key_list = list(utool.roundrobin(varnames, vartypes, spaces))
+        c_arrptr_dtype = c_arrptr.dtype  # NOQA
+        #key_list = list(zip(varnames, vartypes, spaces))
+        key_list = ['c_arrptr_dtype'] + 'c_arrptr, shape, arr_t, dtype'.split(', ')
         print('itemsize(float) = %r' % np.dtype(float).itemsize)
         print('itemsize(c_char) = %r' % np.dtype(C.c_char).itemsize)
         print('itemsize(c_wchar) = %r' % np.dtype(C.c_wchar).itemsize)
@@ -324,26 +342,10 @@ def arrptr_to_np(c_arrptr, shape, arr_t, dtype):
         print('itemsize(int) = %r' % np.dtype(int).itemsize)
         print('itemsize(float32) = %r' % np.dtype(np.float32).itemsize)
         print('itemsize(float64) = %r' % np.dtype(np.float64).itemsize)
-        utool.printex(ex, key_list=key_list)
+        ut.printex(ex, keys=key_list)
+        ut.embed()
         raise
     return np_arr
-
-
-def extract_2darr_list(size_list, ptr_list, arr_t, arr_dtype,
-                        arr_dim):
-    """
-    size_list - contains the size of each output 2d array
-    ptr_list  - an array of pointers to the head of each output 2d
-                array (which was allocated in C)
-    arr_t     - the C pointer type
-    arr_dtype - the numpy array type
-    arr_dim   - the number of columns in each output 2d array
-    """
-    iter_ = ((arr_ptr, (size, arr_dim))
-             for (arr_ptr, size) in zip(ptr_list, size_list))
-    arr_list = [arrptr_to_np(arr_ptr, shape, arr_t, arr_dtype)
-                for arr_ptr, shape in iter_]
-    return arr_list
 
 
 def get_hesaff_default_params():
@@ -568,10 +570,12 @@ def detect_kpts_list(image_paths_list, **kwargs):
         >>> # ENABLE_DOCTEST
         >>> from pyhesaff._pyhesaff import *  # NOQA
         >>> import utool as ut
-        >>> lena_fpath = ut.grab_file_url('http://i.imgur.com/JGrqMnV.png', fname='lena.png')
-        >>> image_paths_list = [lena_fpath]
+        >>> lena_fpath = ut.grab_test_imgpath('lena.png')  # ut.grab_file_url('http://i.imgur.com/JGrqMnV.png', fname='lena.png')
+        >>> carl_fpath = ut.grab_test_imgpath('carl.jpg')
+        >>> image_paths_list = [lena_fpath, carl_fpath, ut.grab_test_imgpath('star.png')]
         >>> (kpts_list, vecs_list) = detect_kpts_list(image_paths_list)
-        >>> print((kpts_list, vecs_list))
+        >>> #print((kpts_list, vecs_list))
+        >>> print(ut.depth_profile(vecs_list))
 
     """
     # Get Num Images
@@ -585,32 +589,126 @@ def detect_kpts_list(image_paths_list, **kwargs):
 
     c_strs = _cast_strlist_to_C(realpaths_list)
 
-    # Allocate empty array pointers for each image
-    kpts_ptr_array = np.empty(nImgs, dtype=kpts_t)  # array of float arrays
-    vecs_ptr_array = np.empty(nImgs, dtype=vecs_t)  # array of byte arrays
-    nDetect_array = np.empty(nImgs, dtype=int_t)  # array of detections per image
-
     # Get algorithm parameters
     hesaff_params = HESAFF_PARAM_DICT.copy()
     hesaff_params.update(kwargs)
     hesaff_args = hesaff_params.values()  # pass all parameters to HESAFF_CLIB
 
-    # Detect keypoints in parallel
-    HESAFF_CLIB.detectKeypointsList(nImgs, c_strs,
-                                    kpts_ptr_array, vecs_ptr_array,
-                                    nDetect_array, *hesaff_args)
+    NEW = True
+    if not NEW:
+        # Allocate empty array pointers for each image
+        kpts_ptr_array = np.empty(nImgs, dtype=kpts_t)  # array of float arrays
+        vecs_ptr_array = np.empty(nImgs, dtype=vecs_t)  # array of byte arrays
+        nDetect_array = np.empty(nImgs, dtype=int_t)  # array of detections per image
+        # Detect keypoints in parallel
+        HESAFF_CLIB.detectKeypointsList(nImgs, c_strs,
+                                        kpts_ptr_array, vecs_ptr_array,
+                                        nDetect_array, *hesaff_args)
 
-    # Cast keypoint array to list of numpy keypoints
-    kpts_list = extract_2darr_list(nDetect_array, kpts_ptr_array, kpts_t, kpts_dtype, KPTS_DIM)
-    # Cast decsriptor array to list of numpy decsriptors
-    vecs_list = extract_2darr_list(nDetect_array, vecs_ptr_array, vecs_t, vecs_dtype, DESC_DIM)
+        # TODO: this should return the sizes of the arrays, then numpy should allocate
+        # the memory and then the memory should be copied from C to numpy using
+        # two calls.
 
-    #kpts_list = [arrptr_to_np(kpts_ptr, (len_, KPTS_DIM), kpts_t, kpts_dtype)
-    #             for (kpts_ptr, len_) in zip(kpts_ptr_array, nDetect_array)]
-    #vecs_list = [arrptr_to_np(vecs_ptr, (len_, DESC_DIM), vecs_t, vecs_dtype)
-    #             for (vecs_ptr, len_) in zip(vecs_ptr_array, nDetect_array)]
+        #try:
+        # Cast keypoint array to list of numpy keypoints
+        kpts_list = extract_2darr_list(nDetect_array, kpts_ptr_array, kpts_t, kpts_dtype, KPTS_DIM)
+        # Cast decsriptor array to list of numpy decsriptors
+        vecs_list = extract_2darr_list(nDetect_array, vecs_ptr_array, vecs_t, vecs_dtype, DESC_DIM)
+        #except Exception:
+        #    raise
+        #    #argtypes = HESAFF_CLIB.detectKeypointsList.argtypes
+        #    #ut.printex(ex, 'error extracting 2darr list', keys=[
+        #    #    'argtypes'
+        #    #])
+        #    #ut.embed()
+
+        #kpts_list = [arrptr_to_np(kpts_ptr, (len_, KPTS_DIM), kpts_t, kpts_dtype)
+        #             for (kpts_ptr, len_) in zip(kpts_ptr_array, nDetect_array)]
+        #vecs_list = [arrptr_to_np(vecs_ptr, (len_, DESC_DIM), vecs_t, vecs_dtype)
+        #             for (vecs_ptr, len_) in zip(vecs_ptr_array, nDetect_array)]
+    else:
+        length_array = np.empty(nImgs, dtype=int_t)
+        detector_array = HESAFF_CLIB.detectKeypointsListStep1(nImgs, c_strs, *hesaff_args)
+        HESAFF_CLIB.detectKeypointsListStep2(nImgs, detector_array, length_array)
+        total_pts = length_array.sum()
+        flat_kpts_ptr, flat_vecs_ptr = _allocate_kpts_and_vecs(nImgs * total_pts)
+        # TODO: get this working
+        offset_array = length_array.cumsum().astype(int_t) - length_array[0]
+        HESAFF_CLIB.detectKeypointsListStep3(nImgs, detector_array, length_array, offset_array, flat_kpts_ptr, flat_vecs_ptr)
+
+        # reshape into jagged arrays
+        kpts_list = [flat_kpts_ptr[o:o + l] for o, l in zip(offset_array, length_array)]
+        vecs_list = [flat_vecs_ptr[o:o + l] for o, l in zip(offset_array, length_array)]
 
     return kpts_list, vecs_list
+
+
+def extract_2darr_list(size_list, ptr_list, arr_t, arr_dtype,
+                        arr_dim):
+    """
+    size_list - contains the size of each output 2d array
+    ptr_list  - an array of pointers to the head of each output 2d
+                array (which was allocated in C)
+    arr_t     - the C pointer type
+    arr_dtype - the numpy array type
+    arr_dim   - the number of columns in each output 2d array
+    """
+    iter_ = ((arr_ptr, (size, arr_dim))
+             for (arr_ptr, size) in zip(ptr_list, size_list))
+    arr_list = [arrptr_to_np(arr_ptr, shape, arr_t, arr_dtype)
+                for arr_ptr, shape in iter_]
+    return arr_list
+
+
+def arrptr_to_np(c_arrptr, shape, arr_t, dtype):
+    """
+    Casts an array pointer from C to numpy
+
+    Args:
+        c_arrptr (uint64): a pointer to an array returned from C
+        shape (tuple): shape of the underlying array being pointed to
+        arr_t (PyCSimpleType): the ctypes datatype of c_arrptr
+        dtype (dtype): numpy datatype the array will be to cast into
+
+    CommandLine:
+        python2 -m pyhesaff._pyhesaff --test-detect_kpts_list:0 --rebuild-hesaff
+        python2 -m pyhesaff._pyhesaff --test-detect_kpts_list:0
+        python3 -m pyhesaff._pyhesaff --test-detect_kpts_list:0
+
+    """
+    try:
+        byte_t = ctypes.c_char
+        itemsize_ = dtype().itemsize  # size of a single byte
+        dtype_t = byte_t * itemsize_  # datatype of array elements
+        dtype_ptr_t = C.POINTER(dtype_t)  # size of each item
+        typed_c_arrptr = c_arrptr.astype(int)
+        c_arr = C.cast(typed_c_arrptr, dtype_ptr_t)   # cast to ctypes
+        #raise Exception('fuuu. Why does 2.7 work? Why does 3.4 not!?!!!')
+        np_arr = np.ctypeslib.as_array(c_arr, shape)       # cast to numpy
+        np_arr.dtype = dtype                               # fix numpy dtype
+    except Exception as ex:
+        import utool as ut
+        #utool.embed()
+        varnames = sorted(list(locals().keys()))
+        vartypes = [(type, name) for name in varnames]
+        spaces    = [None for name in varnames]
+        c_arrptr_dtype = c_arrptr.dtype  # NOQA
+        #key_list = list(zip(varnames, vartypes, spaces))
+        key_list = ['c_arrptr_dtype'] + 'c_arrptr, shape, arr_t, dtype'.split(', ')
+        print('itemsize(float) = %r' % np.dtype(float).itemsize)
+        print('itemsize(c_char) = %r' % np.dtype(C.c_char).itemsize)
+        print('itemsize(c_wchar) = %r' % np.dtype(C.c_wchar).itemsize)
+        print('itemsize(c_char_p) = %r' % np.dtype(C.c_char_p).itemsize)
+        print('itemsize(c_wchar_p) = %r' % np.dtype(C.c_wchar_p).itemsize)
+        print('itemsize(c_int) = %r' % np.dtype(C.c_int).itemsize)
+        print('itemsize(c_int32) = %r' % np.dtype(C.c_int32).itemsize)
+        print('itemsize(c_int64) = %r' % np.dtype(C.c_int64).itemsize)
+        print('itemsize(int) = %r' % np.dtype(int).itemsize)
+        print('itemsize(float32) = %r' % np.dtype(np.float32).itemsize)
+        print('itemsize(float64) = %r' % np.dtype(np.float64).itemsize)
+        ut.printex(ex, keys=key_list)
+        raise
+    return np_arr
 
 
 def detect_kpts_in_image(img, **kwargs):

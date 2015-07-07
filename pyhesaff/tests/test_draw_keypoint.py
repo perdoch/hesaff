@@ -11,6 +11,7 @@ from six.moves import range
 from itertools import product as iprod
 #import vtool  # NOQA
 import utool as ut
+import six
 
 
 px_ = 0
@@ -106,7 +107,8 @@ def test_draw_keypoint_main():
     nCols = 4
 
     import plottool as pt
-    pnum_ = pt.pnum_generator(nRows, nCols).next
+    #pnum_ = pt.pnum_generator(nRows, nCols).next
+    pnum_ = pt.pnum_generator(nRows, nCols)
 
     #def pnum_(px=None):
     #    global px_
@@ -138,7 +140,7 @@ def test_draw_keypoint_main():
         skew = (MIN_SWEW * (1 - beta))  + (MAX_SKEW * (beta))
         ysca = (MIN_Y    * (1 - beta))  + (MAX_Y    * (beta))
 
-        kpts, sifts = test_shape(pnum=pnum_(),
+        kpts, sifts = test_shape(pnum=six.next(pnum_),
                                  ori=ori,
                                  skew=skew,
                                  xscale=xsca,

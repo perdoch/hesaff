@@ -1174,6 +1174,64 @@ PYHESAFF void detectKeypointsList(int num_filenames,
     }
 }
 
+
+PYHESAFF AffineHessianDetector** detectKeypointsListStep1(int num_filenames,
+                                                          char** image_filename_list,
+                                                          __HESAFF_PARAM_SIGNATURE_ARGS__)
+{
+    // Create all of the detector_array
+    AffineHessianDetector** detector_array = new AffineHessianDetector*[num_filenames];
+    int index;
+    #pragma omp parallel for private(index)
+    for(index = 0; index < num_filenames; ++index)
+    {
+        char* image_filename = image_filename_list[index];
+        AffineHessianDetector* detector =
+            new_hesaff_from_fpath_and_params(image_filename, __HESAFF_PARAM_CALL_ARGS__);
+        detector->DBG_params();
+        detector_array[index] = detector;
+    }
+    return detector_array;
+}
+
+PYHESAFF void detectKeypointsListStep2(int num_filenames, AffineHessianDetector** detector_array, int* length_array)
+{
+    // Run Detection
+    int index;
+    #pragma omp parallel for private(index)
+    for(index = 0; index < num_filenames; ++index)
+    {
+        AffineHessianDetector* detector = detector_array[index];
+        detector->DBG_params();
+        int length = detector->detect();
+        length_array[index] = length;
+    }
+}
+
+PYHESAFF void detectKeypointsListStep3(int num_filenames, 
+                                       AffineHessianDetector** detector_array, 
+                                       int* length_array,
+                                       int* offset_array,
+                                       float* keypoints_array, 
+                                       uint8* descriptors_array)
+{
+    // Export the results
+    int index;
+    #pragma omp parallel for private(index)
+    for(index = 0; index < num_filenames; ++index)
+    {
+        AffineHessianDetector* detector = detector_array[index];
+        int length = length_array[index];
+        int offset = offset_array[index];
+        float *keypoints = &keypoints_array[offset * KPTS_DIM];
+        uint8 *descriptors = &descriptors_array[offset * DESC_DIM];
+        exportArrays(detector, length, keypoints, descriptors);
+        delete detector;
+    }
+    delete detector_array;
+}
+
+
 PYHESAFF void detectKeypointsList1(int num_filenames,
                                    char** image_filename_list,
                                    float** keypoints_array,
