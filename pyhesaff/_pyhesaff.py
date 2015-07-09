@@ -232,13 +232,14 @@ def _allocate_kpts_and_vecs(nKpts):
     return kpts, vecs
 
 
-def _make_hesaff_cpp_params(**kwargs):
+def _make_hesaff_cpp_params(kwargs):
     hesaff_params = HESAFF_PARAM_DICT.copy()
     for key, val in six.iteritems(kwargs):
         if key in hesaff_params:
             hesaff_params[key] = val
         else:
             print('[pyhesaff] WARNING: key=%r is not known' % key)
+    return hesaff_params
 
 
 def _cast_strlist_to_C(py_strlist):
@@ -381,14 +382,15 @@ def get_cpp_version():
 
 def _new_fpath_hesaff(img_fpath, **kwargs):
     """ Creates new detector object which reads the image """
-    hesaff_params = HESAFF_PARAM_DICT.copy()
-    hesaff_params.update(kwargs)
-    try:
-        assert len(hesaff_params) == len(HESAFF_PARAM_DICT), (
-            'len(hesaff_params) = %d, len(HESAFF_PARAM_DICT)=%d' % (len(hesaff_params), len(HESAFF_PARAM_DICT)))
-    except AssertionError as ex:
-        print('Unknown paramaters = %s' % (ut.dict_str(ut.dict_setdiff(kwargs, HESAFF_PARAM_DICT.keys()))))
-        raise
+    hesaff_params = _make_hesaff_cpp_params(kwargs)
+    #hesaff_params = HESAFF_PARAM_DICT.copy()
+    #hesaff_params.update(kwargs)
+    #try:
+    #    assert len(hesaff_params) == len(HESAFF_PARAM_DICT), (
+    #        'len(hesaff_params) = %d, len(HESAFF_PARAM_DICT)=%d' % (len(hesaff_params), len(HESAFF_PARAM_DICT)))
+    #except AssertionError as ex:
+    #    print('Unknown paramaters = %s' % (ut.dict_str(ut.dict_setdiff(kwargs, HESAFF_PARAM_DICT.keys()))))
+    #    raise
 
     if __DEBUG__:
         print('[hes] New Hesaff')
@@ -413,14 +415,15 @@ def _new_fpath_hesaff(img_fpath, **kwargs):
 
 def _new_image_hesaff(img, **kwargs):
     """ Creates new detector object which reads the image """
-    hesaff_params = HESAFF_PARAM_DICT.copy()
-    hesaff_params.update(kwargs)
-    try:
-        assert len(hesaff_params) == len(HESAFF_PARAM_DICT), (
-            'len(hesaff_params) = %d, len(HESAFF_PARAM_DICT)=%d' % (len(hesaff_params), len(HESAFF_PARAM_DICT)))
-    except AssertionError as ex:
-        print('Unknown paramaters = %s' % (ut.dict_str(ut.dict_setdiff(kwargs, HESAFF_PARAM_DICT.keys()))))
-        raise
+    hesaff_params = _make_hesaff_cpp_params(kwargs)
+    #hesaff_params = HESAFF_PARAM_DICT.copy()
+    #hesaff_params.update(kwargs)
+    #try:
+    #    assert len(hesaff_params) == len(HESAFF_PARAM_DICT), (
+    #        'len(hesaff_params) = %d, len(HESAFF_PARAM_DICT)=%d' % (len(hesaff_params), len(HESAFF_PARAM_DICT)))
+    #except AssertionError as ex:
+    #    print('Unknown paramaters = %s' % (ut.dict_str(ut.dict_setdiff(kwargs, HESAFF_PARAM_DICT.keys()))))
+    #    raise
 
     if __DEBUG__:
         print('[hes] New Hesaff')
