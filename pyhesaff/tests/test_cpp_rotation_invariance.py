@@ -112,7 +112,7 @@ def test_cpp_rotinvar_main():
 
 
     Example:
-        >>> # ENABLE_DOCTEST
+        >>> # DISABLE_DOCTEST
         >>> from pyhesaff.tests.test_cpp_rotation_invariance import *  # NOQA
         >>> # build test data
         >>> # execute function
