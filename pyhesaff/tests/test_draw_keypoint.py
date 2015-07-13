@@ -23,11 +23,16 @@ def test_draw_keypoint_main():
         python -m pyhesaff.tests.test_draw_keypoint --test-test_draw_keypoint_main --show
 
     Example:
-        >>> # ENABLE_DOCTEST
+        >>> # DISABLE_DOCTEST
         >>> from pyhesaff.tests.test_draw_keypoint import *  # NOQA
         >>> test_draw_keypoint_main()
         >>> ut.show_if_requested()
     """
+
+    # TODO: Gui tests yield:
+    # Jul 13 13:14:53 www.longerdog.com Python[23974] <Error>: This user is not allowed access to the window system right now.
+    # don't do window access without --show
+
     TAU = 2 * np.pi
 
     # Hack these directions to be relative to gravity

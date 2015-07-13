@@ -120,6 +120,7 @@ def test_cpp_rotinvar_main():
         >>> # verify results
         >>> print(result)
     """
+    # TODO; take visualization out of this test by default
     from pyhesaff.tests import pyhestest
     import pyhesaff
     # Read data
