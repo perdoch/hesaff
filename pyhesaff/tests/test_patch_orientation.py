@@ -116,7 +116,7 @@ def test_patch_ori_main():
         python -m pyhesaff.tests.test_patch_orientation --test-test_patch_ori_main --show
 
     Example:
-        >>> # ENABLE_DOCTEST
+        >>> # GUI_DOCTEST
         >>> from pyhesaff.tests.test_patch_orientation import *  # NOQA
         >>> test_patch_ori_main()
         >>> ut.show_if_requested()
