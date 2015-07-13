@@ -143,7 +143,7 @@ def test_adaptive_scale_main():
         python -m pyhesaff.tests.test_adaptive_scale --test-test_adaptive_scale_main --show
 
     Example:
-        >>> # ENABLE_DOCTEST
+        >>> # DISABLE_DOCTEST
         >>> from pyhesaff.tests.test_adaptive_scale import *  # NOQA
         >>> # build test data
         >>> # execute function
@@ -156,6 +156,7 @@ def test_adaptive_scale_main():
 
     #adaptive_locals = test_adaptive_scale()
     # They seem to work
+    # TODO: take the gui functions out of this test
     test_adaptive_scale()
 
     if ut.show_was_requested():
