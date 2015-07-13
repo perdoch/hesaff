@@ -22,7 +22,7 @@ def test_ori_extract_main():
         python -m pyhesaff.tests.test_exhaustive_ori_extract --test-test_ori_extract_main --show
 
     Example:
-        >>> # ENABLE_DOCTEST
+        >>> # GUI_DOCTEST
         >>> from pyhesaff.tests.test_exhaustive_ori_extract import *  # NOQA
         >>> test_ori_extract_main()
         >>> ut.show_if_requested()
