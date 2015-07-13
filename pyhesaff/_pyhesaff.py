@@ -929,7 +929,7 @@ def test_rot_invar():
         python -m vtool.tests.dummy --test-testdata_ratio_matches --show --ratio_thresh=1.1 --rotation_invariance --rebuild-hesaff
 
     Example:
-        >>> # ENABLE_DOCTEST
+        >>> # DISABLE_DODCTEST
         >>> from pyhesaff._pyhesaff import *  # NOQA
         >>> test_rot_invar()
     """
