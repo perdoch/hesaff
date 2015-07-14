@@ -2,6 +2,9 @@
 """
 The python hessian affine keypoint module
 
+TODO:
+    need to delete hesaff objects
+
 Command Line:
     python -c "import utool as ut; ut.write_modscript_alias('Fshow.sh', 'pyhesaff._pyhesaff --test-detect_kpts --fname easy1.png --verbose  --show')"
     Fshow.sh --no-affine_invariance --scale-max=150 --darken .5
@@ -56,6 +59,7 @@ __DEBUG__ = '--debug-pyhesaff' in sys.argv or '--debug' in sys.argv
 kpts_dtype = np.float32
 vecs_dtype = np.uint8
 img_dtype  = np.uint8
+img32_dtype  = np.float32
 # scalar ctypes
 obj_t     = C.c_void_p
 str_t     = C.c_char_p
@@ -77,6 +81,7 @@ FLAGS_RO = 'aligned, c_contiguous'
 kpts_t       = np.ctypeslib.ndpointer(dtype=kpts_dtype, ndim=2, flags=FLAGS_RW)
 vecs_t       = np.ctypeslib.ndpointer(dtype=vecs_dtype, ndim=2, flags=FLAGS_RW)
 img_t        = np.ctypeslib.ndpointer(dtype=img_dtype, ndim=3, flags=FLAGS_RO)
+img32_t      = np.ctypeslib.ndpointer(dtype=img32_dtype, ndim=3, flags=FLAGS_RO)
 kpts_array_t = np.ctypeslib.ndpointer(dtype=kpts_t, ndim=1, flags=FLAGS_RW)
 vecs_array_t = np.ctypeslib.ndpointer(dtype=vecs_t, ndim=1, flags=FLAGS_RW)
 int_array_t  = np.ctypeslib.ndpointer(dtype=int_t, ndim=1, flags=FLAGS_RW)
@@ -192,6 +197,7 @@ def load_hesaff_clib(rebuild=None):
     def_cfunc(int_t, 'get_desc_dim',           [])
     def_cfunc(None,  'exportArrays',           [obj_t, int_t, kpts_t, vecs_t])
     def_cfunc(None,  'extractDesc',            [obj_t, int_t, kpts_t, vecs_t])
+    def_cfunc(None,  'extractPatches',         [obj_t, int_t, kpts_t, img32_t])
     def_cfunc(None,  'extractDescFromPatches', [int_t, int_t, int_t, img_t, vecs_t])
     def_cfunc(obj_t, 'new_hesaff',             [str_t])
     def_cfunc(obj_t, 'new_hesaff_from_fpath_and_params', [str_t] + HESAFF_PARAM_TYPES)
@@ -219,15 +225,20 @@ if __DEBUG__:
 #============================
 
 
+def _alloc_patches(nKpts, size=41):
+    patches = np.empty((nKpts, size, size), np.float32)
+    return patches
+
+
 def _alloc_vecs(nKpts):
-    #vecs = np.empty((nKpts, DESC_DIM), vecs_dtype)
-    vecs = np.zeros((nKpts, DESC_DIM), vecs_dtype)
+    vecs = np.empty((nKpts, DESC_DIM), vecs_dtype)
+    #vecs = np.zeros((nKpts, DESC_DIM), vecs_dtype)
     return vecs
 
 
 def _allocate_kpts_and_vecs(nKpts):
-    #kpts = np.empty((nKpts, KPTS_DIM), kpts_dtype)  # array of floats
-    kpts = np.zeros((nKpts, KPTS_DIM), kpts_dtype) - 1.0  # array of floats
+    kpts = np.empty((nKpts, KPTS_DIM), kpts_dtype)  # array of floats
+    #kpts = np.zeros((nKpts, KPTS_DIM), kpts_dtype) - 1.0  # array of floats
     vecs = _alloc_vecs(nKpts)  # array of bytes
     return kpts, vecs
 
@@ -459,7 +470,11 @@ def extract_vecs(img_fpath, kpts, **kwargs):
         ndarray[uint8_t, ndim=2]: vecs -  descriptor vectors
 
     CommandLine:
-        python -m pyhesaff._pyhesaff --test-extract_vecs
+        python -m pyhesaff._pyhesaff --test-extract_vecs:0
+        python -m pyhesaff._pyhesaff --test-extract_vecs:1 --fname=lena.png
+        python -m pyhesaff._pyhesaff --test-extract_vecs:1 --fname=patsy.jpg --show
+        python -m pyhesaff._pyhesaff --test-extract_vecs:1 --fname=carl.jpg
+        python -m pyhesaff._pyhesaff --test-extract_vecs:1 --fname=zebra.png
 
     Example:
         >>> # ENABLE_DOCTEST
@@ -470,6 +485,36 @@ def extract_vecs(img_fpath, kpts, **kwargs):
         >>> vecs = extract_vecs(img_fpath, kpts)
         >>> result = ('vecs = %s' % (str(vecs),))
         >>> print(result)
+
+    Example:
+        >>> # ENABLE_DOCTEST
+        >>> from pyhesaff._pyhesaff import *  # NOQA
+        >>> import vtool as vt
+        >>> img_fpath = ut.grab_test_imgpath(ut.get_argval('--fname', default='lena.png'))
+        >>> # Extract original keypoints
+        >>> kpts, vecs1 = detect_kpts(img_fpath)
+        >>> # Re-extract keypoints
+        >>> vecs2 = extract_vecs(img_fpath, kpts)
+        >>> # Descriptors should be the same
+        >>> errors = vt.L2_sift(vecs1, vecs2)
+        >>> errors_index = np.nonzero(errors)[0]
+        >>> print('errors = %r' % (errors,))
+        >>> print('errors_index = %r' % (errors_index,))
+        >>> print('errors.sum() = %r' % (errors.sum(),))
+        >>> # VISUALIZTION
+        >>> ut.quit_if_noshow()
+        >>> import plottool as pt
+        >>> # Extract the underlying grayscale patches
+        >>> img = vt.imread(img_fpath)
+        >>> patch_list_ = np.array(vt.get_warped_patches(img, kpts)[0])
+        >>> patch_list = np.array(vt.convert_image_list_colorspace(patch_list_, 'gray'))
+        >>> pt.interact_keypoints.ishow_keypoints(img_fpath, kpts[errors_index], vecs1[errors_index], fnum=1)
+        >>> ax = pt.draw_patches_and_sifts(patch_list[errors_index], vecs1[errors_index], pnum=(1, 2, 1), fnum=2)
+        >>> ax.set_title('patch extracted')
+        >>> ax = pt.draw_patches_and_sifts(patch_list[errors_index], vecs2[errors_index], pnum=(1, 2, 2), fnum=2)
+        >>> ax.set_title('image extracted')
+        >>> pt.set_figtitle('Error Keypoints')
+        >>> ut.show_if_requested()
     """
     hesaff_ptr = _new_fpath_hesaff(img_fpath, **kwargs)
     nKpts = len(kpts)
@@ -480,14 +525,67 @@ def extract_vecs(img_fpath, kpts, **kwargs):
     return vecs
 
 
+def extract_patches(img_fpath, kpts, **kwargs):
+    r"""
+    Extract SIFT descriptors at keypoint locations
+
+    Args:
+        img_fpath (?):
+        kpts (ndarray[float32_t, ndim=2]):  keypoints
+
+    Returns:
+        ndarray[uint8_t, ndim=2]: vecs -  descriptor vectors
+
+    CommandLine:
+        python -m pyhesaff._pyhesaff --test-extract_patches:0 --show
+        python -m pyhesaff._pyhesaff --test-extract_vecs:1 --fname=lena.png
+        python -m pyhesaff._pyhesaff --test-extract_vecs:1 --fname=patsy.jpg --show
+        python -m pyhesaff._pyhesaff --test-extract_vecs:1 --fname=carl.jpg
+        python -m pyhesaff._pyhesaff --test-extract_vecs:1 --fname=zebra.png
+
+    Example:
+        >>> # ENABLE_DOCTEST
+        >>> from pyhesaff._pyhesaff import *  # NOQA
+        >>> from pyhesaff._pyhesaff import _alloc_patches, _new_fpath_hesaff
+        >>> import vtool as vt
+        >>> kwargs = {}
+        >>> img_fpath = ut.grab_test_imgpath('carl.jpg')
+        >>> img = vt.imread(img_fpath)
+        >>> kpts, vecs1 = detect_kpts(img_fpath)
+        >>> kpts = kpts[1::len(kpts) // 9]
+        >>> vecs1 = vecs1[1::len(vecs1) // 9]
+        >>> cpp_patch_list = extract_patches(img_fpath, kpts)
+        >>> py_patch_list_ = np.array(vt.get_warped_patches(img, kpts, patch_size=41)[0])
+        >>> py_patch_list = np.array(vt.convert_image_list_colorspace(py_patch_list_, 'gray'))
+        >>> ut.quit_if_noshow()
+        >>> import plottool as pt
+        >>> ax = pt.draw_patches_and_sifts(cpp_patch_list, None, pnum=(1, 2, 1))
+        >>> ax.set_title('hesaff extracted')
+        >>> ax = pt.draw_patches_and_sifts(py_patch_list, None, pnum=(1, 2, 2))
+        >>> ax.set_title('python extracted')
+        >>> ut.show_if_requested()
+    """
+    hesaff_ptr = _new_fpath_hesaff(img_fpath, **kwargs)
+    nKpts = len(kpts)
+    patch_list = _alloc_patches(nKpts, 41)   # allocate memory for patches
+    patch_list[:] = 0
+    kpts = np.ascontiguousarray(kpts)  # kpts might not be contiguous
+    # extract decsriptors at given locations
+    HESAFF_CLIB.extractPatches(hesaff_ptr, nKpts, kpts, patch_list)
+    return patch_list
+
+
 def extract_desc_from_patches(patch_list):
     r"""
+    Careful about the way the patches are extracted here.
+
     Args:
-        patch_list (list):
+        patch_list (ndarray[ndims=3]):
 
     CommandLine:
         python -m pyhesaff._pyhesaff --test-extract_desc_from_patches  --rebuild-hesaff --no-rmbuild
         python -m pyhesaff._pyhesaff --test-extract_desc_from_patches  --rebuild-hesaff --no-rmbuild --show
+        python -m pyhesaff._pyhesaff --test-extract_desc_from_patches:1 --show
 
     Example:
         >>> # ENABLE_DOCTEST
@@ -495,15 +593,44 @@ def extract_desc_from_patches(patch_list):
         >>> from pyhesaff._pyhesaff import _alloc_vecs
         >>> import vtool as vt
         >>> img_fpath = ut.grab_test_imgpath(ut.get_argval('--fname', default='lena.png'))
-        >>> (kpts_list, vecs_list) = detect_kpts(img_fpath)
+        >>> # First extract keypoints normally
+        >>> (orig_kpts_list, orig_vecs_list) = detect_kpts(img_fpath)
+        >>> # Take 9 keypoints
         >>> img = vt.imread(img_fpath)
-        >>> kpts_list = kpts_list[1::len(kpts_list) // 9]
+        >>> kpts_list = orig_kpts_list[1::len(orig_kpts_list) // 9]
+        >>> vecs_list = orig_vecs_list[1::len(orig_vecs_list) // 9]
+        >>> # Extract the underlying grayscale patches (using different patch_size)
         >>> patch_list_ = np.array(vt.get_warped_patches(img, kpts_list, patch_size=64)[0])
         >>> patch_list = np.array(vt.convert_image_list_colorspace(patch_list_, 'gray'))
+        >>> # Extract descriptors from the patches
         >>> vecs_array = extract_desc_from_patches(patch_list)
+
+    Example:
+        >>> # ENABLE_DOCTEST
+        >>> from pyhesaff._pyhesaff import *  # NOQA
+        >>> from pyhesaff._pyhesaff import _alloc_vecs
+        >>> import vtool as vt
+        >>> img_fpath = ut.grab_test_imgpath(ut.get_argval('--fname', default='lena.png'))
+        >>> # First extract keypoints normally
+        >>> (orig_kpts_list, orig_vecs_list) = detect_kpts(img_fpath)
+        >>> # Take 9 keypoints
+        >>> img = vt.imread(img_fpath)
+        >>> kpts_list = orig_kpts_list[1::len(orig_kpts_list) // 9]
+        >>> vecs_list = orig_vecs_list[1::len(orig_vecs_list) // 9]
+        >>> # Extract the underlying grayscale patches
+        >>> patch_list_ = np.array(vt.get_warped_patches(img, kpts_list)[0])
+        >>> patch_list = np.array(vt.convert_image_list_colorspace(patch_list_, 'gray'))
+        >>> # Extract descriptors from thos patches
+        >>> vecs_array = extract_desc_from_patches(patch_list)
+        >>> # Comparse to see if they are close to the original descriptors
+        >>> errors = vt.L2_sift(vecs_list, vecs_array)
+        >>> print('Errors: %r' % (errors,))
         >>> ut.quit_if_noshow()
         >>> import plottool as pt
-        >>> pt.draw_patches_and_sifts(patch_list, vecs_array)
+        >>> ax = pt.draw_patches_and_sifts(patch_list, vecs_array, pnum=(1, 2, 1))
+        >>> ax.set_title('patch extracted')
+        >>> ax = pt.draw_patches_and_sifts(patch_list, vecs_list, pnum=(1, 2, 2))
+        >>> ax.set_title('image extracted')
         >>> ut.show_if_requested()
     """
     ndims = len(patch_list.shape)

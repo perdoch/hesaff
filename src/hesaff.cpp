@@ -329,6 +329,66 @@ public:
         }
     }
 
+    void extractPatches(int nKpts, float* kpts, float* patches_array)
+    {
+        /*
+         * Warps underlying keypoints into patches
+         */
+        
+        // Extract descriptors from user specified keypoints
+        float x, y, iv11, iv12, iv21, iv22;
+        float sc;
+        float a11, a12, a21, a22, s, ori;
+        for(int fx = 0; fx < (nKpts); fx++)
+        {
+            // 2D Array offsets
+            size_t rowk = fx * KPTS_DIM;
+            size_t rowd = fx * DESC_DIM;
+            //Read a keypoint from the file
+            x = kpts[rowk + 0];
+            y = kpts[rowk + 1];
+            // We are currently using invV format in HotSpotter
+            iv11 = kpts[rowk + 2];
+            iv12 = 0;
+            iv21 = kpts[rowk + 3];
+            iv22 = kpts[rowk + 4];
+#if USE_ORI
+            ori  = kpts[rowk + 5];
+#else
+            ori  = R_GRAVITY_THETA
+#endif
+            // Extract scale.
+            sc = sqrt(std::abs((iv11 * iv22) - (iv12 * iv21)));
+            // Deintegrate scale. Keep invA format
+            s  = (sc / AffineShape::par.mrSize); // scale
+            a11 = iv11 / sc;
+            a12 = 0;
+            a21 = iv21 / sc;
+            a22 = iv22 / sc;
+
+            int patch_size = AffineShape::par.patchSize;
+            int patch_area = patch_size * patch_size;
+            // now sample the patch (populates this->patch)
+            if(!this->normalizeAffine(this->image, x, y, s, a11, a12, a21, a22, ori))  //affine.cpp
+            {
+                float* pp = this->patch.ptr<float>(0);
+                int patch_size = this->patch.rows * this->patch.cols;
+                for(int ix = 0; ix < patch_size; ix++)
+                {
+                    *patches_array = *pp;  // populate outvar
+                    patches_array++;
+                    pp++;
+                }
+            }
+            else
+            {
+                // skip this data
+                patches_array += patch_area;
+                printDBG("Failure!");
+            }
+        }
+    }
+
     //------------------------------------------------------------
     // BEGIN void onAffineShapeFound
     // *
@@ -1065,6 +1125,16 @@ PYHESAFF void extractDesc(AffineHessianDetector* detector,
 {
     printDBG("detector->extractDesc");
     detector->extractDesc(nKpts, kpts, desc);
+    printDBG("extracted nKpts = " << nKpts);
+}
+
+
+// Extracts patches used to compute descriptors
+PYHESAFF void extractPatches(AffineHessianDetector* detector,
+                          int nKpts, float* kpts, float* patch_array)
+{
+    printDBG("detector->extractPatches");
+    detector->extractPatches(nKpts, kpts, patch_array);
     printDBG("extracted nKpts = " << nKpts);
 }
 
