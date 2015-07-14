@@ -527,14 +527,11 @@ def extract_vecs(img_fpath, kpts, **kwargs):
 
 def extract_patches(img_fpath, kpts, **kwargs):
     r"""
-    Extract SIFT descriptors at keypoint locations
+    Extract patches used to compute SIFT descriptors.
 
     Args:
         img_fpath (?):
         kpts (ndarray[float32_t, ndim=2]):  keypoints
-
-    Returns:
-        ndarray[uint8_t, ndim=2]: vecs -  descriptor vectors
 
     CommandLine:
         python -m pyhesaff._pyhesaff --test-extract_patches:0 --show
