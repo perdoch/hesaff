@@ -982,7 +982,7 @@ def detect_kpts(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kwa
         python -m pyhesaff._pyhesaff --test-detect_kpts --show --fname lena.png --no-affine-invariance --numberOfScales=1 --maxPyramidLevels=1 --use_dense --dense_stride=64
         python -m pyhesaff._pyhesaff --test-detect_kpts --show --fname lena.png --no-affine-invariance --numberOfScales=1 --maxPyramidLevels=1 --use_dense --dense_stride=64 --rotation-invariance
         python -m pyhesaff._pyhesaff --test-detect_kpts --show --fname lena.png --affine-invariance --numberOfScales=1 --maxPyramidLevels=1 --use_dense --dense_stride=64
-        python -m pyhesaff._pyhesaff --test-detect_kpts --show --fname lena.png --no-affine-invariance --numberOfScales=3 --maxPyramidLevels=2 --use_dense --dense_stride=64
+        python -m pyhesaff._pyhesaff --test-detect_kpts --show --fname lena.png --no-affine-invariance --numberOfScales=3 --maxPyramidLevels=2 --use_dense --dense_stride=32
 
 
     Example0:

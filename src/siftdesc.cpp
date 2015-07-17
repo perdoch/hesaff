@@ -172,6 +172,10 @@ void SIFTDescriptor::sample()
     // accumulate histograms
     this->samplePatch();
     // L2 normalization
+    // TODO: return original vector length
+    // then use this to filter out homogenous keypoints as in
+    // A comparison of dense region detectors for image search and fine-grained
+    // classification (2015)
     this->normalize();
     // check if there are some descriptor values above threshold
     bool changed = false;
