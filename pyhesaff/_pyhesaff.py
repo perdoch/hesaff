@@ -506,8 +506,9 @@ def extract_vecs(img_fpath, kpts, **kwargs):
         >>> import plottool as pt
         >>> # Extract the underlying grayscale patches
         >>> img = vt.imread(img_fpath)
-        >>> patch_list_ = np.array(vt.get_warped_patches(img, kpts)[0])
-        >>> patch_list = np.array(vt.convert_image_list_colorspace(patch_list_, 'gray'))
+        >>> #patch_list_ = np.array(vt.get_warped_patches(img, kpts)[0])
+        >>> #patch_list = np.array(vt.convert_image_list_colorspace(patch_list_, 'gray'))
+        >>> patch_list = extract_patches(img, kpts)
         >>> pt.interact_keypoints.ishow_keypoints(img_fpath, kpts[errors_index], vecs1[errors_index], fnum=1)
         >>> ax = pt.draw_patches_and_sifts(patch_list[errors_index], vecs1[errors_index], pnum=(1, 2, 1), fnum=2)
         >>> ax.set_title('patch extracted')
@@ -525,12 +526,12 @@ def extract_vecs(img_fpath, kpts, **kwargs):
     return vecs
 
 
-def extract_patches(img_fpath, kpts, **kwargs):
+def extract_patches(img_or_fpath, kpts, **kwargs):
     r"""
     Extract patches used to compute SIFT descriptors.
 
     Args:
-        img_fpath (?):
+        img_or_fpath (?):
         kpts (ndarray[float32_t, ndim=2]):  keypoints
 
     CommandLine:
@@ -548,21 +549,25 @@ def extract_patches(img_fpath, kpts, **kwargs):
         >>> kwargs = {}
         >>> img_fpath = ut.grab_test_imgpath('carl.jpg')
         >>> img = vt.imread(img_fpath)
+        >>> img_or_fpath = img
         >>> kpts, vecs1 = detect_kpts(img_fpath)
         >>> kpts = kpts[1::len(kpts) // 9]
         >>> vecs1 = vecs1[1::len(vecs1) // 9]
-        >>> cpp_patch_list = extract_patches(img_fpath, kpts)
-        >>> py_patch_list_ = np.array(vt.get_warped_patches(img, kpts, patch_size=41)[0])
+        >>> cpp_patch_list = extract_patches(img, kpts)
+        >>> py_patch_list_ = np.array(vt.get_warped_patches(img_or_fpath, kpts, patch_size=41)[0])
         >>> py_patch_list = np.array(vt.convert_image_list_colorspace(py_patch_list_, 'gray'))
         >>> ut.quit_if_noshow()
         >>> import plottool as pt
         >>> ax = pt.draw_patches_and_sifts(cpp_patch_list, None, pnum=(1, 2, 1))
-        >>> ax.set_title('hesaff extracted')
+        >>> ax.set_title('C++ extracted')
         >>> ax = pt.draw_patches_and_sifts(py_patch_list, None, pnum=(1, 2, 2))
-        >>> ax.set_title('python extracted')
+        >>> ax.set_title('Python extracted')
         >>> ut.show_if_requested()
     """
-    hesaff_ptr = _new_fpath_hesaff(img_fpath, **kwargs)
+    if isinstance(img_or_fpath, six.string_types):
+        hesaff_ptr = _new_fpath_hesaff(img_or_fpath, **kwargs)
+    else:
+        hesaff_ptr = _new_image_hesaff(img_or_fpath, **kwargs)
     nKpts = len(kpts)
     patch_list = _alloc_patches(nKpts, 41)   # allocate memory for patches
     patch_list[:] = 0
@@ -615,9 +620,13 @@ def extract_desc_from_patches(patch_list):
         >>> kpts_list = orig_kpts_list[1::len(orig_kpts_list) // 9]
         >>> vecs_list = orig_vecs_list[1::len(orig_vecs_list) // 9]
         >>> # Extract the underlying grayscale patches
-        >>> patch_list_ = np.array(vt.get_warped_patches(img, kpts_list)[0])
-        >>> patch_list = np.array(vt.convert_image_list_colorspace(patch_list_, 'gray'))
-        >>> # Extract descriptors from thos patches
+        >>> #patch_list_ = np.array(vt.get_warped_patches(img, kpts_list)[0])
+        >>> #patch_list = np.array(vt.convert_image_list_colorspace(patch_list_, 'gray'))
+        >>> patch_list = extract_patches(img, kpts_list)
+        >>> patch_list = np.round(patch_list).astype(np.uint8)
+        >>> # Currently its impossible to get the correct answer
+        >>> # TODO: allow patches to be passed in as float32
+        >>> # Extract descriptors from those patches
         >>> vecs_array = extract_desc_from_patches(patch_list)
         >>> # Comparse to see if they are close to the original descriptors
         >>> errors = vt.L2_sift(vecs_list, vecs_array)
