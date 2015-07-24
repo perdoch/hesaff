@@ -211,7 +211,11 @@ def load_hesaff_clib(rebuild=None):
     return clib, lib_fpath
 
 # Create a global interface to the hesaff lib
-HESAFF_CLIB, __LIB_FPATH__ = load_hesaff_clib()
+try:
+    HESAFF_CLIB, __LIB_FPATH__ = load_hesaff_clib()
+except AttributeError as ex:
+    ut.printex(ex, 'Need to rebuild hesaff')
+
 KPTS_DIM = HESAFF_CLIB.get_kpts_dim()
 DESC_DIM = HESAFF_CLIB.get_desc_dim()
 
