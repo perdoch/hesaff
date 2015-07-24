@@ -215,6 +215,7 @@ try:
     HESAFF_CLIB, __LIB_FPATH__ = load_hesaff_clib()
 except AttributeError as ex:
     ut.printex(ex, 'Need to rebuild hesaff')
+    raise
 
 KPTS_DIM = HESAFF_CLIB.get_kpts_dim()
 DESC_DIM = HESAFF_CLIB.get_desc_dim()
