@@ -17,6 +17,15 @@ using namespace cv;
 #define M_PI 3.14159
 #endif
 
+//#define DEBUG_SIFT 1
+#define DEBUG_SIFT 0
+
+#if DEBUG_SIFT
+    #define printDBG_SIFT(msg) std::cerr << "[sift.c] " << msg << std::endl;
+#else
+    #define printDBG_SIFT(msg);
+#endif
+
 // The SIFT descriptor is subject to US Patent 6,711,293
 
 SIFTDescriptor::SIFTDescriptor(const SIFTDescriptorParams &par) :
@@ -187,12 +196,22 @@ void SIFTDescriptor::sample()
             changed = true;
         }
     }
+    #if DEBUG_SIFT
+        printDBG_SIFT("changed " << changed);
+        printDBG_SIFT("this->par.maxBinValue " << this->par.maxBinValue);
+        float maxval_postclip = *max_element(this->vec.begin(), this->vec.end());
+        printDBG_SIFT("maxval_postclip " << maxval_postclip);
+    #endif 
     // L2 normalize descriptor vector again if it was clipped
     if(changed)
     {
         this->normalize();
     }
-    // Quantize into range 0-255 but use a hack
+    #if DEBUG_SIFT
+        float maxval_postnorm = *max_element(this->vec.begin(), this->vec.end());
+        printDBG_SIFT("maxval_postnorm " << maxval_postnorm);
+    #endif 
+    // Compress into range 0-255 but use a hack
     for(size_t i = 0; i < this->vec.size(); i++)
     {
         // Tricky: Components are gaurenteed to be less than .5 due to L2
@@ -200,6 +219,10 @@ void SIFTDescriptor::sample()
         int b = min((int)(512.0f * this->vec[i]), 255);
         this->vec[i] = float(b);
     }
+    #if DEBUG_SIFT
+        float maxval_postint = *max_element(this->vec.begin(), this->vec.end());
+        printDBG_SIFT("maxval_postint " << maxval_postint);
+    #endif 
 }
 
 void SIFTDescriptor::computeSiftDescriptor(Mat &patch)

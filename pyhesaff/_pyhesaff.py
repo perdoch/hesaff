@@ -1044,6 +1044,10 @@ def detect_kpts(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kwa
     if __DEBUG__:
         print('[hes] export')
     HESAFF_CLIB.exportArrays(hesaff_ptr, nKpts, kpts, vecs)  # Populate arrays
+    if __DEBUG__:
+        import vtool as vt
+        with ut.Indenter('[DBG_DETECT_KPTS]'):
+            assert vt.check_sift_validity(vecs)
     if use_adaptive_scale:  # Adapt scale if requested
         #print('Adapting Scale')
         if __DEBUG__:
