@@ -1,15 +1,8 @@
 #!/usr/bin/env python2.7
 from __future__ import absolute_import, division, print_function
-#import __sysreq__  # NOQA
-from plottool import draw_func2 as df2
-from plottool import mpl_keypoint
-#from plottool import mpl_sift  # NOQA
-import vtool.keypoint as ktool  # NOQA
 import numpy as np
-#import matplotlib as mpl  # NOQA
 from six.moves import range
 from itertools import product as iprod
-#import vtool  # NOQA
 import utool as ut
 import six
 
@@ -28,6 +21,9 @@ def test_draw_keypoint_main():
         >>> test_draw_keypoint_main()
         >>> ut.show_if_requested()
     """
+    from plottool import draw_func2 as df2
+    from plottool import mpl_keypoint
+    import vtool.keypoint as ktool  # NOQA
 
     # TODO: Gui tests yield:
     # Jul 13 13:14:53 www.longerdog.com Python[23974] <Error>: This user is not allowed access to the window system right now.

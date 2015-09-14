@@ -1,15 +1,8 @@
 #!/usr/bin/env python2.7
 from __future__ import absolute_import, division, print_function
 import numpy as np
-# Hesaff
 import utool as ut
-# Tools
 import utool
-from plottool import draw_func2 as df2
-from plottool.viz_keypoints import _annotate_kpts, show_keypoints
-from plottool.viz_featrow import draw_feat_row
-import plottool
-import vtool.patch as ptool
 
 
 def TEST_ptool_find_kpts_direction(imgBGR, kpts):
@@ -66,6 +59,11 @@ def TEST_figure2(imgBGR, kpts, desc, sel, fnum=2):
 
 
 def TEST_keypoint(imgBGR, img_fpath, kpts, desc, sel, fnum=1, figtitle=''):
+    from plottool import draw_func2 as df2
+    from plottool.viz_keypoints import _annotate_kpts, show_keypoints
+    from plottool.viz_featrow import draw_feat_row
+    import plottool
+    import vtool.patch as ptool
     #----------------------#
     # --- Extract Data --- #
     #----------------------#
