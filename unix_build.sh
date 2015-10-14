@@ -41,6 +41,7 @@ cd build
 
 echo "$OSTYPE"
 
+export PYEXE=$(which python2.7)
 if [[ "$VIRTUAL_ENV" == ""  ]]; then
     export LOCAL_PREFIX=/usr/local
     export _SUDO="sudo"
