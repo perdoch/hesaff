@@ -6,7 +6,7 @@ TODO:
     need to delete hesaff objects
 
 Command Line:
-    python -c "import utool as ut; ut.write_modscript_alias('Fshow.sh', 'pyhesaff._pyhesaff --test-detect_kpts --fname easy1.png --verbose  --show')"
+    python -c "import utool as ut; ut.write_modscript_alias('Fshow.sh', 'pyhesaff._pyhesaff --test-detect_kpts --fname easy1.png --verbose  --show')"  # NOQA
     Fshow.sh --no-affine_invariance --scale-max=150 --darken .5
     Fshow.sh --no-affine_invariance --scale-max=100 --darken .5
     Fshow.sh --no-affine_invariance --scale-max=100
@@ -403,9 +403,11 @@ def _new_fpath_hesaff(img_fpath, **kwargs):
     #hesaff_params.update(kwargs)
     #try:
     #    assert len(hesaff_params) == len(HESAFF_PARAM_DICT), (
-    #        'len(hesaff_params) = %d, len(HESAFF_PARAM_DICT)=%d' % (len(hesaff_params), len(HESAFF_PARAM_DICT)))
+    #        'len(hesaff_params) = %d, len(HESAFF_PARAM_DICT)=%d' %
+    #        (len(hesaff_params), len(HESAFF_PARAM_DICT)))
     #except AssertionError as ex:
-    #    print('Unknown paramaters = %s' % (ut.dict_str(ut.dict_setdiff(kwargs, HESAFF_PARAM_DICT.keys()))))
+    #    print('Unknown paramaters = %s' % (ut.dict_str(ut.dict_setdiff(kwargs,
+    #    HESAFF_PARAM_DICT.keys()))))
     #    raise
 
     if __DEBUG__:
@@ -436,9 +438,11 @@ def _new_image_hesaff(img, **kwargs):
     #hesaff_params.update(kwargs)
     #try:
     #    assert len(hesaff_params) == len(HESAFF_PARAM_DICT), (
-    #        'len(hesaff_params) = %d, len(HESAFF_PARAM_DICT)=%d' % (len(hesaff_params), len(HESAFF_PARAM_DICT)))
+    #        'len(hesaff_params) = %d, len(HESAFF_PARAM_DICT)=%d' %
+    #        (len(hesaff_params), len(HESAFF_PARAM_DICT)))
     #except AssertionError as ex:
-    #    print('Unknown paramaters = %s' % (ut.dict_str(ut.dict_setdiff(kwargs, HESAFF_PARAM_DICT.keys()))))
+    #    print('Unknown paramaters = %s' % (ut.dict_str(ut.dict_setdiff(kwargs,
+    #    HESAFF_PARAM_DICT.keys()))))
     #    raise
 
     if __DEBUG__:
@@ -451,9 +455,11 @@ def _new_image_hesaff(img, **kwargs):
     else:
         channels = img.shape[2]
     try:
-        hesaff_ptr = HESAFF_CLIB.new_hesaff_from_image_and_params(img, rows, cols, channels, *hesaff_args)
+        hesaff_ptr = HESAFF_CLIB.new_hesaff_from_image_and_params(
+            img, rows, cols, channels, *hesaff_args)
     except Exception as ex:
-        msg = 'hesaff_ptr = HESAFF_CLIB.new_hesaff_from_image_and_params(img_realpath, *hesaff_args)',
+        msg = ('hesaff_ptr = '
+               'HESAFF_CLIB.new_hesaff_from_image_and_params(img_realpath, *hesaff_args)')
         print(msg)
         print('hesaff_args = ')
         print(hesaff_args)
@@ -660,7 +666,8 @@ def extract_desc_from_patches(patch_list):
     # If the input array list is memmaped it is a good idea to process in chunks
     CHUNKS = isinstance(patch_list, np.memmap)
     if not CHUNKS:
-        HESAFF_CLIB.extractDescFromPatches(num_patches, patch_h, patch_w, patch_list, vecs_array)
+        HESAFF_CLIB.extractDescFromPatches(num_patches, patch_h, patch_w,
+                                           patch_list, vecs_array)
     else:
         from six.moves import range
         chunksize = 2048
@@ -671,14 +678,18 @@ def extract_desc_from_patches(patch_list):
             rx = (ix + 1) * chunksize
             patch_sublist = np.array(patch_list[lx:rx])
             sublist_size = rx - lx
-            HESAFF_CLIB.extractDescFromPatches(sublist_size, patch_h, patch_w, patch_sublist, vecs_array[lx:rx])
+            HESAFF_CLIB.extractDescFromPatches(sublist_size, patch_h, patch_w,
+                                               patch_sublist,
+                                               vecs_array[lx:rx])
         last_size = num_patches - rx
         if last_size > 0:
             lx = rx
             rx = lx + last_size
             patch_sublist = np.array(patch_list[lx:rx])
             sublist_size = rx - lx
-            HESAFF_CLIB.extractDescFromPatches(sublist_size, patch_h, patch_w, patch_sublist, vecs_array[lx:rx])
+            HESAFF_CLIB.extractDescFromPatches(sublist_size, patch_h, patch_w,
+                                               patch_sublist,
+                                               vecs_array[lx:rx])
     #print('vecs_array = %r' % (vecs_array,))
     return vecs_array
 
@@ -798,9 +809,12 @@ def detect_kpts_list(image_paths_list, **kwargs):
         total_pts = length_array.sum()
         flat_kpts_ptr, flat_vecs_ptr = _allocate_kpts_and_vecs(nImgs * total_pts)
         # TODO: get this working
-        offset_array = np.roll(length_array.cumsum(), 1).astype(int_t)  # np.array([0] + length_array.cumsum().tolist()[0:-1], int_t)
+        offset_array = np.roll(length_array.cumsum(), 1).astype(int_t)
+        # np.array([0] + length_array.cumsum().tolist()[0:-1], int_t)
         offset_array[0] = 0
-        HESAFF_CLIB.detectKeypointsListStep3(nImgs, detector_array, length_array, offset_array, flat_kpts_ptr, flat_vecs_ptr)
+        HESAFF_CLIB.detectKeypointsListStep3(nImgs, detector_array,
+                                             length_array, offset_array,
+                                             flat_kpts_ptr, flat_vecs_ptr)
 
         # reshape into jagged arrays
         kpts_list = [flat_kpts_ptr[o:o + l] for o, l in zip(offset_array, length_array)]
@@ -1118,9 +1132,11 @@ def test_rot_invar():
         rect = True
         if not ut.get_argflag('--nocpp'):
             if len(kpts_ri) > 0:
-                pt.draw_kpts2(kpts_ri, rect=rect, ell=ell, ori=True, ell_color=pt.RED, ell_linewidth=5.5)
+                pt.draw_kpts2(kpts_ri, rect=rect, ell=ell, ori=True,
+                              ell_color=pt.RED, ell_linewidth=5.5)
         if len(kpts_ripy) > 0:
-            pt.draw_kpts2(kpts_ripy, rect=rect, ell=ell,  ori=True, ell_color=pt.GREEN, ell_linewidth=3.5)
+            pt.draw_kpts2(kpts_ripy, rect=rect, ell=ell,  ori=True,
+                          ell_color=pt.GREEN, ell_linewidth=3.5)
         #print('\n'.join(vt.get_ori_strs(np.vstack([kpts_gv, kpts_ri, kpts_ripy]))))
         #ut.embed(exec_lines=['pt.update()'])
     pt.set_figtitle('green=python, red=C++')
@@ -1161,7 +1177,8 @@ def adapt_scale(img_fpath, kpts):
 #if __name__ == '__main__':
 #    """
 #    CommandLine:
-#        python -c "import utool, pyhesaff._pyhesaff; utool.doctest_funcs(pyhesaff._pyhesaff, allexamples=True)"
+#        python -c "import utool, pyhesaff._pyhesaff;
+#        utool.doctest_funcs(pyhesaff._pyhesaff, allexamples=True)"
 #        python -c "import utool, pyhesaff._pyhesaff; utool.doctest_funcs(pyhesaff._pyhesaff)"
 #        python pyhesaff\_pyhesaff.py
 #        python pyhesaff\_pyhesaff.py --allexamples
