@@ -40,6 +40,9 @@ from collections import OrderedDict
 # Scientific
 import numpy as np
 import utool as ut
+
+#raise ImportError('refused to import hesaff')
+
 #print, print_, printDBG, rrr, profile = ut.inject(__name__, '[hesaff]')
 
 #try:
