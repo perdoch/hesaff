@@ -939,10 +939,21 @@ def detect_kpts_in_image(img, **kwargs):
 
 
 def detect_kpts2(img_or_fpath, **kwargs):
+    """
+    General way of detecting from either an fpath or ndarray
+
+    Args:
+        img_or_fpath (str or ndarray):  file path string
+
+    Returns:
+        tuple
+    """
     if isinstance(img_or_fpath, six.string_types):
-        return detect_kpts(img_or_fpath, **kwargs)
+        fpath = img_or_fpath
+        return detect_kpts(fpath, **kwargs)
     else:
-        return detect_kpts_in_image(img_or_fpath, **kwargs)
+        img = img_or_fpath
+        return detect_kpts_in_image(img, **kwargs)
 
 
 #@profile
@@ -1029,7 +1040,7 @@ def detect_kpts(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kwa
         >>> fpath = ut.grab_test_imgpath(ut.get_argval('--fname', default='lena.png'))
         >>> theta = ut.get_argval('--theta', float, 0)  # TAU * 3 / 8)
         >>> img_fpath = vt.rotate_image_on_disk(fpath, theta)
-        >>> kwargs = ut.parse_dict_from_argv(get_hesaff_default_params())
+        >>> kwargs = ut.argparse_dict(get_hesaff_default_params())
         >>> (kpts_list, vecs_list) = detect_kpts(img_fpath, **kwargs)
         >>> #print(kpts_list)
         >>> #print(vecs_list)
