@@ -94,7 +94,12 @@ public:
 
     // fills patch with affine normalized neighbourhood around point in the img, enlarged mrSize times
     bool normalizeAffine(const cv::Mat &img, float x, float y, float s,
-                         float a11, float a12, float a21, float a22, float theta);
+                         float a11, float a12, float a21, float a22, float ori);
+
+    // Checks if we could fill affine neighborhood
+    bool normalizeAffineCheckBorders(const cv::Mat &img, float x, float y, float s,
+                                     float a11, float a12, float a21, float
+                                     a22, float ori);
 
 public:
     cv::Mat patch;  // member var to store a computed patch in

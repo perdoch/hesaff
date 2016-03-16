@@ -10,29 +10,39 @@ int global_c2 = 0;
  * the terms of the BSD license (see the COPYING file).
  *
  */
+// Modifications by Jon Crall
 /*
+ *
 CommandLine:
+    astyle --style=ansi --indent=spaces  --indent-classes  --indent-switches \
+        --indent-col1-comments --pad-oper --unpad-paren --delete-empty-lines \
+        --add-brackets *.cpp *.h
     mingw_build.bat && python -c "import utool as ut; ut.cmd('build/hesaffexe.exe ' + ut.grab_test_imgpath('star.png'))"
     ./unix_build.sh && python -c "import utool as ut; ut.cmd('build/hesaffexe ' + ut.grab_test_imgpath('star.png'))"
 
     python -m pyhesaff._pyhesaff --test-test_rot_invar --show --rebuild-hesaff --no-rmbuild
     python -m pyhesaff._pyhesaff --test-test_rot_invar --show
-
-
  */
 
 // Main File. Includes and uses the other files
 //
 
+#define DEBUG_HESAFF 0
+
 #include <iostream>
 #include <fstream>
 #include <string>
+#if DEBUG_HESAFF
 #include <assert.h>
+#endif
 #include <opencv2/core/core.hpp>
 //#include <opencv2/core/utility.hpp>
 
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
+
+#include <stdlib.h> // malloc
+#include <string.h> // strcpy
 
 #include "pyramid.h"
 #include "helpers.h"
@@ -62,8 +72,6 @@ CommandLine:
 // relative to gravity
 #define R_GRAVITY_THETA 0
 #endif
-
-#define DEBUG_HESAFF 0
 
 #if DEBUG_HESAFF
     #define printDBG(msg) std::cout << "[hesaff.c] " << msg << std::endl;
@@ -106,6 +114,7 @@ public:
     const cv::Mat image;
     SIFTDescriptor sift;
     std::vector<Keypoint> keys;
+    int num_kpts;
     HesaffParams hesPar;
 public:
     // Constructor
@@ -116,7 +125,7 @@ public:
                           const HesaffParams& hesParams):
         HessianDetector(par), AffineShape(ap), image(image), sift(sp), hesPar(hesParams)
     {
-        
+        this->num_kpts = 0;
         this->setHessianKeypointCallback(this); //Inherits from pyramid.h HessianDetector
         this->setAffineShapeCallback(this); // Inherits from affine.h AffineShape
     }
@@ -125,7 +134,14 @@ public:
     {
         // Reset counters
         this->detectPyramidKeypoints(this->image);
-        return this->keys.size();
+        #if DEBUG_HESAFF
+        if (!hesPar.only_count)
+        {
+            assert(this->num_kpts == this->keys.size());
+        }
+        #endif
+        return this->num_kpts;
+        //return this->keys.size();
     }
 
     void exportArrays(int nKpts, float *kpts, uint8 *desc)
@@ -133,7 +149,7 @@ public:
         // Exports keypoints and descriptors into preallocated numpy arrays
         for(size_t fx = 0; fx < nKpts; fx++)
         {
-            Keypoint &k = keys[fx];
+            Keypoint &k = this->keys[fx];
             float x, y, iv11, iv12, iv21, iv22, s, det;
             float sc = AffineShape::par.mrSize * k.s;
             size_t rowk = fx * KPTS_DIM;
@@ -157,11 +173,6 @@ public:
             kpts[rowk + 5] = k.ori;
             #endif
 
-            #if 0
-            //if(fx == 0 || fx == nKpts - 1){
-            //    DBG_keypoint(kpts, rowk);
-            //}
-            #endif
             // Assign Descriptor Output
             for(size_t ix = 0; ix < DESC_DIM; ix++)
             {
@@ -193,17 +204,17 @@ public:
 
     void exportKeypoints(std::ostream &out)
     {
-        /*Writes text keypoints in the invE format to a stdout stream
-         * [iE_a, iE_b]
-         * [iE_b, iE_d]
+        /* Writes text keypoints in the invE format to a stdout stream
+         *  [iE_a, iE_b]
+         *  [iE_b, iE_d]
          */
         out << DESC_DIM << std::endl;
-        int nKpts = keys.size();
+        int nKpts = this->keys.size();
         printDBG("[export] Writing " << nKpts << " keypoints");
         out << nKpts << std::endl;
         for(size_t i = 0; i < nKpts; i++)
         {
-            Keypoint &k = keys[i];
+            Keypoint &k = this->keys[i];
             float sc = AffineShape::par.mrSize * k.s;
             // Grav invA keypoints
             cv::Mat invA = (cv::Mat_<float>(2, 2) << k.a11, k.a12, k.a21, k.a22);
@@ -218,7 +229,6 @@ public:
             // X == Y, because E is symmetric
             // W == S^2
             // X == V
-
             // Decompose invA
             SVD svd_invA(invA, SVD::FULL_UV);
             float *diag_invA = (float *)svd_invA.w.data;
@@ -226,7 +236,7 @@ public:
             diag_invA[0] = 1.0f / (diag_invA[0] * diag_invA[0] * sc * sc);
             diag_invA[1] = 1.0f / (diag_invA[1] * diag_invA[1] * sc * sc);
             // Build the matrix invE
-            // (I dont understand why U here, but it preserves the rotation I guess)
+            // (I dont understand why U is here, but it preserves the rotation I guess)
             // invE = (V * 1/S * U.T) * (U * 1/S * V.T)
             cv::Mat invE = svd_invA.u * cv::Mat::diag(svd_invA.w) * svd_invA.u.t();
             // Write inv(E) to out stream
@@ -268,8 +278,8 @@ public:
             //float ratio = s / (par.initialSigma * pixelDistance);
             float u11 = 1.0f, u12 = 0.0f, u21 = 0.0f, u22 = 1.0f;
             int iters = 0;
-            // the callback is private to hack a call to onAffineShapeFound
-            // directly
+            // HACK: call private function onAffineShapeFound even though we
+            // are directly setting the shape to be circular.
             this->onAffineShapeFound(blur, x, y, s, pixelDistance, u11, u12, u21, u22, type, response, iters); // Call Step 4
         }
     }
@@ -281,6 +291,7 @@ public:
          The code here might not be compliant. 
          We should strive to change code HERE to
          match the python code, which is consistent
+
         Variables:
             invV : maps from ucircle onto an ellipse (perdoch.invA)
                V : maps from ellipse to ucircle      (perdoch.A)
@@ -304,11 +315,11 @@ public:
             iv12 = 0;
             iv21 = kpts[rowk + 3];
             iv22 = kpts[rowk + 4];
-#if USE_ORI
+            #if USE_ORI
             ori  = kpts[rowk + 5];
-#else
+            #else
             ori  = R_GRAVITY_THETA
-#endif
+            #endif
             // Extract scale.
             sc = sqrt(std::abs((iv11 * iv22) - (iv12 * iv21)));
             // Deintegrate scale. Keep invA format
@@ -352,11 +363,11 @@ public:
             iv12 = 0;
             iv21 = kpts[rowk + 3];
             iv22 = kpts[rowk + 4];
-#if USE_ORI
+            #if USE_ORI
             ori  = kpts[rowk + 5];
-#else
+            #else
             ori  = R_GRAVITY_THETA
-#endif
+            #endif
             // Extract scale.
             sc = sqrt(std::abs((iv11 * iv22) - (iv12 * iv21)));
             // Deintegrate scale. Keep invA format
@@ -421,20 +432,10 @@ public:
             response - hessian responce
             iters - num iterations for shape estimation
 
-         */
-        // type can be one of:
-        //#if DEBUG_ROTINVAR 
-        //if (std::abs(response) > 1000 || std::abs(response) < 800)
-        //{
-        //    return;
-        //}
-        //#endif
-
+        */
         // check if detected keypoint is within scale thresholds
         float scale_min = hesPar.scale_min;
         float scale_max = hesPar.scale_max;
-        //float scale = AffineShape::par.mrSize * s;
-        //float scale = s * AffineShape::par.mrSize / (AffineShape::par.initialSigma * pixelDistance);
         float scale = s * AffineShape::par.mrSize;
         // negative thresholds turn the threshold test off
         if((scale_min > 0 && scale < scale_min) || (scale_max > 0 && scale > scale_max))
@@ -485,7 +486,6 @@ public:
                 submaxima_oris.push_back(R_GRAVITY_THETA - M_TAU / 24.0);
             }
         }
-
         //printDBG("[onAffShapeFound] Found " << submaxima_oris.size() << " orientations")
         global_c1++;
         global_nmulti_ori += submaxima_oris.size() - 1;
@@ -496,38 +496,57 @@ public:
             global_nkpts++;
             // sample the patch (populates this->patch)
             // (from affine.cpp)
-            if(!this->normalizeAffine(this->image, x, y, s, a11, a12, a21, a22, ori)) 
+            // 
+            if (hesPar.only_count)
             {
-                this->push_new_keypoint(x, y, s, a11, a12, a21, a22, ori, type, response);
+                // HACK, if we are only counting we dont need to 
+                // interpolate new patches. (this does seem to cause 
+                // minor inconsistencies)
+                if(!this->normalizeAffineCheckBorders(this->image, x, y, s, a11, a12, a21, a22, ori)) 
+                {
+                this->num_kpts++;
+                }
+            }
+            else
+            {
+                if(!this->normalizeAffine(this->image, x, y, s, a11, a12, a21, a22, ori)) 
+                {
+                    this->push_new_keypoint(x, y, s, a11, a12, a21, a22, ori, type, response);
+                }
             }
         }
         //else std::cout << global_nkpts << std::endl;
-        
     }
     // END void onAffineShapeFound
     //------------------------------------------------------------
-    void push_new_keypoint(float x, float y, float s, float a11, float a12, float a21, float a22, float ori, int type, float response)
+    void push_new_keypoint(float x, float y, float s, float a11, float a12,
+                           float a21, float a22, float ori, int type, 
+                           float response)
     {
-        //printDBG("response = " << response)
-        // compute SIFT and append new keypoint and descriptor
-        global_c1++;
-        //this->DBG_patch();
-        this->keys.push_back(Keypoint());
-        Keypoint &k = this->keys.back();
-        k.type = type;
-        k.response = response;
-        k.x = x;
-        k.y = y;
-        k.s = s;
-        k.a11 = a11;
-        k.a12 = a12;
-        k.a21 = a21;
-        k.a22 = a22;
-        #if USE_ORI
-        k.ori = ori;
-        #endif
-        this->populateDescriptor(k.desc, 0);
-        //this->keys.push_back(Keypoint());
+        this->num_kpts++;
+        if (!hesPar.only_count)
+        {
+            //printDBG("response = " << response)
+            // compute SIFT and append new keypoint and descriptor
+            global_c1++;
+            //this->DBG_patch();
+            this->keys.push_back(Keypoint());
+            Keypoint &k = this->keys.back();
+            k.type = type;
+            k.response = response;
+            k.x = x;
+            k.y = y;
+            k.s = s;
+            k.a11 = a11;
+            k.a12 = a12;
+            k.a21 = a21;
+            k.a22 = a22;
+            #if USE_ORI
+            k.ori = ori;
+            #endif
+            this->populateDescriptor(k.desc, 0);
+            //this->keys.push_back(Keypoint());
+        }
     }
 
     float localizeKeypointOrientation(const cv::Mat& img, float x, float y,
@@ -557,7 +576,6 @@ public:
 
         CommandLine:
             python -m pyhesaff._pyhesaff --test-test_rot_invar --show --rebuild-hesaff --no-rmbuild
-
         */
         global_c2++;
 
@@ -575,7 +593,8 @@ public:
             return false;
         }
         // Warp elliptical keypoint region in image into a (cropped) unit circle
-        //normalizeAffine does the job of ptool.get_warped_patch, but uses a class variable to store the output (messy)
+        //normalizeAffine does the job of ptool.get_warped_patch, but uses a
+        //class variable to store the output (messy)
         // Compute gradient
         
         cv::Mat xgradient(this->patch.rows, this->patch.cols, this->patch.depth());
@@ -765,8 +784,8 @@ public:
             define CV_32F  5
             define CV_64F  6
 
-             keys = 'CV_8U, CV_8S, CV_16U, CV_16S, CV_32S, CV_32F, CV_64F'.split()
-             print(ut.dict_str(dict(zip(keys, ut.dict_take(cv2.__dict__, keys)))))
+             cvk = 'CV_8U, CV_8S, CV_16U, CV_16S, CV_32S, CV_32F, CV_64F'.split()
+             print(ut.dict_str(dict(zip(cvk, ut.dict_take(cv2.__dict__, cvk)))))
          */
         //DBG: write out patches
         run_system_command("python -c \"import utool as ut; ut.ensuredir('patches', verbose=False)\"");
@@ -942,13 +961,33 @@ PYHESAFF int detect(AffineHessianDetector* detector)
 
 PYHESAFF int get_cpp_version()
 {
-    return 2;
+    return 3;
 }
+
+//const PYHESAFF char* cmake_build_type()
+//{
+//    // References:
+//    // http://stackoverflow.com/questions/14883853/ctypes-return-a-string-from-c-function
+//    char *build_type = (char*) malloc(sizeof(char) * (10 + 1));
+//    #ifdef CMAKE_BUILD_TYPE
+//    //char hello[] = CMAKE_BUILD_TYPE
+//    strcpy(build_type, "testb1");
+//    #else
+//    strcpy(build_type, "testb2");
+//    #endif
+//    return build_type;
+//}
+
+//PYHESAFF char* free_char(char* malloced_char)
+//{
+//    // need to free anything malloced here
+//    free(malloced_char);
+//}
 
 
 PYHESAFF int is_debug_mode()
 {
-    return DEBUG_ROTINVAR;
+    return DEBUG_ROTINVAR || DEBUG_HESAFF;
 }
 
 
@@ -963,7 +1002,7 @@ PYHESAFF int get_desc_dim()
 }
 
 
-// reduce redundant function signature arguments
+// MACRO to reduce redundant function signature arguments
 #define __HESAFF_PARAM_SIGNATURE_ARGS__ \
  int   numberOfScales,\
  float threshold,\
@@ -985,6 +1024,7 @@ PYHESAFF int get_desc_dim()
  bool augment_orientation,\
  float ori_maxima_thresh,\
  bool affine_invariance,\
+ bool only_count,\
  bool use_dense,\
  int dense_stride\
 
@@ -993,10 +1033,13 @@ numberOfScales, threshold, edgeEigenValueRatio, border, maxPyramidLevels, maxIte
 convergenceThreshold, smmWindowSize, mrSize, spatialBins, orientationBins,\
 maxBinValue, initialSigma, patchSize, scale_min, scale_max,\
 rotation_invariance, augment_orientation, ori_maxima_thresh,\
-affine_invariance, use_dense, dense_stride
+affine_invariance, only_count, use_dense, dense_stride
 
 
-PYHESAFF AffineHessianDetector* new_hesaff_from_image_and_params(uint8 *imgin, int rows, int cols, int channels, __HESAFF_PARAM_SIGNATURE_ARGS__)
+// new hessian affine detector (from image pixels)
+PYHESAFF AffineHessianDetector* new_hesaff_image(uint8 *imgin, int rows, 
+                                                 int cols, int channels,
+                                                 __HESAFF_PARAM_SIGNATURE_ARGS__)
 {
     // Convert input image to float32
     cv::Mat image(rows, cols, CV_32FC1, Scalar(0));
@@ -1055,6 +1098,7 @@ PYHESAFF AffineHessianDetector* new_hesaff_from_image_and_params(uint8 *imgin, i
     hesParams.augment_orientation  = augment_orientation;
     hesParams.ori_maxima_thresh    = ori_maxima_thresh;
     hesParams.affine_invariance    = affine_invariance;
+    hesParams.only_count           = only_count;
     //
     pyrParams.use_dense                 = use_dense;
     pyrParams.dense_stride              = dense_stride;
@@ -1065,8 +1109,8 @@ PYHESAFF AffineHessianDetector* new_hesaff_from_image_and_params(uint8 *imgin, i
     return detector;
 }
 
-// new hessian affine detector
-PYHESAFF AffineHessianDetector* new_hesaff_from_fpath_and_params(char* img_fpath, __HESAFF_PARAM_SIGNATURE_ARGS__)
+// new hessian affine detector (from image fpath)
+PYHESAFF AffineHessianDetector* new_hesaff_fpath(char* img_fpath, __HESAFF_PARAM_SIGNATURE_ARGS__)
 {
     printDBG("making detector for " << img_fpath);
     printDBG(" * img_fpath = " << img_fpath);
@@ -1077,13 +1121,13 @@ PYHESAFF AffineHessianDetector* new_hesaff_from_fpath_and_params(char* img_fpath
     int channels = 3;
     uint8 *imgin  = tmp.ptr<uint8>(0);
     // Create detector
-    AffineHessianDetector* detector = new_hesaff_from_image_and_params(imgin, rows, cols, channels, __HESAFF_PARAM_CALL_ARGS__);
+    AffineHessianDetector* detector = new_hesaff_image(imgin, rows, cols, channels, __HESAFF_PARAM_CALL_ARGS__);
     return detector;
 }
 
 
 // new default hessian affine detector WRAPPER
-PYHESAFF AffineHessianDetector* new_hesaff(char* img_fpath)
+PYHESAFF AffineHessianDetector* new_hesaff_imgpath_noparams(char* img_fpath)
 {
     // Pyramid Params
     int   numberOfScales = 3;
@@ -1112,11 +1156,18 @@ PYHESAFF AffineHessianDetector* new_hesaff(char* img_fpath)
     float ori_maxima_thresh = .8;
     bool affine_invariance = true;
     //
-    bool  use_dense = false;
-    int   dense_stride = 32;
+    bool use_dense = false;
+    int  dense_stride = 32;
+    bool only_count = false;
 
-    AffineHessianDetector* detector = new_hesaff_from_fpath_and_params(img_fpath, __HESAFF_PARAM_CALL_ARGS__);
+    AffineHessianDetector* detector = new_hesaff_fpath(img_fpath, __HESAFF_PARAM_CALL_ARGS__);
     return detector;
+}
+
+PYHESAFF int free_hesaff(AffineHessianDetector* detector)
+{
+    delete detector;
+    return 1;
 }
 
 // extract descriptors from user specified keypoints
@@ -1158,22 +1209,23 @@ PYHESAFF void writeFeatures(AffineHessianDetector* detector,
     detector->write_features(img_fpath);
 }
 
-void detectKeypoints(char* image_filename,
-                     float** keypoints,
-                     uint8** descriptors,
-                     int* length,
-                     __HESAFF_PARAM_SIGNATURE_ARGS__
-                     )
-{
-    AffineHessianDetector* detector = new_hesaff_from_fpath_and_params(image_filename, __HESAFF_PARAM_CALL_ARGS__);
-    detector->DBG_params();
-    *length = detector->detect();
-    *keypoints = new float[(*length)*KPTS_DIM];
-    *descriptors = new uint8[(*length)*DESC_DIM];
-    detector->exportArrays((*length), *keypoints, *descriptors);
-    //may need to add support for "use_adaptive_scale" and "nogravity_hack" here (needs translation from Python to C++ first)
-    delete detector;
-}
+//void detectKeypoints(char* image_filename,
+//                     float** keypoints,
+//                     uint8** descriptors,
+//                     int* length,
+//                     __HESAFF_PARAM_SIGNATURE_ARGS__
+//                     )
+//{
+//    AffineHessianDetector* detector = new_hesaff_fpath(image_filename, __HESAFF_PARAM_CALL_ARGS__);
+//    detector->DBG_params();
+//    *length = detector->detect();
+//    // TODO: shouldn't python be doing this allocation?
+//    *keypoints = new float[(*length)*KPTS_DIM];
+//    *descriptors = new uint8[(*length)*DESC_DIM];
+//    detector->exportArrays((*length), *keypoints, *descriptors);
+//    //may need to add support for "use_adaptive_scale" and "nogravity_hack" here (needs translation from Python to C++ first)
+//    delete detector;
+//}
 
 PYHESAFF void extractDescFromPatches(int num_patches,
                                      int patch_h, 
@@ -1211,68 +1263,69 @@ PYHESAFF void extractDescFromPatches(int num_patches,
         sift.computeSiftDescriptor(patch);
         for(int ix = 0; ix < DESC_DIM; ix++)
         {
-            descriptors_array[(i * DESC_DIM) + ix] = (uint8) sift.vec[ix];  // populate outvar
+            // populate outvar
+            descriptors_array[(i * DESC_DIM) + ix] = (uint8) sift.vec[ix]; 
         }
     }
 
 }
 
-PYHESAFF void detectKeypointsList(int num_filenames,
-                                  char** image_filename_list,
-                                  float** keypoints_array,
-                                  uint8** descriptors_array,
-                                  int* length_array,
-                                  __HESAFF_PARAM_SIGNATURE_ARGS__
-                                  )
-{
-    assert(0);  // do not use
-    // Maybe use this implimentation instead to be more similar to the way
-    // pyhesaff calls this library?
-    int index;
-    #pragma omp parallel for private(index)
-    for(index = 0; index < num_filenames; ++index)
-    {
-        char* image_filename = image_filename_list[index];
-        AffineHessianDetector* detector =
-            new_hesaff_from_fpath_and_params(image_filename, __HESAFF_PARAM_CALL_ARGS__);
-        detector->DBG_params();
-        int length = detector->detect();
-        length_array[index] = length;
-        keypoints_array[index] = new float[length * KPTS_DIM];
-        descriptors_array[index] = new uint8[length * DESC_DIM];
-        exportArrays(detector, length, keypoints_array[index], descriptors_array[index]);
-        delete detector;
-    }
-}
+//PYHESAFF void detectKeypointsList(int num_fpaths,
+//                                  char** image_fpath_list,
+//                                  float** keypoints_array,
+//                                  uint8** descriptors_array,
+//                                  int* length_array,
+//                                  __HESAFF_PARAM_SIGNATURE_ARGS__
+//                                  )
+//{
+//    assert(0);  // do not use
+//    // Maybe use this implimentation instead to be more similar to the way
+//    // pyhesaff calls this library?
+//    int index;
+//    #pragma omp parallel for private(index)
+//    for(index = 0; index < num_fpaths; ++index)
+//    {
+//        char* image_filename = image_fpath_list[index];
+//        AffineHessianDetector* detector =
+//            new_hesaff_fpath(image_filename, __HESAFF_PARAM_CALL_ARGS__);
+//        detector->DBG_params();
+//        int length = detector->detect();
+//        length_array[index] = length;
+//        // TODO: shouldn't python be doing this allocation?
+//        keypoints_array[index] = new float[length * KPTS_DIM];
+//        descriptors_array[index] = new uint8[length * DESC_DIM];
+//        exportArrays(detector, length, keypoints_array[index], descriptors_array[index]);
+//        delete detector;
+//    }
+//}
 
 
-PYHESAFF AffineHessianDetector** detectKeypointsListStep1(int num_filenames,
-                                                          char** image_filename_list,
+PYHESAFF AffineHessianDetector** detectKeypointsListStep1(int num_fpaths,
+                                                          char** image_fpath_list,
                                                           __HESAFF_PARAM_SIGNATURE_ARGS__)
 {
     printDBG("detectKeypointsListStep1()");
     // Create all of the detector_array
-    AffineHessianDetector** detector_array = new AffineHessianDetector*[num_filenames];
+    AffineHessianDetector** detector_array = new AffineHessianDetector*[num_fpaths];
     int index;
     //#pragma omp parallel for private(index)
-    for(index = 0; index < num_filenames; ++index)
+    for(index = 0; index < num_fpaths; ++index)
     {
-        char* image_filename = image_filename_list[index];
-        AffineHessianDetector* detector =
-            new_hesaff_from_fpath_and_params(image_filename, __HESAFF_PARAM_CALL_ARGS__);
+        char* image_filename = image_fpath_list[index];
+        AffineHessianDetector* detector = new_hesaff_fpath(image_filename, __HESAFF_PARAM_CALL_ARGS__);
         //detector->DBG_params();
         detector_array[index] = detector;
     }
     return detector_array;
 }
 
-PYHESAFF void detectKeypointsListStep2(int num_filenames, AffineHessianDetector** detector_array, int* length_array)
+PYHESAFF void detectKeypointsListStep2(int num_fpaths, AffineHessianDetector** detector_array, int* length_array)
 {
     printDBG("detectKeypointsListStep2()");
     // Run Detection
     int index;
     //#pragma omp parallel for private(index)
-    for(index = 0; index < num_filenames; ++index)
+    for(index = 0; index < num_fpaths; ++index)
     {
         AffineHessianDetector* detector = detector_array[index];
         int length = detector->detect();
@@ -1280,18 +1333,18 @@ PYHESAFF void detectKeypointsListStep2(int num_filenames, AffineHessianDetector*
     }
 }
 
-PYHESAFF void detectKeypointsListStep3(int num_filenames, 
+PYHESAFF void detectKeypointsListStep3(int num_fpaths, 
                                        AffineHessianDetector** detector_array, 
                                        int* length_array,
                                        int* offset_array,
                                        float* flat_keypoints, 
-                                       uint8* flag_descriptors)
+                                       uint8* flat_descriptors)
 {
     printDBG("detectKeypointsListStep3()");
     // Export the results
     int index;
     //#pragma omp parallel for private(index)
-    for(index = 0; index < num_filenames; ++index)
+    for(index = 0; index < num_fpaths; ++index)
     {
         AffineHessianDetector* detector = detector_array[index];
         int length = length_array[index];
@@ -1299,103 +1352,63 @@ PYHESAFF void detectKeypointsListStep3(int num_filenames,
         printDBG("offset " << offset)
         printDBG("length " << length)
         float *keypoints = &flat_keypoints[offset * KPTS_DIM];
-        uint8 *descriptors = &flag_descriptors[offset * DESC_DIM];
+        uint8 *descriptors = &flat_descriptors[offset * DESC_DIM];
         exportArrays(detector, length, keypoints, descriptors);
     }
-    // Clean up 
-    for(index = 0; index < num_filenames; ++index)
+    // Clean up hesaff objects
+    for(index = 0; index < num_fpaths; ++index)
     {
         delete detector_array[index];
     }
     delete detector_array;
 }
-
-
-PYHESAFF void detectKeypointsList1(int num_filenames,
-                                   char** image_filename_list,
-                                   float** keypoints_array,
-                                   uint8** descriptors_array,
-                                   int* length_array,
-                                   __HESAFF_PARAM_SIGNATURE_ARGS__
-                                   )
-{
-    assert(0);   // do not use
-    int index;
-    #pragma omp parallel for private(index)
-    for(index = 0; index < num_filenames; ++index)
-    {
-        detectKeypoints(image_filename_list[index],
-                        &(keypoints_array[index]),
-                        &(descriptors_array[index]),
-                        &(length_array[index]),
-                        __HESAFF_PARAM_CALL_ARGS__);
-    }
 }
-#ifdef __cplusplus
-}
-#endif
-// END PYTHON BINDINGS
-//----------------------------------------------
 
 
-//-------------------------------
-// int main
-// * program entry point for command line use if we build the executable
 int main(int argc, char **argv)
 {
     /*
+    program entry point for command line use if we build the executable
+
     CommandLine:
          ./unix_build.sh --fast && ./build/hesaffexe /home/joncrall/.config/utool/star.png
          ./unix_build.sh --fast && ./build/hesaffexe /home/joncrall/.config/utool/star.png
          sh mingw_build.sh --fast
-         build/hesaffexe /home/joncrall/.config/utool/star.png -rotation_invariance
+         ~/code/hesaff/build/hesaffexe /home/joncrall/.config/utool/star.png -rotation_invariance
+         ~/code/hesaff/build/hesaffexe /home/joncrall/.config/utool/lena.png -rotation_invariance
+
+         hes
+         cd build
+         cp /home/joncrall/.config/utool/lena.png .
+
+         hes
+         cd build
+         ./hesaffexe lena.png
+
+         gprof hesaffexe 
+         gprof hesaffexe | gprof2dot | dot -Tpng -o output.png
+         eog output.png
     */
-    const char* about_message = "\nUsage: hesaffexe image_name.png kpts_file.txt\nDescribes elliptical keypoints (with gravity vector) given in kpts_file.txt using a SIFT descriptor.\n\n";
+    const char* about_message = "\nUsage: hesaffexe image_name.png kpts_file.txt\nDescribes elliptical keypoints (with gravity vector) given in kpts_file.txt using a SIFT descriptor. The help message has unfortunately been deleted. Check github history for details. https://github.com/perdoch/hesaff/blob/master/hesaff.cpp\n\n";
     // Parser Reference: http://docs.opencv.org/trunk/modules/core/doc/command_line_parser.html
-    //const char* keys =
-    //"{help h usage ? |       | print this message   }"
-    //"{@img_fpath     |       | image for detection  }"
-    //"{@output_path   |.      | output file path     }"
-    //"{rotation_invariance | false | rotation invariance  }"
-    //"{N count        |100    | count of objects     }"
-    //;
-    //cv::CommandLineParser parser(argc, argv, keys);
-    //parser.about(about_message);
-    //if (parser.has("help"))
-    //{
-    //    parser.printMessage();
-    //    return 0;
-    //}
-    //bool rotation_invariance = parser.get<bool>("rotation_invariance");
-    //String img_fpath = parser.get<String>("img_fpath");
-
-    //if (argc <= 1)
-    //{
-    //    parser.printParams();
-    //    return 0;
-    //}
-
-    //if (!parser.check())
-    //{
-    //    parser.printErrors();
-    //    return 0;
-    //}    
     
     if(argc > 1)
     {
         printDBG("main()");
         char* img_fpath = argv[1];
         int nKpts;
-        AffineHessianDetector* detector = new_hesaff(img_fpath);
+        AffineHessianDetector* detector = new_hesaff_imgpath_noparams(img_fpath);
         //detector->hesPar.rotation_invariance = true;
             //(argc > 2) ? atoi(argv[2]) : true;
         detector->DBG_params();
         nKpts = detect(detector);
         writeFeatures(detector, img_fpath);
         std::cout << "[main] nKpts: " << nKpts << std::endl;
+        std::cout << "[main] nKpts_: " << detector->keys.size() << std::endl;
         std::cout << "[main] global_nkpts: " << global_nkpts << std::endl;
         std::cout << "[main] global_c1: " << global_c1 << std::endl;
         std::cout << "[main] global_c2: " << global_c2 << std::endl;
+        delete detector;
     }
     else
     {

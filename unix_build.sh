@@ -4,19 +4,7 @@
 export FAILCMD='{ echo "FAILED HESAFF BUILD" ; exit 1; }'
 
 echo "[hesaff.unix_build] checking if build dir should be removed"
-
-#RMBUILD=1
-#for i in "$@"
-#do
-#case $i in --no-rmbuild)
-    #RMBUILD=0
-    #;;
-#esac
-#done
-#if [[ "$RMBUILD" == "1" ]]; then
-    #rm -rf build
-#fi
-python2.7 -c "import utool as ut; print('keeping build dir' if ut.get_argflag('--no-rmbuild') else ut.delete('build'))" $@
+python2.7 -c "import utool as ut; print('keeping build dir' if ut.get_argflag(('--fast', '--no-rmbuild')) else ut.delete('build'))" $@
 
 # +==================================================
 # SIMPLE WAY OF EXECUTING MULTILINE PYTHON FROM BASH
@@ -38,7 +26,6 @@ python2.7 -c "import utool as ut; print('keeping build dir' if ut.get_argflag('-
 mkdir build
 cd build
 
-
 echo "$OSTYPE"
 
 export PYEXE=$(which python2.7)
@@ -50,25 +37,48 @@ else
     export _SUDO=""
 fi
 
+export COMMONFLAGS="$COMMONFLAGS -DCMAKE_BUILD_TYPE=Release"
+#export COMMONFLAGS="$COMMONFLAGS -D CMAKE_BUILD_TYPE=Debug"
+#export COMMONFLAGS="$COMMONFLAGS -D CMAKE_VERBOSE_MAKEFILE=On"
+#export COMMONFLAGS="$COMMONFLAGS -D ENABLE_GPROF=On"
+
+echo "COMMONFLAGS=$COMMONFLAGS"
+
 if [[ "$OSTYPE" == "darwin"* ]]; then
-    cmake -DCMAKE_OSX_ARCHITECTURES=x86_64 -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=$LOCAL_PREFIX -DOpenCV_DIR=$LOCAL_PREFIX/share/OpenCV ..  || $FAILCMD
+    # MAC
+    cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=$LOCAL_PREFIX -DOpenCV_DIR=$LOCAL_PREFIX/share/OpenCV -DCMAKE_OSX_ARCHITECTURES=x86_64  $COMMONFLAGS .. 
 elif [[ "$OSTYPE" == "msys"* ]]; then
+    # WINDOWS
     echo "USE MINGW BUILD INSTEAD" ; exit 1
     export INSTALL32="c:/Program Files (x86)"
     export HESAFF_INSTALL="$INSTALL32/Hesaff"
     echo "INSTALL32=$INSTALL32"
     echo "HESAFF_INSTALL=$HESAFF_INSTALL"
-    cmake -G "MSYS Makefiles" -DCMAKE_INSTALL_PREFIX="$HESAFF_INSTALL" -DOpenCV_DIR="$INSTALL32/OpenCV" .. || $FAILCMD
+    cmake -G "MSYS Makefiles" -DCMAKE_INSTALL_PREFIX="$HESAFF_INSTALL" -DOpenCV_DIR="$INSTALL32/OpenCV" $COMMONFLAGS .. 
 else
-    cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=$LOCAL_PREFIX -DOpenCV_DIR=$LOCAL_PREFIX/share/OpenCV .. || $FAILCMD
+    # LINUX
+    cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=$LOCAL_PREFIX -DOpenCV_DIR=$LOCAL_PREFIX/share/OpenCV $COMMONFLAGS .. 
+fi
+export CMAKE_EXITCODE=$?
+if [[ $CMAKE_EXITCODE != 0 ]]; then
+    $FAILCMD
 fi
 
 if [[ "$OSTYPE" == "msys"* ]]; then
-    make || $FAILCMD
+    make
 else
     export NCPUS=$(grep -c ^processor /proc/cpuinfo)
-    make -j$NCPUS || $FAILCMD
+    make -j$NCPUS
+    #make -j$NCPUS VERBOSE=1
+    #make -j$NCPUS
 fi
+export MAKE_EXITCODE=$?
+echo "MAKE_EXITCODE=$MAKE_EXITCODE"
 
-cp -v libhesaff* ../pyhesaff
+if [[ $MAKE_EXITCODE == 0 ]]; then
+    #make VERBOSE=1
+    cp -v libhesaff* ../pyhesaff
+else
+    $FAILCMD
+fi
 cd ..

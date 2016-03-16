@@ -58,9 +58,9 @@ bool AffineShape::findAffineShape(const Mat &blur, float x, float y, float s, fl
         // compute SMM on the warped patch
         float a = 0, b = 0, c = 0;
         float *maskptr = this->mask.ptr<float>(0);
-        float *pfx = fx.ptr<float>(0), *pfy = fy.ptr<float>(0);
+        float *pfx = this->fx.ptr<float>(0), *pfy = this->fy.ptr<float>(0);
 
-        computeGradient(this->img, fx, fy); // Defined in helpers, fx and fy are outvars
+        computeGradient(this->img, this->fx, this->fy); // Defined in helpers, fx and fy are outvars
 
         // estimate SMM (second moment matrix)
         for(int i = 0; i < maskPixels; ++i)
@@ -122,6 +122,62 @@ bool AffineShape::findAffineShape(const Mat &blur, float x, float y, float s, fl
 }
 
 
+bool AffineShape::normalizeAffineCheckBorders(const Mat &img,
+                                  float x, float y,
+                                  float s,
+                                  float a11, float a12,
+                                  float a21, float a22,
+                                  float ori)
+{
+    /*
+     Mirrors checks in normalizeAffine but
+     Simply returns true or false, does not affect state
+     */
+    if(!almost_eq(ori, R_GRAVITY_THETA))
+    {
+        // rotate relative to the gravity vector
+        float ori_offst = (ori - R_GRAVITY_THETA);
+        printDBG("Rotating Patch ori=" << ori << "; offst_ori=" << ori_offst)
+        rotateAffineTransformation(a11, a12, a21, a22, ori_offst); // helper
+    }
+    assert(fabs(a11 * a22 - a12 * a21 - 1.0f) < 0.01);
+    float mrScale = ceil(s * par.mrSize);
+    int   patchImageSize = 2 * int(mrScale) + 1;
+    float imageToPatchScale = float(patchImageSize) / float(par.patchSize);
+    if(interpolateCheckBorders(img, x, y, a11 * imageToPatchScale,
+                               a12 * imageToPatchScale, a21 * imageToPatchScale,
+                               a22 * imageToPatchScale, this->patch))
+    {
+        return true;
+    }
+    if(imageToPatchScale > 0.4)
+    {
+        // CASE 1: Bigger patches (in image space)
+        // the pixels in the image are 0.4 apart + the affine deformation
+        // leave +1 border for the bilinear interpolation
+        patchImageSize += 2;
+        size_t wss = patchImageSize * patchImageSize * sizeof(float);
+        if(wss >= workspace.size())
+        {
+            // FIXME: this function is only supposed to check
+            // but this line actually changes state
+            workspace.resize(wss);
+        }
+        // FIRST SAMPLE PATCH SHAPE WITHOUT CHANGING SCALES
+        Mat smoothed(patchImageSize, patchImageSize, CV_32FC1, (void *)&workspace.front());
+        return interpolateCheckBorders(img, x, y, a11, a12, a21, a22, smoothed);
+    }
+    else
+    {
+        a11 *= imageToPatchScale;
+        a12 *= imageToPatchScale;
+        a21 *= imageToPatchScale;
+        a22 *= imageToPatchScale;
+        return interpolateCheckBorders(img, x, y, a11, a12, a21, a22, this->patch);
+    }
+}
+
+
 //Called by hessaff.cpp
 bool AffineShape::normalizeAffine(const Mat &img,
                                   float x, float y,
@@ -141,7 +197,6 @@ bool AffineShape::normalizeAffine(const Mat &img,
         printDBG("Rotating Patch ori=" << ori << "; offst_ori=" << ori_offst)
         rotateAffineTransformation(a11, a12, a21, a22, ori_offst); // helper
     }
-
     // determinant == 1 assumed (i.e. isotropic scaling should be separated in mrScale
     assert(fabs(a11 * a22 - a12 * a21 - 1.0f) < 0.01);
     //    mrSize = 3.0f*sqrt(3.0f);

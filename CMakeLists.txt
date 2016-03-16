@@ -25,7 +25,7 @@ endif()
 
 #######################################
 project(hesaff) #### !!!!IMPORTANT!!!! THIS MUST BE DOWN HERE FOR CLANG2
-set(CMAKE_BUILD_TYPE "Release")
+#set(CMAKE_BUILD_TYPE "Release")
 
 if (APPLE)
     #MacPorts
@@ -59,8 +59,10 @@ find_package(OpenMP)
 IF(OPENMP_FOUND)
     message("Found OpenMP! ^_^")
     # add flags for OpenMP
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS} -fopenmp")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} -fopenmp")
+    #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS} -fopenmp")
+    #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} -fopenmp")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${OpenMP_C_FLAGS} ${OpenMP_SHARED_LINKER_FLAGS}")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_C_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 ELSE()
@@ -77,9 +79,25 @@ set(SOURCE_FILES
     #src/python_bindings.cpp 
     src/siftdesc.cpp)
 
+# Annotate code with ctags
+#set_source_files_properties( tags PROPERTIES GENERATED true)
+#add_custom_command ( OUTPUT tags
+#    COMMAND ctags -R --c++-kinds=+p --fields=+iaS --extra=+q . 
+#    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} )
+#add_executable(hesaff_tags tags)
+
+option(ENABLE_GPROF Off)
+IF(ENABLE_GPROF)
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg")
+    SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pg")
+    SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -pg")
+ENDIF()
+
 add_library(hesaff SHARED ${SOURCE_FILES})
 add_executable(hesaffexe ${SOURCE_FILES})
 
 #######################################
 target_link_libraries(hesaff ${OpenCV_LIBS})
 target_link_libraries(hesaffexe ${OpenCV_LIBS})
+
+message(CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE})

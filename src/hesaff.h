@@ -30,6 +30,7 @@ struct HesaffParams
     bool adapt_scale;
     bool affine_invariance;
     bool augment_orientation;
+    bool only_count;
 
     HesaffParams()
     {
@@ -41,6 +42,7 @@ struct HesaffParams
         adapt_rotation = false;
         adapt_scale = false;
         affine_invariance = true;  // if false uses circular keypoints 
+        only_count = false;
     }
 };
 
