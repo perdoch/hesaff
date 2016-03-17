@@ -191,6 +191,7 @@ def load_hesaff_clib(rebuild=None):
     # Expose extern C Functions to hesaff's clib
     #def_cfunc(C.c_char_p, 'cmake_build_type',       [])
     #def_cfunc(None,  'free_char',       [C.c_char_p])
+    def_cfunc(None,  'free_hesaff',            [obj_t])
     def_cfunc(int_t, 'get_cpp_version',        [])
     def_cfunc(int_t, 'is_debug_mode',          [])
     def_cfunc(int_t, 'detect',                 [obj_t])
