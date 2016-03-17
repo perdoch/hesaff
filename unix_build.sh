@@ -46,7 +46,7 @@ echo "COMMONFLAGS=$COMMONFLAGS"
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
     # MAC
-    cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=$LOCAL_PREFIX -DOpenCV_DIR=$LOCAL_PREFIX/share/OpenCV -DCMAKE_OSX_ARCHITECTURES=x86_64  $COMMONFLAGS .. 
+    cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=$LOCAL_PREFIX -DOpenCV_DIR=$LOCAL_PREFIX/share/OpenCV -DCMAKE_OSX_ARCHITECTURES=x86_64  $COMMONFLAGS ..
 elif [[ "$OSTYPE" == "msys"* ]]; then
     # WINDOWS
     echo "USE MINGW BUILD INSTEAD" ; exit 1
@@ -54,10 +54,10 @@ elif [[ "$OSTYPE" == "msys"* ]]; then
     export HESAFF_INSTALL="$INSTALL32/Hesaff"
     echo "INSTALL32=$INSTALL32"
     echo "HESAFF_INSTALL=$HESAFF_INSTALL"
-    cmake -G "MSYS Makefiles" -DCMAKE_INSTALL_PREFIX="$HESAFF_INSTALL" -DOpenCV_DIR="$INSTALL32/OpenCV" $COMMONFLAGS .. 
+    cmake -G "MSYS Makefiles" -DCMAKE_INSTALL_PREFIX="$HESAFF_INSTALL" -DOpenCV_DIR="$INSTALL32/OpenCV" $COMMONFLAGS ..
 else
     # LINUX
-    cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=$LOCAL_PREFIX -DOpenCV_DIR=$LOCAL_PREFIX/share/OpenCV $COMMONFLAGS .. 
+    cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=$LOCAL_PREFIX -DOpenCV_DIR=$LOCAL_PREFIX/share/OpenCV $COMMONFLAGS ..
 fi
 export CMAKE_EXITCODE=$?
 if [[ $CMAKE_EXITCODE != 0 ]]; then
@@ -77,6 +77,7 @@ echo "MAKE_EXITCODE=$MAKE_EXITCODE"
 
 if [[ $MAKE_EXITCODE == 0 ]]; then
     #make VERBOSE=1
+    install_name_tool -change libiomp5.dylib ~/code/libomp_oss/exports/mac_32e/lib.thin/libiomp5.dylib lib*
     cp -v libhesaff* ../pyhesaff
 else
     $FAILCMD
