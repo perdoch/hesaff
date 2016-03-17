@@ -191,6 +191,7 @@ def _load_hesaff_clib(rebuild=None):
     def_cfunc(None,  'exportArrays',           [obj_t, int_t, kpts_t, vecs_t])
     def_cfunc(None,  'extractDesc',            [obj_t, int_t, kpts_t, vecs_t])
     def_cfunc(None,  'extractPatches',         [obj_t, int_t, kpts_t, img32_t])
+    def_cfunc(None,  'free_hesaff',            [obj_t])
     def_cfunc(None,  'extractDescFromPatches', [int_t, int_t, int_t, img_t, vecs_t])
     def_cfunc(obj_t, 'new_hesaff_fpath',       [str_t] + HESAFF_PARAM_TYPES)
     def_cfunc(obj_t, 'new_hesaff_image',       [img_t, int_t, int_t, int_t] + HESAFF_PARAM_TYPES)
