@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 2.8)
 # http://goo.gl/1Tg0Zj
 if (APPLE)
     message("Detected APPLE system")
-    SET(CLANG2 Off)
+    SET(CLANG2 On)
 endif()
 
 if (APPLE AND CLANG2)
