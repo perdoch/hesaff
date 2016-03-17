@@ -14,20 +14,23 @@ int global_c2 = 0;
 /*
  *
 CommandLine:
-    astyle --style=ansi --indent=spaces  --indent-classes  --indent-switches \
-        --indent-col1-comments --pad-oper --unpad-paren --delete-empty-lines \
-        --add-brackets *.cpp *.h
     mingw_build.bat && python -c "import utool as ut; ut.cmd('build/hesaffexe.exe ' + ut.grab_test_imgpath('star.png'))"
     ./unix_build.sh && python -c "import utool as ut; ut.cmd('build/hesaffexe ' + ut.grab_test_imgpath('star.png'))"
 
+    python -m pyhesaff detect_kpts --fname lena.png --verbose  --show  --rebuild-hesaff --no-rmbuild
+
     python -m pyhesaff._pyhesaff --test-test_rot_invar --show --rebuild-hesaff --no-rmbuild
     python -m pyhesaff._pyhesaff --test-test_rot_invar --show
+
+    astyle --style=ansi --indent=spaces  --indent-classes  --indent-switches \
+        --indent-col1-comments --pad-oper --unpad-paren --delete-empty-lines \
+        --add-brackets *.cpp *.h
  */
 
 // Main File. Includes and uses the other files
 //
 
-#define DEBUG_HESAFF 0
+#define DEBUG_HESAFF 1
 
 #include <iostream>
 #include <fstream>
@@ -1164,10 +1167,12 @@ PYHESAFF AffineHessianDetector* new_hesaff_imgpath_noparams(char* img_fpath)
     return detector;
 }
 
-PYHESAFF int free_hesaff(AffineHessianDetector* detector)
+PYHESAFF void free_hesaff(AffineHessianDetector* detector)
 {
+    printDBG("about to free detector=@" << static_cast<void*>(detector))
+    //printDBG("about to free &detector=@" << static_cast<void*>(&detector))
     delete detector;
-    return 1;
+    printDBG("deallocated detector");
 }
 
 // extract descriptors from user specified keypoints
@@ -1374,8 +1379,8 @@ int main(int argc, char **argv)
          ./unix_build.sh --fast && ./build/hesaffexe /home/joncrall/.config/utool/star.png
          ./unix_build.sh --fast && ./build/hesaffexe /home/joncrall/.config/utool/star.png
          sh mingw_build.sh --fast
-         ~/code/hesaff/build/hesaffexe /home/joncrall/.config/utool/star.png -rotation_invariance
-         ~/code/hesaff/build/hesaffexe /home/joncrall/.config/utool/lena.png -rotation_invariance
+         ~/code/hesaff/build/hesaffexe ~/.config/utool/star.png -rotation_invariance
+         ~/code/hesaff/build/hesaffexe ~/.config/utool/lena.png -rotation_invariance
 
          hes
          cd build
