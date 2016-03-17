@@ -938,7 +938,7 @@ public:
 //----------------------------------------------
 // BEGIN PYTHON BINDINGS
 // * python's ctypes module can talk to extern c code
-//http://nbviewer.ipython.org/github/pv/SciPy-CookBook/blob/master/ipython/Ctypes.ipynb
+// http://nbviewer.ipython.org/github/pv/SciPy-CookBook/blob/master/ipython/Ctypes.ipynb
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -1005,38 +1005,120 @@ PYHESAFF int get_desc_dim()
 }
 
 
-// MACRO to reduce redundant function signature arguments
-#define __HESAFF_PARAM_SIGNATURE_ARGS__ \
- int   numberOfScales,\
- float threshold,\
- float edgeEigenValueRatio,\
- int   border,\
- int   maxPyramidLevels,\
- int   maxIterations,\
- float convergenceThreshold,\
- int   smmWindowSize,\
- float mrSize,\
- int spatialBins,\
- int orientationBins,\
- float maxBinValue,\
- float initialSigma,\
- int patchSize,\
- float scale_min,\
- float scale_max,\
- bool rotation_invariance,\
- bool augment_orientation,\
- float ori_maxima_thresh,\
- bool affine_invariance,\
- bool only_count,\
- bool use_dense,\
- int dense_stride\
+// MACROS TO REDUCE REDUNDANT FUNCTION SIGNATURE ARGUMENTS
 
-#define __HESAFF_PARAM_CALL_ARGS__ \
-numberOfScales, threshold, edgeEigenValueRatio, border, maxPyramidLevels, maxIterations,\
-convergenceThreshold, smmWindowSize, mrSize, spatialBins, orientationBins,\
-maxBinValue, initialSigma, patchSize, scale_min, scale_max,\
-rotation_invariance, augment_orientation, ori_maxima_thresh,\
+// Macro for putting arguments into the call signature
+#define __HESAFF_PARAM_SIGNATURE_ARGS__ \
+ int   numberOfScales,                  \
+ float threshold,                       \
+ float edgeEigenValueRatio,             \
+ int   border,                          \
+ int   maxPyramidLevels,                \
+ int   maxIterations,                   \
+ float convergenceThreshold,            \
+ int   smmWindowSize,                   \
+ float mrSize,                          \
+ int spatialBins,                       \
+ int orientationBins,                   \
+ float maxBinValue,                     \
+ float initialSigma,                    \
+ int patchSize,                         \
+ float scale_min,                       \
+ float scale_max,                       \
+ bool rotation_invariance,              \
+ bool augment_orientation,              \
+ float ori_maxima_thresh,               \
+ bool affine_invariance,                \
+ bool only_count,                       \
+ bool use_dense,                        \
+ int dense_stride
+
+
+// Macro for putting calling a function with the macroed signature
+#define __HESAFF_PARAM_CALL_ARGS__                                                       \
+numberOfScales, threshold, edgeEigenValueRatio, border, maxPyramidLevels, maxIterations, \
+convergenceThreshold, smmWindowSize, mrSize, spatialBins, orientationBins,               \
+maxBinValue, initialSigma, patchSize, scale_min, scale_max,                              \
+rotation_invariance, augment_orientation, ori_maxima_thresh,                             \
 affine_invariance, only_count, use_dense, dense_stride
+
+
+#define __MACRO_COMMENT__(s) ;
+
+// Macro to define the param object in func with call signature
+#define __HESAFF_DEFINE_PARAMS_FROM_CALL__                      \
+    __MACRO_COMMENT__( Define params)                           \
+    SIFTDescriptorParams siftParams;                            \
+    PyramidParams pyrParams;                                    \
+    AffineShapeParams affShapeParams;                           \
+    HesaffParams hesParams;                                     \
+                                                                \
+    __MACRO_COMMENT__( Copy Pyramid params)                     \
+    pyrParams.numberOfScales            = numberOfScales;       \
+    pyrParams.threshold                 = threshold;            \
+    pyrParams.edgeEigenValueRatio       = edgeEigenValueRatio;  \
+    pyrParams.border                    = border;               \
+    pyrParams.maxPyramidLevels          = maxPyramidLevels;     \
+    pyrParams.initialSigma              = initialSigma;         \
+                                                                \
+    __MACRO_COMMENT__( Copy Affine Shape params)                \
+    affShapeParams.maxIterations        = maxIterations;        \
+    affShapeParams.convergenceThreshold = convergenceThreshold; \
+    affShapeParams.smmWindowSize        = smmWindowSize;        \
+    affShapeParams.mrSize               = mrSize;               \
+    affShapeParams.initialSigma         = initialSigma;         \
+    affShapeParams.patchSize            = patchSize;            \
+                                                                \
+    __MACRO_COMMENT__( Copy SIFT params)                        \
+    siftParams.spatialBins              = spatialBins;          \
+    siftParams.orientationBins          = orientationBins;      \
+    siftParams.maxBinValue              = maxBinValue;          \
+    siftParams.patchSize                = patchSize;            \
+                                                                \
+    __MACRO_COMMENT__( Copy my params)                          \
+    hesParams.scale_min            = scale_min;                 \
+    hesParams.scale_max            = scale_max;                 \
+    hesParams.rotation_invariance  = rotation_invariance;       \
+    hesParams.augment_orientation  = augment_orientation;       \
+    hesParams.ori_maxima_thresh    = ori_maxima_thresh;         \
+    hesParams.affine_invariance    = affine_invariance;         \
+    hesParams.only_count           = only_count;                \
+    __MACRO_COMMENT__()                                         \
+    pyrParams.use_dense                 = use_dense;            \
+    pyrParams.dense_stride              = dense_stride;
+
+// Macro to define the param object in func without call signature
+#define __HESAFF_DEFINE_PARAMS_FROM_DEFAULTS__  \
+    __MACRO_COMMENT__( Pyramid Params)          \
+    int   numberOfScales = 3;                   \
+    float threshold = 16.0f / 3.0f;             \
+    float edgeEigenValueRatio = 10.0f;          \
+    int   border = 5;                           \
+    int   maxPyramidLevels = -1;                \
+    __MACRO_COMMENT__( Affine Params Shape)     \
+    int   maxIterations = 16;                   \
+    float convergenceThreshold = 0.05;          \
+    int   smmWindowSize = 19;                   \
+    float mrSize = 3.0f * sqrt(3.0f);           \
+    __MACRO_COMMENT__( SIFT params)             \
+    int spatialBins = 4;                        \
+    int orientationBins = 8;                    \
+    float maxBinValue = 0.2f;                   \
+    __MACRO_COMMENT__( Shared Pyramid + Affine) \
+    float initialSigma = 1.6f;                  \
+    __MACRO_COMMENT__( Shared SIFT + Affine)    \
+    int patchSize = 41;                         \
+    __MACRO_COMMENT__( My params)               \
+    float scale_min = -1;                       \
+    float scale_max = -1;                       \
+    bool rotation_invariance = false;           \
+    bool augment_orientation = false;           \
+    float ori_maxima_thresh = .8;               \
+    bool affine_invariance = true;              \
+    __MACRO_COMMENT__()                         \
+    bool use_dense = false;                     \
+    int  dense_stride = 32;                     \
+    bool only_count = false;
 
 
 // new hessian affine detector (from image pixels)
@@ -1065,47 +1147,9 @@ PYHESAFF AffineHessianDetector* new_hesaff_image(uint8 *imgin, int rows,
             imgin += 1;
         }
     }
+
+    __HESAFF_DEFINE_PARAMS_FROM_CALL__
     
-    // Define params
-    SIFTDescriptorParams siftParams;
-    PyramidParams pyrParams;
-    AffineShapeParams affShapeParams;
-    HesaffParams hesParams;
-
-    // Copy Pyramid params
-    pyrParams.numberOfScales            = numberOfScales;
-    pyrParams.threshold                 = threshold;
-    pyrParams.edgeEigenValueRatio       = edgeEigenValueRatio;
-    pyrParams.border                    = border;
-    pyrParams.maxPyramidLevels          = maxPyramidLevels;
-    pyrParams.initialSigma              = initialSigma;
-
-    // Copy Affine Shape params
-    affShapeParams.maxIterations        = maxIterations;
-    affShapeParams.convergenceThreshold = convergenceThreshold;
-    affShapeParams.smmWindowSize        = smmWindowSize;
-    affShapeParams.mrSize               = mrSize;
-    affShapeParams.initialSigma         = initialSigma;
-    affShapeParams.patchSize            = patchSize;
-
-    // Copy SIFT params
-    siftParams.spatialBins              = spatialBins;
-    siftParams.orientationBins          = orientationBins;
-    siftParams.maxBinValue              = maxBinValue;
-    siftParams.patchSize                = patchSize;
-
-    // Copy my params
-    hesParams.scale_min            = scale_min;
-    hesParams.scale_max            = scale_max;
-    hesParams.rotation_invariance  = rotation_invariance;
-    hesParams.augment_orientation  = augment_orientation;
-    hesParams.ori_maxima_thresh    = ori_maxima_thresh;
-    hesParams.affine_invariance    = affine_invariance;
-    hesParams.only_count           = only_count;
-    //
-    pyrParams.use_dense                 = use_dense;
-    pyrParams.dense_stride              = dense_stride;
-
     // Create detector
     AffineHessianDetector* detector = new AffineHessianDetector(image, pyrParams, affShapeParams, siftParams, hesParams);
     detector->DBG_params();
@@ -1132,36 +1176,8 @@ PYHESAFF AffineHessianDetector* new_hesaff_fpath(char* img_fpath, __HESAFF_PARAM
 // new default hessian affine detector WRAPPER
 PYHESAFF AffineHessianDetector* new_hesaff_imgpath_noparams(char* img_fpath)
 {
-    // Pyramid Params
-    int   numberOfScales = 3;
-    float threshold = 16.0f / 3.0f;
-    float edgeEigenValueRatio = 10.0f;
-    int   border = 5;
-    int   maxPyramidLevels = -1;
-    // Affine Params Shape
-    int   maxIterations = 16;
-    float convergenceThreshold = 0.05;
-    int   smmWindowSize = 19;
-    float mrSize = 3.0f * sqrt(3.0f);
-    // SIFT params
-    int spatialBins = 4;
-    int orientationBins = 8;
-    float maxBinValue = 0.2f;
-    // Shared Pyramid + Affine
-    float initialSigma = 1.6f;
-    // Shared SIFT + Affine
-    int patchSize = 41;
-    // My params
-    float scale_min = -1;
-    float scale_max = -1;
-    bool rotation_invariance = false;
-    bool augment_orientation = false;
-    float ori_maxima_thresh = .8;
-    bool affine_invariance = true;
-    //
-    bool use_dense = false;
-    int  dense_stride = 32;
-    bool only_count = false;
+
+    __HESAFF_DEFINE_PARAMS_FROM_DEFAULTS__
 
     AffineHessianDetector* detector = new_hesaff_fpath(img_fpath, __HESAFF_PARAM_CALL_ARGS__);
     return detector;
@@ -1214,24 +1230,6 @@ PYHESAFF void writeFeatures(AffineHessianDetector* detector,
     detector->write_features(img_fpath);
 }
 
-//void detectKeypoints(char* image_filename,
-//                     float** keypoints,
-//                     uint8** descriptors,
-//                     int* length,
-//                     __HESAFF_PARAM_SIGNATURE_ARGS__
-//                     )
-//{
-//    AffineHessianDetector* detector = new_hesaff_fpath(image_filename, __HESAFF_PARAM_CALL_ARGS__);
-//    detector->DBG_params();
-//    *length = detector->detect();
-//    // TODO: shouldn't python be doing this allocation?
-//    *keypoints = new float[(*length)*KPTS_DIM];
-//    *descriptors = new uint8[(*length)*DESC_DIM];
-//    detector->exportArrays((*length), *keypoints, *descriptors);
-//    //may need to add support for "use_adaptive_scale" and "nogravity_hack" here (needs translation from Python to C++ first)
-//    delete detector;
-//}
-
 PYHESAFF void extractDescFromPatches(int num_patches,
                                      int patch_h, 
                                      int patch_w,
@@ -1274,35 +1272,6 @@ PYHESAFF void extractDescFromPatches(int num_patches,
     }
 
 }
-
-//PYHESAFF void detectKeypointsList(int num_fpaths,
-//                                  char** image_fpath_list,
-//                                  float** keypoints_array,
-//                                  uint8** descriptors_array,
-//                                  int* length_array,
-//                                  __HESAFF_PARAM_SIGNATURE_ARGS__
-//                                  )
-//{
-//    assert(0);  // do not use
-//    // Maybe use this implimentation instead to be more similar to the way
-//    // pyhesaff calls this library?
-//    int index;
-//    #pragma omp parallel for private(index)
-//    for(index = 0; index < num_fpaths; ++index)
-//    {
-//        char* image_filename = image_fpath_list[index];
-//        AffineHessianDetector* detector =
-//            new_hesaff_fpath(image_filename, __HESAFF_PARAM_CALL_ARGS__);
-//        detector->DBG_params();
-//        int length = detector->detect();
-//        length_array[index] = length;
-//        // TODO: shouldn't python be doing this allocation?
-//        keypoints_array[index] = new float[length * KPTS_DIM];
-//        descriptors_array[index] = new uint8[length * DESC_DIM];
-//        exportArrays(detector, length, keypoints_array[index], descriptors_array[index]);
-//        delete detector;
-//    }
-//}
 
 
 PYHESAFF AffineHessianDetector** detectKeypointsListStep1(int num_fpaths,
@@ -1394,7 +1363,7 @@ int main(int argc, char **argv)
          gprof hesaffexe | gprof2dot | dot -Tpng -o output.png
          eog output.png
     */
-    const char* about_message = "\nUsage: hesaffexe image_name.png kpts_file.txt\nDescribes elliptical keypoints (with gravity vector) given in kpts_file.txt using a SIFT descriptor. The help message has unfortunately been deleted. Check github history for details. https://github.com/perdoch/hesaff/blob/master/hesaff.cpp\n\n";
+    const char* about_message = "\nUsage: hesaffexe image_name.png\nDescribes elliptical keypoints (with gravity vector) given in kpts_file.txt using a SIFT descriptor. The help message has unfortunately been deleted. Check github history for details. https://github.com/perdoch/hesaff/blob/master/hesaff.cpp\n\n";
     // Parser Reference: http://docs.opencv.org/trunk/modules/core/doc/command_line_parser.html
     
     if(argc > 1)
