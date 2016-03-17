@@ -24,7 +24,7 @@ struct HesaffParams
 {
     float scale_min;     // minimum scale threshold
     float scale_max;     // maximum scale threshold
-    float ori_maxima_thresh;  // threshold for orientation invaraince
+    float ori_maxima_thresh;  // threshold for orientation invariance
     bool rotation_invariance;  // are we assuming the gravity vector?
     bool adapt_rotation;
     bool adapt_scale;

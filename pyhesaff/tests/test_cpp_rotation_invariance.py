@@ -124,8 +124,8 @@ def test_cpp_rotinvar_main():
     # Read data
     print('[rotinvar] loading test data')
     img_fpath = pyhestest.get_test_image()
-    [kpts1], [desc1] = pyhesaff.detect_kpts_list([img_fpath], rotation_invariance=False)
-    [kpts2], [desc2] = pyhesaff.detect_kpts_list([img_fpath], rotation_invariance=True)
+    [kpts1], [desc1] = pyhesaff.detect_feats_list([img_fpath], rotation_invariance=False)
+    [kpts2], [desc2] = pyhesaff.detect_feats_list([img_fpath], rotation_invariance=True)
     np.set_printoptions(threshold=5000, linewidth=5000, precision=8, suppress=True)
 
     print('kpts1.shape = %r' % (kpts1.shape,))

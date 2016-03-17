@@ -46,11 +46,11 @@ bool AffineShape::findAffineShape(const Mat &blur, float x, float y, float s, fl
     float eigen_ratio_act = 0.0f, eigen_ratio_bef = 0.0f;
     float u11 = 1.0f, u12 = 0.0f, u21 = 0.0f, u22 = 1.0f, eigval1 = 1.0f, eigval2 = 1.0f;
     float lx = x / pixelDistance, ly = y / pixelDistance;
-    float ratio = s / (par.initialSigma * pixelDistance);
+    float ratio = s / (this->par.initialSigma * pixelDistance);
     // kernel size...
-    const int maskPixels = par.smmWindowSize * par.smmWindowSize;
+    const int maskPixels = this->par.smmWindowSize * this->par.smmWindowSize;
 
-    for(int iters = 0; iters < par.maxIterations; iters ++)
+    for(int iters = 0; iters < this->par.maxIterations; iters ++)
     {
         // warp input according to current shape matrix
         interpolate(blur, lx, ly, u11 * ratio, u12 * ratio, u21 * ratio, u22 * ratio, this->img); // defined in helpers.cppp
@@ -109,7 +109,7 @@ bool AffineShape::findAffineShape(const Mat &blur, float x, float y, float s, fl
             break;
         }
 
-        if(eigen_ratio_act < par.convergenceThreshold && eigen_ratio_bef < par.convergenceThreshold)
+        if(eigen_ratio_act < this->par.convergenceThreshold && eigen_ratio_bef < this->par.convergenceThreshold)
         {
             if(affineShapeCallback)
             {
@@ -141,9 +141,9 @@ bool AffineShape::normalizeAffineCheckBorders(const Mat &img,
         rotateAffineTransformation(a11, a12, a21, a22, ori_offst); // helper
     }
     assert(fabs(a11 * a22 - a12 * a21 - 1.0f) < 0.01);
-    float mrScale = ceil(s * par.mrSize);
+    float mrScale = ceil(s * this->par.mrSize);
     int   patchImageSize = 2 * int(mrScale) + 1;
-    float imageToPatchScale = float(patchImageSize) / float(par.patchSize);
+    float imageToPatchScale = float(patchImageSize) / float(this->par.patchSize);
     if(interpolateCheckBorders(img, x, y, a11 * imageToPatchScale,
                                a12 * imageToPatchScale, a21 * imageToPatchScale,
                                a22 * imageToPatchScale, this->patch))
@@ -201,12 +201,12 @@ bool AffineShape::normalizeAffine(const Mat &img,
     assert(fabs(a11 * a22 - a12 * a21 - 1.0f) < 0.01);
     //    mrSize = 3.0f*sqrt(3.0f);
     // half patch size in pixels of image
-    float mrScale = ceil(s * par.mrSize);
+    float mrScale = ceil(s * this->par.mrSize);
     // enforce size to be odd
     int   patchImageSize = 2 * int(mrScale) + 1;
     // patchSize = 41;
     // patch size in image / patch size -> amount of down/up sampling
-    float imageToPatchScale = float(patchImageSize) / float(par.patchSize);
+    float imageToPatchScale = float(patchImageSize) / float(this->par.patchSize);
     // is patch touching boundary? if yes, ignore this feature
     // does not affect state
     if(interpolateCheckBorders(img, x, y, a11 * imageToPatchScale,

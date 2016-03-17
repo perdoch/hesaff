@@ -12,7 +12,7 @@ from matplotlib import pyplot as plt
 
 def test_detect_then_show(ax, img_fpath):
     import pyhesaff
-    kpts, vecs = pyhesaff.detect_kpts(img_fpath)
+    kpts, vecs = pyhesaff.detect_feats(img_fpath)
     print('[test_detect_then_show]')
     print('img_fpath=%r' % img_fpath)
     print('kpts=%s' % (ut.truncate_str(repr(kpts)),))

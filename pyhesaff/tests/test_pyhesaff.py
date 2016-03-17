@@ -23,7 +23,7 @@ def test_pyheaff(img_fpath):
         >>> ut.show_if_requested()
     """
     import pyhesaff
-    kpts, desc = pyhesaff.detect_kpts(img_fpath)
+    kpts, desc = pyhesaff.detect_feats(img_fpath)
     rchip = cv2.imread(img_fpath)
     if ut.show_was_requested():
         from plottool.interact_keypoints import ishow_keypoints

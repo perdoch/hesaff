@@ -6,7 +6,7 @@ TODO:
     need to delete hesaff objects
 
 Command Line:
-    python -c "import utool as ut; ut.write_modscript_alias('Fshow.sh', 'pyhesaff detect_kpts --fname easy1.png --verbose  --show')"  # NOQA
+    python -c "import utool as ut; ut.write_modscript_alias('Fshow.sh', 'pyhesaff detect_feats --fname easy1.png --verbose  --show')"  # NOQA
     Fshow.sh --no-ai --scale-max=150 --darken .5
     Fshow.sh --no-ai --scale-max=100 --darken .5
     Fshow.sh --no-ai --scale-max=100
@@ -55,9 +55,7 @@ img32_dtype  = np.float32
 # scalar ctypes
 obj_t     = C.c_void_p
 str_t     = C.c_char_p
-PY2 = True  # six.PY2
-#if six.PY2:
-if PY2:
+if True or six.PY2:  # HACK ALWAYS ON
     int_t     = C.c_int
 else:
     raise NotImplementedError('PY3')
@@ -116,7 +114,7 @@ HESAFF_PARAM_DICT = OrderedDict([(key, val) for (type_, key, val) in HESAFF_TYPE
 HESAFF_PARAM_TYPES = [type_ for (type_, key, val) in HESAFF_TYPED_PARAMS]
 
 
-def build_typed_params_kwargs_docstr_block(typed_params):
+def _build_typed_params_kwargs_docstr_block(typed_params):
     r"""
     Args:
         typed_params (dict):
@@ -126,7 +124,7 @@ def build_typed_params_kwargs_docstr_block(typed_params):
 
     Example:
         >>> # DISABLE_DOCTEST
-        >>> from pyhesaff import *  # NOQA
+        >>> from pyhesaff._pyhesaff import *  # NOQA
         >>> typed_params = HESAFF_TYPED_PARAMS
         >>> result = build_typed_params_docstr(typed_params)
         >>> print(result)
@@ -140,7 +138,7 @@ def build_typed_params_kwargs_docstr_block(typed_params):
         kwargs_lines.append(line)
     kwargs_docstr_block = ('Kwargs:\n' + ut.indent('\n'.join(kwargs_lines), '    '))
     return ut.indent(kwargs_docstr_block, '    ')
-hesaff_kwargs_docstr_block = build_typed_params_kwargs_docstr_block(HESAFF_TYPED_PARAMS)
+hesaff_kwargs_docstr_block = _build_typed_params_kwargs_docstr_block(HESAFF_TYPED_PARAMS)
 
 
 HESAFF_CLIB = None
@@ -155,16 +153,9 @@ def argparse_hesaff_params():
     return hesskw
 
 
-def load_hesaff_clib(rebuild=None):
+def _load_hesaff_clib(rebuild=None):
     """
     Specificially loads the hesaff lib and defines its functions
-
-    CommandLine:
-        python -m pyhesaff load_hesaff_clib --rebuild
-
-    Example:
-        >>> pass
-        >>> #import pyhesaff
     """
     global REBUILD_ONCE
     # Get the root directory which should have the dynamic library in it
@@ -203,14 +194,14 @@ def load_hesaff_clib(rebuild=None):
     def_cfunc(None,  'extractDescFromPatches', [int_t, int_t, int_t, img_t, vecs_t])
     def_cfunc(obj_t, 'new_hesaff_fpath',       [str_t] + HESAFF_PARAM_TYPES)
     def_cfunc(obj_t, 'new_hesaff_image',       [img_t, int_t, int_t, int_t] + HESAFF_PARAM_TYPES)
-    def_cfunc(obj_t, 'detectKeypointsListStep1',   [int_t, str_list_t] + HESAFF_PARAM_TYPES)
-    def_cfunc(None,  'detectKeypointsListStep2',    [int_t, obj_t, int_array_t])
-    def_cfunc(None,  'detectKeypointsListStep3',    [int_t, obj_t, int_array_t, int_array_t, kpts_t, vecs_t])
+    def_cfunc(obj_t, 'detectFeaturesListStep1',   [int_t, str_list_t] + HESAFF_PARAM_TYPES)
+    def_cfunc(None,  'detectFeaturesListStep2',    [int_t, obj_t, int_array_t])
+    def_cfunc(None,  'detectFeaturesListStep3',    [int_t, obj_t, int_array_t, int_array_t, kpts_t, vecs_t])
     return clib, lib_fpath
 
 # Create a global interface to the hesaff lib
 try:
-    HESAFF_CLIB, __LIB_FPATH__ = load_hesaff_clib()
+    HESAFF_CLIB, __LIB_FPATH__ = _load_hesaff_clib()
 except AttributeError as ex:
     ut.printex(ex, 'Need to rebuild hesaff')
     raise
@@ -342,7 +333,7 @@ def get_cpp_version():
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from pyhesaff import *  # NOQA
+        >>> from pyhesaff._pyhesaff import *  # NOQA
         >>> cpp_version = get_cpp_version()
         >>> isdebug = get_is_debug_mode()
         >>> print('cpp_version = %r' % (cpp_version,))
@@ -364,7 +355,7 @@ def get_cpp_version():
 # full detection and extraction
 
 
-def detect_kpts(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kwargs):
+def detect_feats(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kwargs):
     r"""
     driver function for detecting hessian affine keypoints from an image path.
     extra parameters can be passed to the hessian affine detector by using
@@ -398,59 +389,59 @@ def detect_kpts(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kwa
         tuple : (kpts, vecs)
 
     CommandLine:
-        python -m pyhesaff detect_kpts
-        python -m pyhesaff detect_kpts --show
-        python -m pyhesaff detect_kpts --show --fname star.png
-        python -m pyhesaff detect_kpts --show --fname lena.png
-        python -m pyhesaff detect_kpts --show --fname carl.jpg
+        python -m pyhesaff detect_feats
+        python -m pyhesaff detect_feats --show
+        python -m pyhesaff detect_feats --show --fname star.png
+        python -m pyhesaff detect_feats --show --fname lena.png
+        python -m pyhesaff detect_feats --show --fname carl.jpg
 
-        python -m pyhesaff detect_kpts --show --fname lena.png --ri
-        python -m pyhesaff detect_kpts --show --fname lena.png --ai
+        python -m pyhesaff detect_feats --show --fname lena.png --ri
+        python -m pyhesaff detect_feats --show --fname lena.png --ai
 
-        python -m pyhesaff detect_kpts --show --fname easy1.png --no-ai
-        python -m pyhesaff detect_kpts --show --fname easy1.png --no-ai --numberOfScales=1 --verbose
-        python -m pyhesaff detect_kpts --show --fname easy1.png --no-ai --scale-max=100 --verbose
-        python -m pyhesaff detect_kpts --show --fname easy1.png --no-ai --scale-min=20 --verbose
-        python -m pyhesaff detect_kpts --show --fname easy1.png --no-ai --scale-min=100 --verbose
-        python -m pyhesaff detect_kpts --show --fname easy1.png --no-ai --scale-max=20 --verbose
+        python -m pyhesaff detect_feats --show --fname easy1.png --no-ai
+        python -m pyhesaff detect_feats --show --fname easy1.png --no-ai --numberOfScales=1 --verbose
+        python -m pyhesaff detect_feats --show --fname easy1.png --no-ai --scale-max=100 --verbose
+        python -m pyhesaff detect_feats --show --fname easy1.png --no-ai --scale-min=20 --verbose
+        python -m pyhesaff detect_feats --show --fname easy1.png --no-ai --scale-min=100 --verbose
+        python -m pyhesaff detect_feats --show --fname easy1.png --no-ai --scale-max=20 --verbose
 
         python -m vtool.test_constrained_matching visualize_matches --show
         python -m vtool.tests.dummy testdata_ratio_matches --show
 
-        python -m pyhesaff detect_kpts --show --fname easy1.png --ai \
+        python -m pyhesaff detect_feats --show --fname easy1.png --ai \
             --verbose --rebuild-hesaff --scale-min=35 --scale-max=40 --no-rmbuild
 
-        python -m pyhesaff detect_kpts --show --fname easy1.png --ai \
+        python -m pyhesaff detect_feats --show --fname easy1.png --ai \
             --verbose --scale-min=35 --scale-max=40&
-        python -m pyhesaff detect_kpts --show --fname easy1.png --no-ai \
+        python -m pyhesaff detect_feats --show --fname easy1.png --no-ai \
             --verbose --scale-min=35 --scale-max=40&
-        python -m pyhesaff detect_kpts --show --fname easy1.png --no-ai \
+        python -m pyhesaff detect_feats --show --fname easy1.png --no-ai \
             --verbose --scale-max=40 --darken .5
-        python -m pyhesaff detect_kpts --show --fname easy1.png --no-ai \
+        python -m pyhesaff detect_feats --show --fname easy1.png --no-ai \
             --verbose --scale-max=30 --darken .5
-        python -m pyhesaff detect_kpts --show --fname easy1.png --ai \
+        python -m pyhesaff detect_feats --show --fname easy1.png --ai \
             --verbose --scale-max=30 --darken .5
 
         # DENSE KEYPOINTS
-        python -m pyhesaff detect_kpts --show --fname lena.png \
+        python -m pyhesaff detect_feats --show --fname lena.png \
             --no-affine-invariance --numberOfScales=1 --maxPyramidLevels=1 \
             --use_dense --dense_stride=64
-        python -m pyhesaff detect_kpts --show --fname lena.png \
+        python -m pyhesaff detect_feats --show --fname lena.png \
             --no-affine-invariance --numberOfScales=1 --maxPyramidLevels=1 \
             --use_dense --dense_stride=64 --rotation-invariance
-        python -m pyhesaff detect_kpts --show --fname lena.png \
+        python -m pyhesaff detect_feats --show --fname lena.png \
             --affine-invariance --numberOfScales=1 --maxPyramidLevels=1 \
             --use_dense --dense_stride=64
-        python -m pyhesaff detect_kpts --show --fname lena.png \
+        python -m pyhesaff detect_feats --show --fname lena.png \
             --no-affine-invariance --numberOfScales=3 \
             --maxPyramidLevels=2 --use_dense --dense_stride=32
 
-        python -m pyhesaff detect_kpts --show --only_count=False
+        python -m pyhesaff detect_feats --show --only_count=False
 
     Example0:
         >>> # ENABLE_DOCTEST
         >>> # Test simple detect
-        >>> from pyhesaff import *  # NOQA
+        >>> from pyhesaff._pyhesaff import *  # NOQA
         >>> import plottool as pt
         >>> import utool as ut
         >>> import vtool as vt
@@ -459,7 +450,7 @@ def detect_kpts(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kwa
         >>> theta = ut.get_argval('--theta', float, 0)  # TAU * 3 / 8)
         >>> img_fpath = vt.rotate_image_on_disk(fpath, theta)
         >>> kwargs = argparse_hesaff_params()
-        >>> (kpts_list, vecs_list) = detect_kpts(img_fpath, **kwargs)
+        >>> (kpts_list, vecs_list) = detect_feats(img_fpath, **kwargs)
         >>> kpts = kpts_list
         >>> vecs = vecs_list
         >>> # Show keypoints
@@ -504,7 +495,7 @@ def detect_kpts(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kwa
     return kpts, vecs
 
 
-def detect_kpts2(img_or_fpath, **kwargs):
+def detect_feats2(img_or_fpath, **kwargs):
     """
     General way of detecting from either an fpath or ndarray
 
@@ -516,13 +507,13 @@ def detect_kpts2(img_or_fpath, **kwargs):
     """
     if isinstance(img_or_fpath, six.string_types):
         fpath = img_or_fpath
-        return detect_kpts(fpath, **kwargs)
+        return detect_feats(fpath, **kwargs)
     else:
         img = img_or_fpath
-        return detect_kpts_in_image(img, **kwargs)
+        return detect_feats_in_image(img, **kwargs)
 
 
-def detect_kpts_list(image_paths_list, **kwargs):
+def detect_feats_list(image_paths_list, **kwargs):
     """
     Args:
         image_paths_list (list): A list of image paths
@@ -549,19 +540,19 @@ def detect_kpts_list(image_paths_list, **kwargs):
         rotation_invariance (bool)   : default=False
 
     CommandLine:
-        python -m pyhesaff._pyhesaff detect_kpts_list --show
+        python -m pyhesaff._pyhesaff detect_feats_list --show
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from pyhesaff import *  # NOQA
+        >>> from pyhesaff._pyhesaff import *  # NOQA
         >>> import utool as ut
         >>> lena_fpath = ut.grab_test_imgpath('lena.png')
         >>> image_paths_list = [ut.grab_test_imgpath('carl.jpg'), ut.grab_test_imgpath('star.png'), lena_fpath]
-        >>> (kpts_list, vecs_list) = detect_kpts_list(image_paths_list)
+        >>> (kpts_list, vecs_list) = detect_feats_list(image_paths_list)
         >>> #print((kpts_list, vecs_list))
         >>> print(ut.depth_profile(kpts_list))
         >>> # Assert that the normal version agrees
-        >>> serial_list = [detect_kpts(fpath) for fpath in image_paths_list]
+        >>> serial_list = [detect_feats(fpath) for fpath in image_paths_list]
         >>> kpts_list2 = ut.get_list_column(serial_list, 0)
         >>> vecs_list2 = ut.get_list_column(serial_list, 1)
         >>> print(ut.depth_profile(kpts_list2))
@@ -588,8 +579,8 @@ def detect_kpts_list(image_paths_list, **kwargs):
     hesaff_args = hesaff_params.values()
 
     length_array = np.empty(num_imgs, dtype=int_t)
-    detector_array = HESAFF_CLIB.detectKeypointsListStep1(num_imgs, c_strs, *hesaff_args)
-    HESAFF_CLIB.detectKeypointsListStep2(num_imgs, detector_array, length_array)
+    detector_array = HESAFF_CLIB.detectFeaturesListStep1(num_imgs, c_strs, *hesaff_args)
+    HESAFF_CLIB.detectFeaturesListStep2(num_imgs, detector_array, length_array)
     total_pts = length_array.sum()
     # allocate arrays
     total_num_arrays = num_imgs * total_pts
@@ -599,7 +590,7 @@ def detect_kpts_list(image_paths_list, **kwargs):
     offset_array = np.roll(length_array.cumsum(), 1).astype(int_t)
     # np.array([0] + length_array.cumsum().tolist()[0:-1], int_t)
     offset_array[0] = 0
-    HESAFF_CLIB.detectKeypointsListStep3(num_imgs, detector_array,
+    HESAFF_CLIB.detectFeaturesListStep3(num_imgs, detector_array,
                                          length_array, offset_array,
                                          flat_kpts_ptr, flat_vecs_ptr)
 
@@ -610,7 +601,7 @@ def detect_kpts_list(image_paths_list, **kwargs):
     return kpts_list, vecs_list
 
 
-def detect_kpts_in_image(img, **kwargs):
+def detect_feats_in_image(img, **kwargs):
     r"""
     Takes a preloaded image and detects keypoints and descriptors
 
@@ -621,16 +612,16 @@ def detect_kpts_in_image(img, **kwargs):
         tuple: (kpts, vecs)
 
     CommandLine:
-        python -m pyhesaff detect_kpts_in_image --show
-        python -m pyhesaff detect_kpts_in_image --rebuild-hesaff --show --no-rmbuild
+        python -m pyhesaff detect_feats_in_image --show
+        python -m pyhesaff detect_feats_in_image --rebuild-hesaff --show --no-rmbuild
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from pyhesaff import *  # NOQA
+        >>> from pyhesaff._pyhesaff import *  # NOQA
         >>> import vtool as vt
         >>> img_fpath = ut.grab_test_imgpath('lena.png')
         >>> img= vt.imread(img_fpath)
-        >>> (kpts, vecs) = detect_kpts_in_image(img)
+        >>> (kpts, vecs) = detect_feats_in_image(img)
         >>> ut.quit_if_noshow()
         >>> import plottool as pt
         >>> pt.interact_keypoints.ishow_keypoints(img, kpts, vecs, ori=True,
@@ -656,7 +647,7 @@ def detect_kpts_in_image(img, **kwargs):
     return kpts, vecs
 
 
-def detect_num_kpts_in_image(img, **kwargs):
+def detect_num_feats_in_image(img, **kwargs):
     r"""
     Just quickly returns how many keypoints are in the image. Does not attempt
     to return or store the values.
@@ -669,20 +660,24 @@ def detect_num_kpts_in_image(img, **kwargs):
     Returns:
         int: nKpts
 
+    ISSUE: there seems to be an inconsistency for jpgs between this and detect_feats
+
     CommandLine:
-        python -m pyhesaff detect_num_kpts_in_image:0 --show
-        python -m pyhesaff detect_num_kpts_in_image:1 --show
+        python -m pyhesaff detect_num_feats_in_image:0 --show
+        python -m pyhesaff detect_num_feats_in_image:1 --show
 
     Example:
         >>> # ENABLE_DOCTEST
         >>> from pyhesaff._pyhesaff import *  # NOQA
         >>> import vtool as vt
-        >>> img_fpath = ut.grab_test_imgpath('carl.jpg')
+        >>> img_fpath = ut.grab_test_imgpath('lena.png')
         >>> img = vt.imread(img_fpath)
-        >>> nKpts = detect_num_kpts_in_image(img)
+        >>> nKpts = detect_num_feats_in_image(img)
+        >>> kpts, vecs = detect_feats_in_image(img)
+        >>> ut.assert_eq(nKpts, len(kpts), 'inconsistency')
         >>> result = ('nKpts = %s' % (ut.repr2(nKpts),))
         >>> print(result)
-        nKpts = 215
+        nKpts = 505
 
     Example1:
         >>> # TIMEDOCTEST
@@ -698,9 +693,9 @@ def detect_num_kpts_in_image(img, **kwargs):
             img = vt.imread(img_fpath)
             ''')
         >>> stmt_list = [
-        >>>    'pyhesaff.detect_kpts_in_image(img)',
-        >>>    'pyhesaff.detect_num_kpts_in_image(img, affine_invariance=False)',
-        >>>    'pyhesaff.detect_num_kpts_in_image(img)',
+        >>>    'pyhesaff.detect_feats_in_image(img)',
+        >>>    'pyhesaff.detect_num_feats_in_image(img, affine_invariance=False)',
+        >>>    'pyhesaff.detect_num_feats_in_image(img)',
         >>> ]
         >>> iterations = 30
         >>> verbose = True
@@ -744,7 +739,7 @@ def extract_vecs(img_fpath, kpts, **kwargs):
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from pyhesaff import *  # NOQA
+        >>> from pyhesaff._pyhesaff import *  # NOQA
         >>> import vtool as vt
         >>> img_fpath = ut.grab_test_imgpath('carl.jpg')
         >>> kpts = vt.dummy.get_dummy_kpts()
@@ -754,11 +749,11 @@ def extract_vecs(img_fpath, kpts, **kwargs):
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from pyhesaff import *  # NOQA
+        >>> from pyhesaff._pyhesaff import *  # NOQA
         >>> import vtool as vt
         >>> img_fpath = ut.grab_test_imgpath(ut.get_argval('--fname', default='lena.png'))
         >>> # Extract original keypoints
-        >>> kpts, vecs1 = detect_kpts(img_fpath)
+        >>> kpts, vecs1 = detect_feats(img_fpath)
         >>> # Re-extract keypoints
         >>> vecs2 = extract_vecs(img_fpath, kpts)
         >>> # Descriptors should be the same
@@ -812,13 +807,13 @@ def extract_patches(img_or_fpath, kpts, **kwargs):
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from pyhesaff import *  # NOQA
+        >>> from pyhesaff._pyhesaff import *  # NOQA
         >>> import vtool as vt
         >>> kwargs = {}
         >>> img_fpath = ut.grab_test_imgpath('carl.jpg')
         >>> img = vt.imread(img_fpath)
         >>> img_or_fpath = img
-        >>> kpts, vecs1 = detect_kpts(img_fpath)
+        >>> kpts, vecs1 = detect_feats(img_fpath)
         >>> kpts = kpts[1::len(kpts) // 9]
         >>> vecs1 = vecs1[1::len(vecs1) // 9]
         >>> cpp_patch_list = extract_patches(img, kpts)
@@ -860,12 +855,11 @@ def extract_desc_from_patches(patch_list):
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from pyhesaff import *  # NOQA
-        >>> from pyhesaff import alloc_vecs
+        >>> from pyhesaff._pyhesaff import *  # NOQA
         >>> import vtool as vt
         >>> img_fpath = ut.grab_test_imgpath(ut.get_argval('--fname', default='lena.png'))
         >>> # First extract keypoints normally
-        >>> (orig_kpts_list, orig_vecs_list) = detect_kpts(img_fpath)
+        >>> (orig_kpts_list, orig_vecs_list) = detect_feats(img_fpath)
         >>> # Take 9 keypoints
         >>> img = vt.imread(img_fpath)
         >>> kpts_list = orig_kpts_list[1::len(orig_kpts_list) // 9]
@@ -878,12 +872,11 @@ def extract_desc_from_patches(patch_list):
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> from pyhesaff import *  # NOQA
-        >>> from pyhesaff import alloc_vecs
+        >>> from pyhesaff._pyhesaff import *  # NOQA
         >>> import vtool as vt
         >>> img_fpath = ut.grab_test_imgpath(ut.get_argval('--fname', default='lena.png'))
         >>> # First extract keypoints normally
-        >>> (orig_kpts_list, orig_vecs_list) = detect_kpts(img_fpath)
+        >>> (orig_kpts_list, orig_vecs_list) = detect_feats(img_fpath)
         >>> # Take 9 keypoints
         >>> img = vt.imread(img_fpath)
         >>> kpts_list = orig_kpts_list[1::len(orig_kpts_list) // 9]
@@ -967,7 +960,7 @@ def test_rot_invar():
 
     Example:
         >>> # DISABLE_DODCTEST
-        >>> from pyhesaff import *  # NOQA
+        >>> from pyhesaff._pyhesaff import *  # NOQA
         >>> test_rot_invar()
     """
     import cv2
@@ -990,9 +983,9 @@ def test_rot_invar():
         #theta = ut.get_argval('--theta', type_=float, default=TAU * 3 / 8)
         img_fpath = vt.rotate_image_on_disk(img_fpath2, theta, borderMode=cv2.BORDER_REPLICATE)
         if not ut.get_argflag('--nocpp'):
-            (kpts_list_ri, vecs_list2) = detect_kpts(img_fpath, rotation_invariance=True)
+            (kpts_list_ri, vecs_list2) = detect_feats(img_fpath, rotation_invariance=True)
             kpts_ri = ut.strided_sample(kpts_list_ri, 2)
-        (kpts_list_gv, vecs_list1) = detect_kpts(img_fpath, rotation_invariance=False)
+        (kpts_list_gv, vecs_list1) = detect_feats(img_fpath, rotation_invariance=False)
         kpts_gv = ut.strided_sample(kpts_list_gv, 2)
         # find_kpts_direction
         imgBGR = vt.imread(img_fpath)
@@ -1042,6 +1035,8 @@ def adapt_scale(img_fpath, kpts):
     vecs2 = extract_vecs(img_fpath, kpts2)
     return kpts2, vecs2
 
+
+del type_, key, val
 
 if __name__ == '__main__':
     """

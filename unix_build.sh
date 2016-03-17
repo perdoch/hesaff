@@ -68,7 +68,8 @@ if [[ "$OSTYPE" == "msys"* ]]; then
     make
 else
     export NCPUS=$(grep -c ^processor /proc/cpuinfo)
-    make -j$NCPUS
+    #make
+    make -j$NCPUS || make
     #make -j$NCPUS VERBOSE=1
     #make -j$NCPUS
 fi

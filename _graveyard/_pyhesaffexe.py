@@ -63,7 +63,7 @@ def __cmd(args, verbose=True):
     return out, err, ret
 
 
-def detect_kpts(rchip_fpath, **kwargs):
+def detect_feats(rchip_fpath, **kwargs):
     'Runs external perdoch detector'
     outname = rchip_fpath + '.hesaff.sift'
     args = '"' + rchip_fpath + '"'

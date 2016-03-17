@@ -35,7 +35,7 @@ def test_hesaff(n=None, fnum=1, **kwargs):
     try:
         # Select kpts
         title = split(_pyhesaffexe.EXE_FPATH)[1] if use_exe else 'libhesaff'
-        detect_func = _pyhesaffexe.detect_kpts if use_exe else detect_kpts
+        detect_func = _pyhesaffexe.detect_feats if use_exe else detect_feats
         with helpers.Timer(msg=title):
             kpts, desc = detect_func(img_fpath, scale_min=0, scale_max=1000)
         if reextract:

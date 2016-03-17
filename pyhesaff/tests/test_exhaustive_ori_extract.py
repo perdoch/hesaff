@@ -7,8 +7,8 @@ import utool as ut
 def double_detect(img_fpath, **kw):
     import pyhesaff
     # Checks to make sure computation is determinsitc
-    _kpts, _vecs = pyhesaff.detect_kpts(img_fpath, **kw)
-    kpts_, vecs_ = pyhesaff.detect_kpts(img_fpath, **kw)
+    _kpts, _vecs = pyhesaff.detect_feats(img_fpath, **kw)
+    kpts_, vecs_ = pyhesaff.detect_feats(img_fpath, **kw)
     assert np.all(kpts_ == _kpts)
     assert np.all(vecs_ == _vecs)
     print('double detect ok')

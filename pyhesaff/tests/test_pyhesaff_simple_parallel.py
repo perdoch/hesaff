@@ -36,14 +36,14 @@ def test_simple_parallel():
 
     # Time parallel computation
     with ut.Timer('Timing Parallel'):
-        kpts_array, desc_array = pyhesaff.detect_kpts_list(img_fpaths)
+        kpts_array, desc_array = pyhesaff.detect_feats_list(img_fpaths)
 
     # Time serial computation
     kpts_list2 = []
     desc_list2 = []
     with ut.Timer('Timing Iterative'):
         for img_fpath in img_fpaths:
-            kpts_, desc_ = pyhesaff.detect_kpts(img_fpath)
+            kpts_, desc_ = pyhesaff.detect_feats(img_fpath)
             kpts_list2.append(kpts_)
             desc_list2.append(desc_)
 

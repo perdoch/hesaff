@@ -17,7 +17,7 @@ CommandLine:
     mingw_build.bat && python -c "import utool as ut; ut.cmd('build/hesaffexe.exe ' + ut.grab_test_imgpath('star.png'))"
     ./unix_build.sh && python -c "import utool as ut; ut.cmd('build/hesaffexe ' + ut.grab_test_imgpath('star.png'))"
 
-    python -m pyhesaff detect_kpts --fname lena.png --verbose  --show  --rebuild-hesaff --no-rmbuild
+    python -m pyhesaff detect_feats --fname lena.png --verbose  --show  --rebuild-hesaff --no-rmbuild
 
     python -m pyhesaff._pyhesaff --test-test_rot_invar --show --rebuild-hesaff --no-rmbuild
     python -m pyhesaff._pyhesaff --test-test_rot_invar --show
@@ -30,7 +30,7 @@ CommandLine:
 // Main File. Includes and uses the other files
 //
 
-#define DEBUG_HESAFF 1
+#define DEBUG_HESAFF 0
 
 #include <iostream>
 #include <fstream>
@@ -88,11 +88,11 @@ CommandLine:
 
 
 #if USE_ORI
-const int KPTS_DIM = 6;
+static const int KPTS_DIM = 6;
 #else
-const int KPTS_DIM = 5;
+static const int KPTS_DIM = 5;
 #endif
-const int DESC_DIM = 128;
+static const int DESC_DIM = 128;
 
 typedef unsigned char uint8;
 
@@ -118,7 +118,7 @@ public:
     SIFTDescriptor sift;
     std::vector<Keypoint> keys;
     int num_kpts;
-    HesaffParams hesPar;
+    const HesaffParams hesPar;
 public:
     // Constructor
     AffineHessianDetector(const cv::Mat &image,
@@ -154,9 +154,9 @@ public:
         {
             Keypoint &k = this->keys[fx];
             float x, y, iv11, iv12, iv21, iv22, s, det;
-            float sc = AffineShape::par.mrSize * k.s;
-            size_t rowk = fx * KPTS_DIM;
-            size_t rowd = fx * DESC_DIM;
+            const float sc = AffineShape::par.mrSize * k.s;
+            const size_t rowk = fx * KPTS_DIM;
+            const size_t rowd = fx * DESC_DIM;
             // given kpts in invV format
             det = (k.a11 * k.a22) - (k.a12 * k.a21);
             x = k.x;
@@ -184,27 +184,6 @@ public:
         }
     }
 
-    void write_features(char* img_fpath)
-    {
-        // Dump keypoints to disk in text format
-        char suffix[] = ".hesaff.sift";
-        int len = strlen(img_fpath) + strlen(suffix) + 1;
-        #ifdef WIN32
-        char* out_fpath = new char[len];
-        #else
-        char out_fpath[len];
-        #endif
-        snprintf(out_fpath, len, "%s%s", img_fpath, suffix);
-        out_fpath[len - 1] = 0;
-        printDBG("detector->writing_features: " << out_fpath);
-        std::ofstream out(out_fpath);
-        this->exportKeypoints(out);
-        // Clean Up
-        #ifdef WIN32
-        delete[] out_fpath;
-        #endif
-    }
-
     void exportKeypoints(std::ostream &out)
     {
         /* Writes text keypoints in the invE format to a stdout stream
@@ -218,7 +197,7 @@ public:
         for(size_t i = 0; i < nKpts; i++)
         {
             Keypoint &k = this->keys[i];
-            float sc = AffineShape::par.mrSize * k.s;
+            const float sc = AffineShape::par.mrSize * k.s;
             // Grav invA keypoints
             cv::Mat invA = (cv::Mat_<float>(2, 2) << k.a11, k.a12, k.a21, k.a22);
             // Integrate the scale via signular value decomposition
@@ -234,7 +213,7 @@ public:
             // X == V
             // Decompose invA
             SVD svd_invA(invA, SVD::FULL_UV);
-            float *diag_invA = (float *)svd_invA.w.data;
+            float * const diag_invA = (float *)svd_invA.w.data;
             // Integrate scale into 1/S and take squared inverst to make 1/W
             diag_invA[0] = 1.0f / (diag_invA[0] * diag_invA[0] * sc * sc);
             diag_invA[1] = 1.0f / (diag_invA[1] * diag_invA[1] * sc * sc);
@@ -243,9 +222,9 @@ public:
             // invE = (V * 1/S * U.T) * (U * 1/S * V.T)
             cv::Mat invE = svd_invA.u * cv::Mat::diag(svd_invA.w) * svd_invA.u.t();
             // Write inv(E) to out stream
-            float e11 = invE.at<float>(0, 0);
-            float e12 = invE.at<float>(0, 1); // also e12 because of E symetry
-            float e22 = invE.at<float>(1, 1);
+            const float e11 = invE.at<float>(0, 0);
+            const float e12 = invE.at<float>(0, 1); // also e12 because of E symetry
+            const float e22 = invE.at<float>(1, 1);
             #if USE_ORI
             float ori = k.ori;
             out << k.x << " " << k.y << " "
@@ -305,7 +284,7 @@ public:
         float x, y, iv11, iv12, iv21, iv22;
         float sc;
         float a11, a12, a21, a22, s, ori;
-        for(int fx = 0; fx < (nKpts); fx++)
+        for(int fx = 0; fx < nKpts; fx++)
         {
             // 2D Array offsets
             size_t rowk = fx * KPTS_DIM;
@@ -353,11 +332,11 @@ public:
         float x, y, iv11, iv12, iv21, iv22;
         float sc;
         float a11, a12, a21, a22, s, ori;
-        for(int fx = 0; fx < (nKpts); fx++)
+        for(int fx = 0; fx < nKpts; fx++)
         {
             // 2D Array offsets
-            size_t rowk = fx * KPTS_DIM;
-            size_t rowd = fx * DESC_DIM;
+            const size_t rowk = fx * KPTS_DIM;
+            const size_t rowd = fx * DESC_DIM;
             //Read a keypoint from the file
             x = kpts[rowk + 0];
             y = kpts[rowk + 1];
@@ -437,9 +416,9 @@ public:
 
         */
         // check if detected keypoint is within scale thresholds
-        float scale_min = hesPar.scale_min;
-        float scale_max = hesPar.scale_max;
-        float scale = s * AffineShape::par.mrSize;
+        const float scale_min = hesPar.scale_min;
+        const float scale_max = hesPar.scale_max;
+        const float scale = s * AffineShape::par.mrSize;
         // negative thresholds turn the threshold test off
         if((scale_min > 0 && scale < scale_min) || (scale_max > 0 && scale > scale_max))
         {
@@ -449,19 +428,19 @@ public:
             //printDBG("[shape_found]  * scale_min: " << scale_min << "; scale_max: " << scale_max)
             return;
         }
-        else
-        {
-            //printDBG("[shape_found] Shape Found And Passed")
-            //printDBG("[shape_found]  * passed: " << scale)
-            //printDBG("[shape_found]  * scale_min: " << scale_min << "; scale_max: " << scale_max)
-        }
+        //else
+        //{
+        //    //printDBG("[shape_found] Shape Found And Passed")
+        //    //printDBG("[shape_found]  * passed: " << scale)
+        //    //printDBG("[shape_found]  * scale_min: " << scale_min << "; scale_max: " << scale_max)
+        //}
         // Enforce the gravity vector: convert shape into a up is up frame
         float ori = R_GRAVITY_THETA;
         rectifyAffineTransformationUpIsUp(a11, a12, a21, a22); // Helper
         std::vector<float> submaxima_oris;
         if(hesPar.rotation_invariance)
         {
-            bool passed = this->localizeKeypointOrientation(
+            const bool passed = this->localizeKeypointOrientation(
                 this->image, x, y, s, a11, a12, a21, a22, submaxima_oris);
             if (!passed)
             {
@@ -584,7 +563,7 @@ public:
 
         // Enforce that the shape is pointing down and sample the patch when the
         // orientation is the gravity vector 
-        float ori = R_GRAVITY_THETA;
+        const float ori = R_GRAVITY_THETA;
         rectifyAffineTransformationUpIsUp(a11, a12, a21, a22);
         // sample the patch (populates this->patch)
         if(this->normalizeAffine(img, x, y, s, a11, a12, a21, a22, ori))
@@ -615,7 +594,7 @@ public:
         //cv::magnitude(xgradient, ygradient, magnitudes);
         cv::cartToPolar(xgradient, ygradient, magnitudes, orientations);
         #if DEBUG_ROTINVAR
-        this->DBG_dump_patch("orientationsbef", orientations);
+            this->DBG_dump_patch("orientationsbef", orientations);
         #endif
 
         orientations += M_GRAVITY_THETA; // adjust for 0 being downward
@@ -636,50 +615,50 @@ public:
             }
         }
         #if DEBUG_ROTINVAR
-        this->DBG_dump_patch("orientationsaft", orientations);
+            this->DBG_dump_patch("orientationsaft", orientations);
         #endif
         
         // gaussian weight magnitudes
         //float sigma0 = (magnitudes.rows / 2) * .95;
         //float sigma1 = (magnitudes.cols / 2) * .95;
-        float sigma0 = (magnitudes.rows / 2) * .4;
-        float sigma1 = (magnitudes.cols / 2) * .4;
+        const float sigma0 = (magnitudes.rows / 2) * .4;
+        const float sigma1 = (magnitudes.cols / 2) * .4;
         cv::Mat gauss_weights;
         make_2d_gauss_patch_01(magnitudes.rows, magnitudes.cols, sigma0, sigma1, gauss_weights);
         // Weight magnitudes using a gaussian kernel
         cv::Mat weights = magnitudes.mul(gauss_weights);
 
         #if DEBUG_ROTINVAR
-        //this->DBG_kp_shape_a(x, y, s, a11, a12, a21, a22, ori);
-        //this->DBG_print_mat(this->patch, 10, "PATCH");
-        //this->DBG_dump_patch("PATCH", this->patch);
-        //this->DBG_print_mat(xgradient, 10, "xgradient");
-        //this->DBG_print_mat(ygradient, 10, "ygradient");
-        std::string patch_fpath = this->DBG_dump_patch("PATCH", this->patch);
-        std::string gradx_fpath = this->DBG_dump_patch("xgradient", xgradient);
-        std::string grady_fpath = this->DBG_dump_patch("ygradient", ygradient);
-        //printDBG("d0_max = " << d0_max);
-        //printDBG("d1_max = " << d1_max);
-        //this->DBG_print_mat(gauss_kernel_d0, 1, "GAUSSd0");
-        //this->DBG_print_mat(gauss_kernel_d1, 1, "GAUSSd1");
-        //this->DBG_print_mat(gauss_weights, 10, "GAUSS");
-        //this->DBG_print_mat(orientations, 10, "ORI");
-        std::string gmag_fpath = this->DBG_dump_patch("magnitudes", magnitudes);
-        std::string gaussweight_fpath = this->DBG_dump_patch("gauss_weights", gauss_weights, true);
-        //std::str ori_fpath;
-        //std::str weights_fpath;
+            //this->DBG_kp_shape_a(x, y, s, a11, a12, a21, a22, ori);
+            //this->DBG_print_mat(this->patch, 10, "PATCH");
+            //this->DBG_dump_patch("PATCH", this->patch);
+            //this->DBG_print_mat(xgradient, 10, "xgradient");
+            //this->DBG_print_mat(ygradient, 10, "ygradient");
+            std::string patch_fpath = this->DBG_dump_patch("PATCH", this->patch);
+            std::string gradx_fpath = this->DBG_dump_patch("xgradient", xgradient);
+            std::string grady_fpath = this->DBG_dump_patch("ygradient", ygradient);
+            //printDBG("d0_max = " << d0_max);
+            //printDBG("d1_max = " << d1_max);
+            //this->DBG_print_mat(gauss_kernel_d0, 1, "GAUSSd0");
+            //this->DBG_print_mat(gauss_kernel_d1, 1, "GAUSSd1");
+            //this->DBG_print_mat(gauss_weights, 10, "GAUSS");
+            //this->DBG_print_mat(orientations, 10, "ORI");
+            std::string gmag_fpath = this->DBG_dump_patch("magnitudes", magnitudes);
+            std::string gaussweight_fpath = this->DBG_dump_patch("gauss_weights", gauss_weights, true);
+            //std::str ori_fpath;
+            //std::str weights_fpath;
 
-        std::string weights_fpath = this->DBG_dump_patch("WEIGHTS", weights);
-        this->DBG_dump_patch("orientations", orientations);
-        cv::Mat orientations01 = orientations.mul(255.0 / 6.28);
-        std::string ori_fpath01 = this->DBG_dump_patch("orientations01", orientations01);
-        cv::Mat gaussweight01 = gauss_weights.mul(255.0 / 6.28);
-        std::string gaussweight01_fpath = this->DBG_dump_patch("gaussweight01", gaussweight01);
-        //make_str(ori_fpath, "patches/KP_" << this->keys.size() << "_" << "orientations01" << ".png");
-        //make_str(weights_fpath, "patches/KP_" << this->keys.size() << "_" << "WEIGHTS" << ".png");
-        //this->DBG_print_mat(magnitudes, 10, "MAG");
-        //this->DBG_print_mat(weights, 10, "WEIGHTS");
-        //cv::waitKey(0);
+            std::string weights_fpath = this->DBG_dump_patch("WEIGHTS", weights);
+            this->DBG_dump_patch("orientations", orientations);
+            cv::Mat orientations01 = orientations.mul(255.0 / 6.28);
+            std::string ori_fpath01 = this->DBG_dump_patch("orientations01", orientations01);
+            cv::Mat gaussweight01 = gauss_weights.mul(255.0 / 6.28);
+            std::string gaussweight01_fpath = this->DBG_dump_patch("gaussweight01", gaussweight01);
+            //make_str(ori_fpath, "patches/KP_" << this->keys.size() << "_" << "orientations01" << ".png");
+            //make_str(weights_fpath, "patches/KP_" << this->keys.size() << "_" << "WEIGHTS" << ".png");
+            //this->DBG_print_mat(magnitudes, 10, "MAG");
+            //this->DBG_print_mat(weights, 10, "WEIGHTS");
+            //cv::waitKey(0);
         #endif
         
         // HISTOGRAM INTERPOLOATION PART
@@ -705,51 +684,50 @@ public:
             float submax_ori2 = ensure_0toTau<float>(submax_ori); 
             submaxima_oris.push_back(submax_ori);
             #if DEBUG_ROTINVAR
-            if (submax_ori != submax_ori2)
-            {
-                printDBG("[find_ori] +------------")
-                printDBG("[find_ori] submax_ori  = " << submax_ori)
-                printDBG("[find_ori] submax_ori2 = " << submax_ori2)
-                printDBG("[find_ori] L____________")
-            }
+                if (submax_ori != submax_ori2)
+                {
+                    printDBG("[find_ori] +------------")
+                    printDBG("[find_ori] submax_ori  = " << submax_ori)
+                    printDBG("[find_ori] submax_ori2 = " << submax_ori2)
+                    printDBG("[find_ori] L____________")
+                }
             #endif
             //submax_ori = submax_ori2;
             //submaxima_oris.push_back(submax_ori);
-
         }
 
         #if DEBUG_ROTINVAR
-        /*
-         python -m pyhesaff._pyhesaff --test-test_rot_invar --show --rebuild-hesaff --no-rmbuild
-         python -m pyhesaff._pyhesaff --test-test_rot_invar --show 
-         */
-        
-        //make_str(cmd_str1, 
-        //        "python -m vtool.patch --test-test_ondisk_find_patch_fpath_dominant_orientations --show" << 
-        //        " --patch-fpath " << patch_fpath <<
-        //        "&"
-        //        ""
-        //        );
-        //run_system_command(cmd_str1);
+            /*
+             python -m pyhesaff._pyhesaff --test-test_rot_invar --show --rebuild-hesaff --no-rmbuild
+             python -m pyhesaff._pyhesaff --test-test_rot_invar --show 
+             */
+            
+            //make_str(cmd_str1, 
+            //        "python -m vtool.patch --test-test_ondisk_find_patch_fpath_dominant_orientations --show" << 
+            //        " --patch-fpath " << patch_fpath <<
+            //        "&"
+            //        ""
+            //        );
+            //run_system_command(cmd_str1);
 
-        make_str(cmd_str2, 
-                "python -m vtool.histogram --test-show_ori_image_ondisk --show" << 
-                " --patch_img_fpath "   << patch_fpath <<
-                " --ori_img_fpath "     << ori_fpath01 <<
-                " --weights_img_fpath " << weights_fpath <<
-                " --grady_img_fpath "   << grady_fpath <<
-                " --gradx_img_fpath "   << gradx_fpath <<
-                " --gauss_weights_img_fpath "   << gaussweight01_fpath <<
-                " --title cpp_show_ori_ondisk "
-                "&"
-                );
-        run_system_command(cmd_str2);
+            make_str(cmd_str2, 
+                    "python -m vtool.histogram --test-show_ori_image_ondisk --show" << 
+                    " --patch_img_fpath "   << patch_fpath <<
+                    " --ori_img_fpath "     << ori_fpath01 <<
+                    " --weights_img_fpath " << weights_fpath <<
+                    " --grady_img_fpath "   << grady_fpath <<
+                    " --gradx_img_fpath "   << gradx_fpath <<
+                    " --gauss_weights_img_fpath "   << gaussweight01_fpath <<
+                    " --title cpp_show_ori_ondisk "
+                    "&"
+                    );
+            run_system_command(cmd_str2);
 
-        print_vector<float>(wrapped_hist.data, "wrapped_hist");
-        print_vector<float>(wrapped_hist.edges, "wrapped_edges");
-        print_vector<float>(wrapped_hist.centers, "wrapped_centers");
+            print_vector<float>(wrapped_hist.data, "wrapped_hist");
+            print_vector<float>(wrapped_hist.edges, "wrapped_edges");
+            print_vector<float>(wrapped_hist.centers, "wrapped_centers");
 
-        show_hist_submaxima(wrapped_hist);
+            show_hist_submaxima(wrapped_hist);
         #endif
         return true;
     }
@@ -779,13 +757,8 @@ public:
             http://docs.opencv.org/modules/core/doc/basic_structures.html#mat-depth
             http://stackoverflow.com/questions/23019021/opencv-how-to-save-float-array-as-an-image
 
-            define CV_8U   0
-            define CV_8S   1
-            define CV_16U  2
-            define CV_16S  3
-            define CV_32S  4
-            define CV_32F  5
-            define CV_64F  6
+            define CV_8U   0 define CV_8S   1 define CV_16U  2 define CV_16S  3
+            define CV_32S  4 define CV_32F  5 define CV_64F  6
 
              cvk = 'CV_8U, CV_8S, CV_16U, CV_16S, CV_32S, CV_32F, CV_64F'.split()
              print(ut.dict_str(dict(zip(cvk, ut.dict_take(cv2.__dict__, cvk)))))
@@ -946,8 +919,6 @@ extern "C" {
 // Python binds to extern C code
 #define PYHESAFF extern HESAFF_EXPORT
 
-typedef void*(*allocer_t)(int, int*);
-
 
 PYHESAFF int detect(AffineHessianDetector* detector)
 {
@@ -966,26 +937,6 @@ PYHESAFF int get_cpp_version()
 {
     return 3;
 }
-
-//const PYHESAFF char* cmake_build_type()
-//{
-//    // References:
-//    // http://stackoverflow.com/questions/14883853/ctypes-return-a-string-from-c-function
-//    char *build_type = (char*) malloc(sizeof(char) * (10 + 1));
-//    #ifdef CMAKE_BUILD_TYPE
-//    //char hello[] = CMAKE_BUILD_TYPE
-//    strcpy(build_type, "testb1");
-//    #else
-//    strcpy(build_type, "testb2");
-//    #endif
-//    return build_type;
-//}
-
-//PYHESAFF char* free_char(char* malloced_char)
-//{
-//    // need to free anything malloced here
-//    free(malloced_char);
-//}
 
 
 PYHESAFF int is_debug_mode()
@@ -1009,29 +960,29 @@ PYHESAFF int get_desc_dim()
 
 // Macro for putting arguments into the call signature
 #define __HESAFF_PARAM_SIGNATURE_ARGS__ \
- int   numberOfScales,                  \
- float threshold,                       \
- float edgeEigenValueRatio,             \
- int   border,                          \
- int   maxPyramidLevels,                \
- int   maxIterations,                   \
- float convergenceThreshold,            \
- int   smmWindowSize,                   \
- float mrSize,                          \
- int spatialBins,                       \
- int orientationBins,                   \
- float maxBinValue,                     \
- float initialSigma,                    \
- int patchSize,                         \
- float scale_min,                       \
- float scale_max,                       \
- bool rotation_invariance,              \
- bool augment_orientation,              \
- float ori_maxima_thresh,               \
- bool affine_invariance,                \
- bool only_count,                       \
- bool use_dense,                        \
- int dense_stride
+ int   numberOfScales,          \
+ float threshold,               \
+ float edgeEigenValueRatio,     \
+ int   border,                  \
+ int   maxPyramidLevels,        \
+ int   maxIterations,           \
+ float convergenceThreshold,    \
+ int   smmWindowSize,           \
+ float mrSize,                  \
+ int   spatialBins,             \
+ int   orientationBins,         \
+ float maxBinValue,             \
+ float initialSigma,            \
+ int   patchSize,               \
+ float scale_min,               \
+ float scale_max,               \
+ bool  rotation_invariance,     \
+ bool  augment_orientation,     \
+ float ori_maxima_thresh,       \
+ bool  affine_invariance,       \
+ bool  only_count,              \
+ bool  use_dense,               \
+ int   dense_stride
 
 
 // Macro for putting calling a function with the macroed signature
@@ -1090,41 +1041,39 @@ affine_invariance, only_count, use_dense, dense_stride
 // Macro to define the param object in func without call signature
 #define __HESAFF_DEFINE_PARAMS_FROM_DEFAULTS__  \
     __MACRO_COMMENT__( Pyramid Params)          \
-    int   numberOfScales = 3;                   \
-    float threshold = 16.0f / 3.0f;             \
-    float edgeEigenValueRatio = 10.0f;          \
-    int   border = 5;                           \
-    int   maxPyramidLevels = -1;                \
+    const int   numberOfScales = 3;             \
+    const float threshold = 16.0f / 3.0f;       \
+    const float edgeEigenValueRatio = 10.0f;    \
+    const int   border = 5;                     \
+    const int   maxPyramidLevels = -1;          \
     __MACRO_COMMENT__( Affine Params Shape)     \
-    int   maxIterations = 16;                   \
-    float convergenceThreshold = 0.05;          \
-    int   smmWindowSize = 19;                   \
-    float mrSize = 3.0f * sqrt(3.0f);           \
+    const int   maxIterations = 16;             \
+    const float convergenceThreshold = 0.05;    \
+    const int   smmWindowSize = 19;             \
+    const float mrSize = 3.0f * sqrt(3.0f);     \
     __MACRO_COMMENT__( SIFT params)             \
-    int spatialBins = 4;                        \
-    int orientationBins = 8;                    \
-    float maxBinValue = 0.2f;                   \
+    const int spatialBins = 4;                  \
+    const int orientationBins = 8;              \
+    const float maxBinValue = 0.2f;             \
     __MACRO_COMMENT__( Shared Pyramid + Affine) \
-    float initialSigma = 1.6f;                  \
+    const float initialSigma = 1.6f;            \
     __MACRO_COMMENT__( Shared SIFT + Affine)    \
-    int patchSize = 41;                         \
+    const int patchSize = 41;                   \
     __MACRO_COMMENT__( My params)               \
-    float scale_min = -1;                       \
-    float scale_max = -1;                       \
-    bool rotation_invariance = false;           \
-    bool augment_orientation = false;           \
-    float ori_maxima_thresh = .8;               \
-    bool affine_invariance = true;              \
+    const float scale_min = -1;                 \
+    const float scale_max = -1;                 \
+    const bool rotation_invariance = false;     \
+    const bool augment_orientation = false;     \
+    const float ori_maxima_thresh = .8;         \
+    const bool affine_invariance = true;        \
     __MACRO_COMMENT__()                         \
-    bool use_dense = false;                     \
-    int  dense_stride = 32;                     \
-    bool only_count = false;
+    const bool use_dense = false;               \
+    const int  dense_stride = 32;               \
+    const bool only_count = false;
 
 
 // new hessian affine detector (from image pixels)
-PYHESAFF AffineHessianDetector* new_hesaff_image(uint8 *imgin, int rows, 
-                                                 int cols, int channels,
-                                                 __HESAFF_PARAM_SIGNATURE_ARGS__)
+PYHESAFF AffineHessianDetector* new_hesaff_image(uint8 *imgin, int rows, int cols, int  channels, __HESAFF_PARAM_SIGNATURE_ARGS__)
 {
     // Convert input image to float32
     cv::Mat image(rows, cols, CV_32FC1, Scalar(0));
@@ -1163,9 +1112,9 @@ PYHESAFF AffineHessianDetector* new_hesaff_fpath(char* img_fpath, __HESAFF_PARAM
     printDBG(" * img_fpath = " << img_fpath);
     // Read in image
     cv::Mat tmp = cv::imread(img_fpath);
-    int rows = tmp.rows;
-    int cols = tmp.cols;
-    int channels = 3;
+    const int rows = tmp.rows;
+    const int cols = tmp.cols;
+    const int channels = 3;
     uint8 *imgin  = tmp.ptr<uint8>(0);
     // Create detector
     AffineHessianDetector* detector = new_hesaff_image(imgin, rows, cols, channels, __HESAFF_PARAM_CALL_ARGS__);
@@ -1227,7 +1176,23 @@ PYHESAFF void exportArrays(AffineHessianDetector* detector,
 PYHESAFF void writeFeatures(AffineHessianDetector* detector,
                             char* img_fpath)
 {
-    detector->write_features(img_fpath);
+    // Dump keypoints to disk in text format
+    char suffix[] = ".hesaff.sift";
+    const int len = strlen(img_fpath) + strlen(suffix) + 1;
+    #ifdef WIN32
+    char* out_fpath = new char[len];
+    #else
+    char out_fpath[len];
+    #endif
+    snprintf(out_fpath, len, "%s%s", img_fpath, suffix);
+    out_fpath[len - 1] = 0;
+    printDBG("detector->writing_features: " << out_fpath);
+    std::ofstream out(out_fpath);
+    detector->exportKeypoints(out);
+    // Clean Up
+    #ifdef WIN32
+    delete[] out_fpath;
+    #endif
 }
 
 PYHESAFF void extractDescFromPatches(int num_patches,
@@ -1274,11 +1239,11 @@ PYHESAFF void extractDescFromPatches(int num_patches,
 }
 
 
-PYHESAFF AffineHessianDetector** detectKeypointsListStep1(int num_fpaths,
+PYHESAFF AffineHessianDetector** detectFeaturesListStep1(int num_fpaths,
                                                           char** image_fpath_list,
                                                           __HESAFF_PARAM_SIGNATURE_ARGS__)
 {
-    printDBG("detectKeypointsListStep1()");
+    printDBG("detectFeaturesListStep1()");
     // Create all of the detector_array
     AffineHessianDetector** detector_array = new AffineHessianDetector*[num_fpaths];
     int index;
@@ -1293,9 +1258,9 @@ PYHESAFF AffineHessianDetector** detectKeypointsListStep1(int num_fpaths,
     return detector_array;
 }
 
-PYHESAFF void detectKeypointsListStep2(int num_fpaths, AffineHessianDetector** detector_array, int* length_array)
+PYHESAFF void detectFeaturesListStep2(int num_fpaths, AffineHessianDetector** detector_array, int* length_array)
 {
-    printDBG("detectKeypointsListStep2()");
+    printDBG("detectFeaturesListStep2()");
     // Run Detection
     int index;
     //#pragma omp parallel for private(index)
@@ -1307,14 +1272,14 @@ PYHESAFF void detectKeypointsListStep2(int num_fpaths, AffineHessianDetector** d
     }
 }
 
-PYHESAFF void detectKeypointsListStep3(int num_fpaths, 
+PYHESAFF void detectFeaturesListStep3(int num_fpaths, 
                                        AffineHessianDetector** detector_array, 
                                        int* length_array,
                                        int* offset_array,
                                        float* flat_keypoints, 
                                        uint8* flat_descriptors)
 {
-    printDBG("detectKeypointsListStep3()");
+    printDBG("detectFeaturesListStep3()");
     // Export the results
     int index;
     //#pragma omp parallel for private(index)

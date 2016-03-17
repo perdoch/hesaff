@@ -342,6 +342,7 @@ bool interpolateCheckBorders(const Mat &im, float ofsx, float ofsy,
                              float a11, float a12, float a21, float a22, const Mat &res)
 {
     /*
+     Mirrors checks in interpolateCheckBorders but
      Simply returns true or false, does not affect state
      */
     // does not do interpolation, just checks if we can

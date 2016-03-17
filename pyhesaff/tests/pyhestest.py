@@ -42,10 +42,10 @@ def load_test_data(short=False, n=0, use_cpp=False, **kwargs):
     }
     detect_kwargs.update(kwargs)
     if not use_cpp:
-        kpts, desc = pyhesaff.detect_kpts(img_fpath, **detect_kwargs)
+        kpts, desc = pyhesaff.detect_feats(img_fpath, **detect_kwargs)
     else:
         # Try the new C++ code
-        [kpts], [desc] = pyhesaff.detect_kpts_list([img_fpath], **detect_kwargs)
+        [kpts], [desc] = pyhesaff.detect_feats_list([img_fpath], **detect_kwargs)
 
     if short and n > 0:
         extra_fxs = []
