@@ -448,7 +448,7 @@ def detect_feats(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kw
         >>> TAU = 2 * np.pi
         >>> fpath = ut.grab_test_imgpath(ut.get_argval('--fname', default='lena.png'))
         >>> theta = ut.get_argval('--theta', float, 0)  # TAU * 3 / 8)
-        >>> img_fpath = vt.rotate_image_on_disk(fpath, theta)
+        >>> img_fpath = vt.rotate_image_ondisk(fpath, theta)
         >>> kwargs = argparse_hesaff_params()
         >>> (kpts_list, vecs_list) = detect_feats(img_fpath, **kwargs)
         >>> kpts = kpts_list
@@ -976,12 +976,12 @@ def test_rot_invar():
     # Expand the border a bit around star.png
     pad_ = 100
     img_fpath = ut.grab_test_imgpath('star.png')
-    img_fpath2 = vt.pad_image_on_disk(img_fpath, pad_, value=26)
+    img_fpath2 = vt.pad_image_ondisk(img_fpath, pad_, value=26)
     for theta in theta_list:
         print('-----------------')
         print('theta = %r' % (theta,))
         #theta = ut.get_argval('--theta', type_=float, default=TAU * 3 / 8)
-        img_fpath = vt.rotate_image_on_disk(img_fpath2, theta, borderMode=cv2.BORDER_REPLICATE)
+        img_fpath = vt.rotate_image_ondisk(img_fpath2, theta, borderMode=cv2.BORDER_REPLICATE)
         if not ut.get_argflag('--nocpp'):
             (kpts_list_ri, vecs_list2) = detect_feats(img_fpath, rotation_invariance=True)
             kpts_ri = ut.strided_sample(kpts_list_ri, 2)
