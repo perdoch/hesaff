@@ -214,8 +214,9 @@ void SIFTDescriptor::sample()
     // Compress into range 0-255 but use a hack
     for(size_t i = 0; i < this->vec.size(); i++)
     {
-        // Tricky: Components are gaurenteed to be less than .5 due to L2
-        // So it is safe to multiply by 512.0, which also gives the uint8s more fidelity 
+        // Tricky: Components are ~~gaurenteed~~ likely to be less than .5 due
+        // to L2 So it is safe to multiply by 512.0, which also gives the
+        // uint8s more fidelity 
         int b = min((int)(512.0f * this->vec[i]), 255);
         this->vec[i] = float(b);
     }

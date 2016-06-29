@@ -39,6 +39,13 @@ CommandLine:
 #include <assert.h>
 #endif
 #include <opencv2/core/core.hpp>
+
+#define USE_FREAK 1
+
+#ifdef USE_FREAK
+//#include <opencv2/nonfree/nonfree.hpp>
+#endif
+
 //#include <opencv2/core/utility.hpp>
 
 #include <opencv2/imgproc/imgproc.hpp>

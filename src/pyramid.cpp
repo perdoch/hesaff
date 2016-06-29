@@ -57,6 +57,10 @@ bool isMax(float val, const Mat &pix, int row, int col)
 {
     for(int r = row - 1; r <= row + 1; r++)
     {
+        // POTENTIAL ISSUE:
+        // this will return true in a homogenous region.
+        // Should this return false? if any point (other than the middle BUT
+        // only when considering this-cur) is equal to val as well?
         const float *row = pix.ptr<float>(r);
         for(int c = col - 1; c <= col + 1; c++)
             if(row[c] > val)
@@ -238,6 +242,7 @@ Mat HessianDetector::hessianResponse(const Mat &inputImage, float norm)
 }
 
 // it seems 0.6 works better than 0.5 (as in DL --- David Lowe --- paper)
+// https://www.cs.ubc.ca/~lowe/papers/ijcv04.pdf
 #define MAX_SUBPIXEL_SHIFT 0.6
 
 // we don't care about border effects
@@ -301,15 +306,9 @@ void HessianDetector::localizeKeypoint(int r, int c, float curScale, float pixel
                  this->low.at<float>(r + 1, c) +  this->low.at<float>(r - 1, c));
 
         float A[9];
-        A[0] = dxx;
-        A[1] = dxy;
-        A[2] = dxs;
-        A[3] = dxy;
-        A[4] = dyy;
-        A[5] = dys;
-        A[6] = dxs;
-        A[7] = dys;
-        A[8] = dss;
+        A[0] = dxx; A[1] = dxy; A[2] = dxs;
+        A[3] = dxy; A[4] = dyy; A[5] = dys;
+        A[6] = dxs; A[7] = dys; A[8] = dss;
 
         float dx = 0.5f * (this->cur.at<float>(r, c + 1) - this->cur.at<float>(r, c - 1));
         float dy = 0.5f * (this->cur.at<float>(r + 1, c) - this->cur.at<float>(r - 1, c));

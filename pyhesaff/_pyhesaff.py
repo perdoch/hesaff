@@ -148,8 +148,8 @@ REBUILD_ONCE = 0
 def argparse_hesaff_params():
     alias_dict = {'affine_invariance': 'ai'}
     alias_dict = {'rotation_invariance': 'ri'}
-    hesskw = ut.argparse_dict(get_hesaff_default_params(),
-                               alias_dict=alias_dict)
+    default_dict_ = get_hesaff_default_params()
+    hesskw = ut.argparse_dict(default_dict_, alias_dict=alias_dict)
     return hesskw
 
 
@@ -392,6 +392,7 @@ def detect_feats(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kw
         python -m pyhesaff detect_feats
         python -m pyhesaff detect_feats --show
         python -m pyhesaff detect_feats --show --fname star.png
+        python -m pyhesaff detect_feats --show --fname zebra.jpg
         python -m pyhesaff detect_feats --show --fname lena.png
         python -m pyhesaff detect_feats --show --fname carl.jpg
 
@@ -450,6 +451,7 @@ def detect_feats(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kw
         >>> theta = ut.get_argval('--theta', float, 0)  # TAU * 3 / 8)
         >>> img_fpath = vt.rotate_image_ondisk(fpath, theta)
         >>> kwargs = argparse_hesaff_params()
+        >>> print('kwargs = %r' % (kwargs,))
         >>> (kpts_list, vecs_list) = detect_feats(img_fpath, **kwargs)
         >>> kpts = kpts_list
         >>> vecs = vecs_list
