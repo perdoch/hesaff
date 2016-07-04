@@ -1038,7 +1038,7 @@ def adapt_scale(img_fpath, kpts):
     return kpts2, vecs2
 
 
-del type_, key, val
+# del type_, key, val
 
 if __name__ == '__main__':
     """
