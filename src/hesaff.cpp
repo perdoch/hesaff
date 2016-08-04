@@ -683,7 +683,7 @@ public:
         // Compute orientation as maxima of wrapped histogram
         const float maxima_thresh = this->hesPar.ori_maxima_thresh;
 
-        htool::hist_interpolated_submaxima(
+        htool::argsubmaxima(
                 wrapped_hist, submaxima_xs, submaxima_ys, maxima_thresh);
         for (int i = 0; i < submaxima_xs.size(); i ++ )
         {
