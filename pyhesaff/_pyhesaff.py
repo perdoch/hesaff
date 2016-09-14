@@ -22,7 +22,7 @@ Command Line:
     sh Fshow.sh --no-ai --numberOfScales=3 --maxPyramidLevels=2 --border=5
 
 """
-from __future__ import absolute_import, print_function, division
+from __future__ import absolute_import, print_function, division, unicode_literals
 import sys
 import six
 from six.moves import zip
@@ -55,18 +55,18 @@ img32_dtype  = np.float32
 # scalar ctypes
 obj_t     = C.c_void_p
 str_t     = C.c_char_p
-if True or six.PY2:  # HACK ALWAYS ON
-    int_t     = C.c_int
-else:
-    raise NotImplementedError('PY3')
+#if True or six.PY2:  # HACK ALWAYS ON
+int_t     = C.c_int
+#else:
+#    raise NotImplementedError('PY3')
 #if six.PY3:
 #    int_t     = C.c_long
 bool_t    = C.c_bool
 float_t   = C.c_float
 #byte_t    = C.c_char
 # array ctypes
-FLAGS_RW = 'aligned, c_contiguous, writeable'
-FLAGS_RO = 'aligned, c_contiguous'
+FLAGS_RW = str('aligned, c_contiguous, writeable')
+FLAGS_RO = str('aligned, c_contiguous')
 #FLAGS_RW = 'aligned, writeable'
 kpts_t       = np.ctypeslib.ndpointer(dtype=kpts_dtype, ndim=2, flags=FLAGS_RW)
 vecs_t       = np.ctypeslib.ndpointer(dtype=vecs_dtype, ndim=2, flags=FLAGS_RW)
