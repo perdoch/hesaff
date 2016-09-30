@@ -24,13 +24,19 @@ struct SIFTDescriptorParams
     int orientationBins;
     float maxBinValue;
     int patchSize;
+    float siftPower;
     SIFTDescriptorParams()
     {
         spatialBins = 4;
         orientationBins = 8;
-        maxBinValue = 0.2f;
+        maxBinValue = 0.2f;  // clipping
         patchSize = 41;
-        // TODO: mean vector? power law?
+        siftPower = 1.0;  
+        // TODO: mean vector?
+        //
+        // Common Variants:
+        // Lowe's Original SIFT: (defaults)
+        // ROOT SIFT: siftPower=.5,maxBinValue=-1
     }
 };
 
@@ -39,6 +45,7 @@ struct SIFTDescriptor
 {
 
 public:
+    
     // top level interface
     SIFTDescriptor(const SIFTDescriptorParams &par); 
 
@@ -50,10 +57,19 @@ public:
 private:
     // helper functions
 
-    float normalize();
     void sample();
     void samplePatch();
     void precomputeBinsAndWeights();
+
+    float norm1();
+    float norm2();
+    float normalize1();
+    float normalize2();
+
+    void powerLaw();
+    bool clipBins();
+    void initialize();
+    void quantize();
 
 private:
     SIFTDescriptorParams par;

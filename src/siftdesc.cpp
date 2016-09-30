@@ -40,6 +40,15 @@ SIFTDescriptor::SIFTDescriptor(const SIFTDescriptorParams &par) :
 }
 
 
+void SIFTDescriptor::initialize()
+{
+    for(size_t i = 0; i < this->vec.size(); i++)
+    {
+        this->vec[i] = 0;
+    }
+}
+
+
 void SIFTDescriptor::precomputeBinsAndWeights()
 {
     int halfSize = this->par.patchSize >> 1;
@@ -93,6 +102,8 @@ void SIFTDescriptor::precomputeBinsAndWeights()
 
 void SIFTDescriptor::samplePatch()
 {
+    // Measure gradient information and record in 
+    // the weighted oriented histogram
     for(int r = 0; r < this->par.patchSize; ++r)
     {
         const int br0 = this->par.spatialBins * this->bin0[r];
@@ -147,47 +158,119 @@ void SIFTDescriptor::samplePatch()
     }
 }
 
-float SIFTDescriptor::normalize()
+
+//float SIFTDescriptor::normp(const float& p)
+//{
+//    // Compute the LP norm
+//    float ellp_norm = 0.0f;
+//    for(size_t i = 0; i < this->vec.size(); i++)
+//    {
+//        const float val = this->vec[i];
+//        ellp_norm += ::pow(::abs(val), p)
+//    }
+//    ellp_norm = ::pow(ellp_norm, 1.0 / p);
+//    return ellp_norm;
+//}
+
+//float SIFTDescriptor::norm_inf()
+//{
+//    // Compute the Linfinity norm
+//    float ellinf_norm = 0.0f;
+//    for(size_t i = 0; i < this->vec.size(); i++)
+//    {
+//        const float val = ::abs(this->vec[i]);
+//        if (val > ellinf_norm){
+//            ellinf_norm = val
+//        }
+//    }
+//    return ellinf_norm;
+//}
+
+
+float SIFTDescriptor::norm2()
 {
-    // Do L2 normalization
-    float vectlen = 0.0f;
+    // Compute the L2 norm
+    float ell2_norm = 0.0f;
     // Compute norm_ = sqrt((vec ** 2).sum())
     for(size_t i = 0; i < this->vec.size(); i++)
     {
         const float val = this->vec[i];
-        vectlen += val * val;
+        ell2_norm += val * val;
     }
-    vectlen = sqrt(vectlen);
+    ell2_norm = sqrt(ell2_norm);
+    return ell2_norm;
+}
+
+
+float SIFTDescriptor::norm1()
+{
+    // Compute the L1 norm
+    float ell1_norm = 0.0f;
+    // Compute norm_ = abs(vec).sum()
+    for(size_t i = 0; i < this->vec.size(); i++)
+    {
+        ell1_norm += ::fabs(this->vec[i]);
+    }
+    return ell1_norm;
+}
+
+
+float SIFTDescriptor::normalize2()
+{
+    // Do L2 normalization
+    float ell2_norm = this->norm2();
 
     // Compute vec /= norm_
-    const float fac = float(1.0f / vectlen);
+    const float fac = float(1.0f / ell2_norm);
     for(size_t i = 0; i < this->vec.size(); i++)
     {
         this->vec[i] *= fac;
     }
-    return vectlen;
+    return ell2_norm;
 }
 
-void SIFTDescriptor::sample()
+
+float SIFTDescriptor::normalize1()
 {
-    /*
-     * Computes this->vec (The 128D SIFT descriptor) of an image patch
-     */
-    // Initialize descriptor vector to zero
+    // Do L1 normalization
+    float ell1_norm = this->norm1();
+
+    // Compute vec /= norm_
+    const float fac = float(1.0f / ell1_norm);
     for(size_t i = 0; i < this->vec.size(); i++)
     {
-        this->vec[i] = 0;
+        this->vec[i] *= fac;
     }
-    // accumulate histograms
-    this->samplePatch();
-    // L2 normalization
-    // TODO: return original vector length
-    // then use this to filter out homogenous keypoints as in
-    // A comparison of dense region detectors for image search and fine-grained
-    // classification (2015)
-    this->normalize();
-    // check if there are some descriptor values above threshold
+    return ell1_norm;
+}
+
+
+void SIFTDescriptor::powerLaw()
+{
+    // Apply any power law transformation
+    // Handle special case (RootSIFT) of power=.5; sqrt is faster than pow
+    if (this->par.siftPower == 0.5)
+    {
+        for(size_t i = 0; i < this->vec.size(); i++) 
+        {
+            this->vec[i] = ::sqrt(this->vec[i]);
+        }
+    }
+    // apply more general power law
+    else 
+    {
+        for(size_t i = 0; i < this->vec.size(); i++) 
+        {
+            this->vec[i] = ::pow(this->vec[i], this->par.siftPower);
+        }
+    }
+}
+
+
+bool SIFTDescriptor::clipBins()
+{
     bool changed = false;
+    // check if there are some descriptor values above threshold
     for(size_t i = 0; i < this->vec.size(); i++) 
     {
         if(this->vec[i] > this->par.maxBinValue)
@@ -196,35 +279,74 @@ void SIFTDescriptor::sample()
             changed = true;
         }
     }
-    #if DEBUG_SIFT
-        printDBG_SIFT("changed " << changed);
-        printDBG_SIFT("this->par.maxBinValue " << this->par.maxBinValue);
-        float maxval_postclip = *max_element(this->vec.begin(), this->vec.end());
-        printDBG_SIFT("maxval_postclip " << maxval_postclip);
-    #endif 
-    // L2 normalize descriptor vector again if it was clipped
-    if(changed)
-    {
-        this->normalize();
-    }
-    #if DEBUG_SIFT
-        float maxval_postnorm = *max_element(this->vec.begin(), this->vec.end());
-        printDBG_SIFT("maxval_postnorm " << maxval_postnorm);
-    #endif 
-    // Compress into range 0-255 but use a hack
+    return changed;
+}
+
+
+void SIFTDescriptor::quantize()
+{
+    // Quantize into range 0-255 but use a hack
     for(size_t i = 0; i < this->vec.size(); i++)
     {
-        // Tricky: Components are ~~gaurenteed~~ likely to be less than .5 due
-        // to L2 So it is safe to multiply by 512.0, which also gives the
-        // uint8s more fidelity 
+        // Tricky: Components are likely to be less than .5 due to L2.
+        // Therefore it is usually safe to multiply by 512.0, which also gives
+        // the uint8s more fidelity and reduces quantization error.
         int b = min((int)(512.0f * this->vec[i]), 255);
         this->vec[i] = float(b);
     }
-    #if DEBUG_SIFT
-        float maxval_postint = *max_element(this->vec.begin(), this->vec.end());
-        printDBG_SIFT("maxval_postint " << maxval_postint);
-    #endif 
 }
+
+
+
+void SIFTDescriptor::sample()
+{
+    /*
+     * Computes this->vec (The 128D SIFT descriptor) of an image patch
+     */
+    
+    // TODO: return original vector length
+    // then use this to filter out homogenous keypoints as in
+    // A comparison of dense region detectors for image search and fine-grained
+    // classification (2015)
+    
+    // Initialize descriptor vector to zero
+    this->initialize();
+
+    // accumulate histograms
+    this->samplePatch();
+
+    if (this->par.siftPower != 1.0)
+    {
+        // Apply power law / (root SIFT)
+        // NOTE: We do not need to apply L1 normalization before the power law
+        // if we are applying L2 normalization after it.
+        this->powerLaw();
+    }
+
+    // Do L2 normalization after any power law
+    float orig_mag = this->normalize2();
+
+    if (this->par.maxBinValue >= 0.0)
+    {
+        // Apply clipping procedure (normal SIFT)
+        bool changed = this->clipBins();
+        // L2 normalize descriptor vector again if it was clipped
+        if(changed)
+        {
+            this->normalize2();
+        }
+    }
+
+    this->quantize();
+}
+
+    //#if DEBUG_SIFT
+    //    //printDBG_SIFT("changed " << changed);
+    //    printDBG_SIFT("this->par.maxBinValue " << this->par.maxBinValue);
+    //    float maxval_postclip = *max_element(this->vec.begin(), this->vec.end());
+    //    printDBG_SIFT("maxval_postclip " << maxval_postclip);
+    //    printDBG_SIFT("])");
+    //#endif 
 
 void SIFTDescriptor::computeSiftDescriptor(Mat &patch)
 {

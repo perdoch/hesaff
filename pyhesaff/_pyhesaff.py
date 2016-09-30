@@ -6,6 +6,10 @@ TODO:
     need to delete hesaff objects
 
 Command Line:
+    python -m pyhesaff detect_feats --show --siftPower=0.5 --maxBinValue=-1
+    python -m pyhesaff detect_feats --show
+    python -m pyhesaff detect_feats --show --siftPower=0.5,
+
     python -c "import utool as ut; ut.write_modscript_alias('Fshow.sh', 'pyhesaff detect_feats --fname easy1.png --verbose  --show')"  # NOQA
     Fshow.sh --no-ai --scale-max=150 --darken .5
     Fshow.sh --no-ai --scale-max=100 --darken .5
@@ -108,6 +112,7 @@ HESAFF_TYPED_PARAMS = [
     #
     (bool_t,  'use_dense', False),
     (int_t,   'dense_stride', 32),
+    (float_t, 'siftPower', 1.0),
 ]
 
 HESAFF_PARAM_DICT = OrderedDict([(key, val) for (type_, key, val) in HESAFF_TYPED_PARAMS])

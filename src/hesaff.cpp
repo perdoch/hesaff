@@ -989,7 +989,8 @@ PYHESAFF int get_desc_dim()
  bool  affine_invariance,       \
  bool  only_count,              \
  bool  use_dense,               \
- int   dense_stride
+ int   dense_stride,            \
+ float siftPower
 
 
 // Macro for putting calling a function with the macroed signature
@@ -998,7 +999,7 @@ numberOfScales, threshold, edgeEigenValueRatio, border, maxPyramidLevels, maxIte
 convergenceThreshold, smmWindowSize, mrSize, spatialBins, orientationBins,               \
 maxBinValue, initialSigma, patchSize, scale_min, scale_max,                              \
 rotation_invariance, augment_orientation, ori_maxima_thresh,                             \
-affine_invariance, only_count, use_dense, dense_stride
+affine_invariance, only_count, use_dense, dense_stride, siftPower
 
 
 #define __MACRO_COMMENT__(s) ;
@@ -1043,7 +1044,8 @@ affine_invariance, only_count, use_dense, dense_stride
     hesParams.only_count           = only_count;                \
     __MACRO_COMMENT__()                                         \
     pyrParams.use_dense                 = use_dense;            \
-    pyrParams.dense_stride              = dense_stride;
+    pyrParams.dense_stride              = dense_stride;         \
+    siftParams.siftPower                = siftPower;
 
 // Macro to define the param object in func without call signature
 #define __HESAFF_DEFINE_PARAMS_FROM_DEFAULTS__  \
@@ -1076,6 +1078,7 @@ affine_invariance, only_count, use_dense, dense_stride
     __MACRO_COMMENT__()                         \
     const bool use_dense = false;               \
     const int  dense_stride = 32;               \
+    const float siftPower = 1.0;                \
     const bool only_count = false;
 
 
