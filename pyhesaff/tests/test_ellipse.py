@@ -16,8 +16,9 @@ TAU = 2 * np.pi  # References: tauday.com
 
 
 def draw_expanded_scales(imgL, sel_kpts, exkpts, exdesc_):
-    draw_keypoint_patch = df2.draw_keypoint_patch
-    get_warped_patch = df2.get_warped_patch  # NOQA
+    import plottool as pt
+    draw_keypoint_patch = pt.draw_keypoint_patch
+    get_warped_patch = pt.get_warped_patch  # NOQA
 
     # Rows are for different scales
     # Cols are for different patches
@@ -26,13 +27,13 @@ def draw_expanded_scales(imgL, sel_kpts, exkpts, exdesc_):
     exkpts_ = np.vstack(exkpts)
 
     fnum = 1
-    df2.figure(fnum=fnum, docla=True, doclf=True)
+    pt.figure(fnum=fnum, docla=True, doclf=True)
 
     nPreRows = 1
     nPreCols = (nPreRows * nCols) + 1
 
-    show_keypoints(imgL, exkpts_, fnum=fnum, pnum=(nRows + nPreRows, 1, 1),
-                   color=df2.BLUE)
+    pt.show_keypoints(imgL, exkpts_, fnum=fnum, pnum=(nRows + nPreRows, 1, 1),
+                      color=pt.BLUE)
 
     px = 0
     for row, kpts_ in enumerate(exkpts):
@@ -64,58 +65,70 @@ def in_depth_ellipse(kp):
         >>> kpts = test_data['kpts']
         >>> kp = kpts[0]
         >>> #kp = np.array([0, 0, 10, 10, 10, 0])
-        >>> print('Testing kp=%r' % (kp,))
         >>> test_locals = in_depth_ellipse(kp)
         >>> ut.quit_if_noshow()
         >>> ut.show_if_requested()
     """
+    import plottool as pt
     #nSamples = 12
     nSamples = ut.get_argval('--num-samples', type_=int, default=12)
     kp = np.array(kp, dtype=np.float64)
-    print('kp = %r' % kp)
     #-----------------------
     # SETUP
     #-----------------------
     np.set_printoptions(precision=3)
-    df2.reset()
-    df2.figure(9003, docla=True, doclf=True)
-    ax = df2.gca()
+    #pt.reset()
+    pt.figure(9003, docla=True, doclf=True)
+    ax = pt.gca()
     ax.invert_yaxis()
 
-    def _plotpts(data, px, color=df2.BLUE, label='', marker='.', **kwargs):
-        #df2.figure(9003, docla=True, pnum=(1, 1, px))
-        df2.plot2(data.T[0], data.T[1], marker, '', color=color, label=label, **kwargs)
-        #df2.update()
+    def _plotpts(data, px, color=pt.BLUE, label='', marker='.', **kwargs):
+        #pt.figure(9003, docla=True, pnum=(1, 1, px))
+        pt.plot2(data.T[0], data.T[1], marker, '', color=color, label=label, **kwargs)
+        #pt.update()
 
-    def _plotarrow(x, y, dx, dy, color=df2.BLUE, label=''):
-        ax = df2.gca()
+    def _plotarrow(x, y, dx, dy, color=pt.BLUE, label=''):
+        ax = pt.gca()
         arrowargs = dict(head_width=.5, length_includes_head=True, label=label)
         arrow = mpl.patches.FancyArrow(x, y, dx, dy, **arrowargs)
         arrow.set_edgecolor(color)
         arrow.set_facecolor(color)
         ax.add_patch(arrow)
-        #df2.update()
+        #pt.update()
 
     #-----------------------
     # INPUT
     #-----------------------
-    # We will call perdoch's invA = invV
+    print('kp = %s' % ut.repr2(kp, precision=3))
     print('--------------------------------')
     print('Let V = Perdoch.A')
     print('Let Z = Perdoch.E')
+    print('Let invV = Perdoch.invA')
     print('--------------------------------')
     print('Input from Perdoch\'s detector: ')
 
     # We are given the keypoint in invA format
     if len(kp) == 5:
-        (ix, iy, iv11, iv21, iv22), iv12 = kp, 0
+        (ix, iy, iv11, iv21, iv22) = kp
+        iv12 = 0
     elif len(kp) == 6:
-        (ix, iy, iv11, iv21, iv22, ori), iv12 = kp, 0
+        (ix, iy, iv11, iv21, iv22, ori) = kp
+        iv12 = 0
     invV = np.array([[iv11, iv12, ix],
                      [iv21, iv22, iy],
                      [   0,    0,  1]])
     V = np.linalg.inv(invV)
     Z = (V.T).dot(V)
+
+    import vtool as vt
+    V_2x2 = V[0:2, 0:2]
+    Z_2x2 = Z[0:2, 0:2]
+    V_2x2_ = vt.decompose_Z_to_V_2x2(Z_2x2)
+    assert np.all(np.isclose(V_2x2, V_2x2_))
+
+    #C = np.linalg.cholesky(Z)
+    #np.isclose(C.dot(C.T), Z)
+    #Z
 
     print('invV is a transform from points on a unit-circle to the ellipse')
     ut.horiz_print('invV = ', invV)
@@ -400,8 +413,8 @@ def in_depth_ellipse(kp):
     uniform_ell_pts = invV.dot(unevn_cicrle_pts.T).T
     #uniform_ell_pts = invV.dot(new_norm_unit.T).T
 
-    _plotpts(approx_pts, 0, df2.YELLOW, label='approx points', marker='o-')
-    _plotpts(uniform_ell_pts, 0, df2.RED, label='uniform points', marker='o-')
+    _plotpts(approx_pts, 0, pt.YELLOW, label='approx points', marker='o-')
+    _plotpts(uniform_ell_pts, 0, pt.RED, label='uniform points', marker='o-')
 
     # Desired number of points
     #ecc = np.sqrt(1 - (b ** 2) / (a ** 2))
@@ -423,65 +436,65 @@ def in_depth_ellipse(kp):
     # DRAWING
     #-----------------------
     print('----------------------------------')
-    # Draw the keypoint using the tried and true df2
+    # Draw the keypoint using the tried and true pt
     # Other things should subsiquently align
-    #df2.draw_kpts2(np.array([kp]), ell_linewidth=4,
-    #               ell_color=df2.DEEP_PINK, ell_alpha=1, arrow=True, rect=True)
+    #pt.draw_kpts2(np.array([kp]), ell_linewidth=4,
+    #               ell_color=pt.DEEP_PINK, ell_alpha=1, arrow=True, rect=True)
 
     # Plot ellipse points
-    _plotpts(ellipse_pts1, 0, df2.LIGHT_BLUE, label='invV.dot(cicrle_pts.T).T', marker='o-')
+    _plotpts(ellipse_pts1, 0, pt.LIGHT_BLUE, label='invV.dot(cicrle_pts.T).T', marker='o-')
 
-    _plotarrow(x_center, y_center, dx1, -dy1, color=df2.GRAY, label='minor axis')
-    _plotarrow(x_center, y_center, dx2, -dy2, color=df2.GRAY, label='major axis')
+    _plotarrow(x_center, y_center, dx1, -dy1, color=pt.GRAY, label='minor axis')
+    _plotarrow(x_center, y_center, dx2, -dy2, color=pt.GRAY, label='major axis')
 
     # Rotate the ellipse so it is axis aligned and plot that
     rot = ltool.rotation_around_mat3x3(theta, ix, iy)
     ellipse_pts3 = rot.dot(ellipse_pts1.T).T
-    #!_plotpts(ellipse_pts3, 0, df2.GREEN, label='axis aligned points')
+    #!_plotpts(ellipse_pts3, 0, pt.GREEN, label='axis aligned points')
 
     # Plot ellipse orientation
     ortho_basis = np.eye(3)[:, 0:2]
     orient_axis = invV.dot(ortho_basis)
     print(orient_axis)
     _dx1, _dx2, _dy1, _dy2, _1, _2 = orient_axis.flatten()
-    #!_plotarrow(x_center, y_center, _dx1, _dy1, color=df2.BLUE, label='ellipse rotation')
-    #!_plotarrow(x_center, y_center, _dx2, _dy2, color=df2.BLUE)
+    #!_plotarrow(x_center, y_center, _dx1, _dy1, color=pt.BLUE, label='ellipse rotation')
+    #!_plotarrow(x_center, y_center, _dx2, _dy2, color=pt.BLUE)
 
-    #df2.plt.gca().set_xlim(400, 600)
-    #df2.plt.gca().set_ylim(300, 500)
+    #pt.plt.gca().set_xlim(400, 600)
+    #pt.plt.gca().set_ylim(300, 500)
 
     xmin, ymin = ellipse_pts1.min(0)[0:2] - 1
     xmax, ymax = ellipse_pts1.max(0)[0:2] + 1
-    df2.plt.gca().set_xlim(xmin, xmax)
-    df2.plt.gca().set_ylim(ymin, ymax)
-    df2.legend()
-    df2.dark_background(doubleit=3)
-    df2.gca().invert_yaxis()
+    pt.plt.gca().set_xlim(xmin, xmax)
+    pt.plt.gca().set_ylim(ymin, ymax)
+    pt.legend()
+    pt.dark_background(doubleit=3)
+    pt.gca().invert_yaxis()
 
     # Hack in another view
     # It seems like the even points are not actually that even.
     # there must be a bug
 
-    df2.figure(fnum=9003 + 1, docla=True, doclf=True, pnum=(1, 3, 1))
-    _plotpts(ellipse_pts1, 0, df2.LIGHT_BLUE, label='invV.dot(cicrle_pts.T).T', marker='o-', title='even')
-    df2.plt.gca().set_xlim(xmin, xmax)
-    df2.plt.gca().set_ylim(ymin, ymax)
-    df2.dark_background(doubleit=3)
-    df2.gca().invert_yaxis()
-    df2.figure(fnum=9003 + 1, pnum=(1, 3, 2))
+    pt.figure(fnum=9003 + 1, docla=True, doclf=True, pnum=(1, 3, 1))
+    _plotpts(ellipse_pts1, 0, pt.LIGHT_BLUE, label='invV.dot(cicrle_pts.T).T', marker='o-', title='even')
+    pt.plt.gca().set_xlim(xmin, xmax)
+    pt.plt.gca().set_ylim(ymin, ymax)
+    pt.dark_background(doubleit=3)
+    pt.gca().invert_yaxis()
+    pt.figure(fnum=9003 + 1, pnum=(1, 3, 2))
 
-    _plotpts(approx_pts, 0, df2.YELLOW, label='approx points', marker='o-', title='approx')
-    df2.plt.gca().set_xlim(xmin, xmax)
-    df2.plt.gca().set_ylim(ymin, ymax)
-    df2.dark_background(doubleit=3)
-    df2.gca().invert_yaxis()
+    _plotpts(approx_pts, 0, pt.YELLOW, label='approx points', marker='o-', title='approx')
+    pt.plt.gca().set_xlim(xmin, xmax)
+    pt.plt.gca().set_ylim(ymin, ymax)
+    pt.dark_background(doubleit=3)
+    pt.gca().invert_yaxis()
 
-    df2.figure(fnum=9003 + 1, pnum=(1, 3, 3))
-    _plotpts(uniform_ell_pts, 0, df2.RED, label='uniform points', marker='o-', title='uniform')
-    df2.plt.gca().set_xlim(xmin, xmax)
-    df2.plt.gca().set_ylim(ymin, ymax)
-    df2.dark_background(doubleit=3)
-    df2.gca().invert_yaxis()
+    pt.figure(fnum=9003 + 1, pnum=(1, 3, 3))
+    _plotpts(uniform_ell_pts, 0, pt.RED, label='uniform points', marker='o-', title='uniform')
+    pt.plt.gca().set_xlim(xmin, xmax)
+    pt.plt.gca().set_ylim(ymin, ymax)
+    pt.dark_background(doubleit=3)
+    pt.gca().invert_yaxis()
 
     return locals()
     # Algebraic form of connic
@@ -517,9 +530,9 @@ def in_depth_ellipse(kp):
 #    #exec(helpers.execstr_dict(adaptive_locals, 'adaptive_locals'))
 #    #in_depth_locals = adaptive_locals['in_depth_locals']
 #    #exec(helpers.execstr_dict(in_depth_locals, 'in_depth_locals'))
-#    #exec(df2.present(override1=True))
+#    #exec(pt.present(override1=True))
 #    if ut.show_was_requested():
-#        exec(df2.present())
+#        exec(pt.present())
 
 
 if __name__ == '__main__':
