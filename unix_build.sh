@@ -1,10 +1,4 @@
 #!/bin/bash
-#cd ~/code/hesaff
-
-export FAILCMD='{ echo "FAILED HESAFF BUILD" ; exit 1; }'
-
-echo "[hesaff.unix_build] checking if build dir should be removed"
-python2.7 -c "import utool as ut; print('keeping build dir' if ut.get_argflag(('--fast', '--no-rmbuild')) else ut.delete('build'))" $@
 
 # +==================================================
 # SIMPLE WAY OF EXECUTING MULTILINE PYTHON FROM BASH
@@ -22,11 +16,21 @@ python2.7 -c "import utool as ut; print('keeping build dir' if ut.get_argflag(('
 #__PYSCRIPT__
 #python /dev/fd/42 $@
 # L_________________________________________________
+export FAILCMD='{ echo "FAILED HESAFF BUILD" ; exit 1; }'
+echo "[hesaff.unix_build] checking if build dir should be removed"
+python2.7 -c "import utool as ut; print('keeping build dir' if ut.get_argflag(('--fast', '--no-rmbuild')) else ut.delete('build'))" $@
 
+#################################
+echo 'Removing old build'
+rm -rf build
+rm -rf CMakeFiles
+rm -rf CMakeCache.txt
+rm -rf cmake_install.cmake
+#################################
+echo 'Creating new build'
 mkdir build
 cd build
-
-echo "$OSTYPE"
+#################################
 
 export PYEXE=$(which python2.7)
 if [[ "$VIRTUAL_ENV" == ""  ]]; then
@@ -37,17 +41,10 @@ else
     export _SUDO=""
 fi
 
-export COMMONFLAGS="$COMMONFLAGS -DCMAKE_BUILD_TYPE=Release"
-#export COMMONFLAGS="$COMMONFLAGS -D CMAKE_BUILD_TYPE=Debug"
-#export COMMONFLAGS="$COMMONFLAGS -D CMAKE_VERBOSE_MAKEFILE=On"
-#export COMMONFLAGS="$COMMONFLAGS -D ENABLE_GPROF=On"
-
-echo "COMMONFLAGS=$COMMONFLAGS"
-
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    install_name_tool -change libiomp5.dylib ~/code/libomp_oss/exports/mac_32e/lib.thin/libiomp5.dylib lib*
-    # MAC
-    cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=$LOCAL_PREFIX -DOpenCV_DIR=$LOCAL_PREFIX/share/OpenCV -DCMAKE_OSX_ARCHITECTURES=x86_64  $COMMONFLAGS ..
+echo 'Configuring with cmake'
+if [[ '$OSTYPE' == 'darwin'* ]]; then
+    export CONFIG="-DCMAKE_OSX_ARCHITECTURES=x86_64 -DCMAKE_C_COMPILER=clang2 -DCMAKE_CXX_COMPILER=clang2++ -DCMAKE_INSTALL_PREFIX=$LOCAL_PREFIX -DOpenCV_DIR=$LOCAL_PREFIX/share/OpenCV"
+    cmake $CONFIG -G 'Unix Makefiles' ..
 elif [[ "$OSTYPE" == "msys"* ]]; then
     # WINDOWS
     echo "USE MINGW BUILD INSTEAD" ; exit 1
@@ -61,6 +58,7 @@ else
     # LINUX
     cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=$LOCAL_PREFIX -DOpenCV_DIR=$LOCAL_PREFIX/share/OpenCV $COMMONFLAGS ..
 fi
+
 export CMAKE_EXITCODE=$?
 if [[ $CMAKE_EXITCODE != 0 ]]; then
     $FAILCMD
