@@ -30,3 +30,5 @@ _doc
 test_times.txt
 
 failed_doctests.txt
+
+timeings.txt
