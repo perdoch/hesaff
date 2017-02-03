@@ -32,3 +32,4 @@ test_times.txt
 failed_doctests.txt
 
 timeings.txt
+cmake_builds
