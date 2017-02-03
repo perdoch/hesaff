@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 from __future__ import absolute_import, division, print_function
 from utool import util_cplat
 from utool import util_setup
@@ -25,7 +25,7 @@ URL_LIST = [
 
 
 INSTALL_REQUIRES = [
-    'numpy >= 1.8.0',
+    'numpy >= 1.9.0',
 ]
 
 if __name__ == '__main__':

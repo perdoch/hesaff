@@ -12,19 +12,52 @@ import ctypes as C
 __DEBUG_CLIB__ = '--debug' in sys.argv or '--debug-clib' in sys.argv
 
 
+def get_plat_specifier():
+    """
+    Standard platform specifier used by distutils
+    """
+    import distutils
+    plat_name = distutils.util.get_platform()
+    plat_specifier = ".%s-%s" % (plat_name, sys.version[0:3])
+    if hasattr(sys, 'gettotalrefcount'):
+        plat_specifier += '-pydebug'
+    return plat_specifier
+
+
 def get_lib_fname_list(libname):
     """
-    input <libname>: library name (e.g. 'hesaff', not 'libhesaff')
-    returns <libnames>: list of plausible library file names
+    Args:
+        libname (str): library name (e.g. 'hesaff', not 'libhesaff')
+
+    Returns:
+        list: libnames - list of plausible library file names
+
+    CommandLine:
+        python -m pyhesaff.ctypes_interface get_lib_fname_list
+
+    Example:
+        >>> # DISABLE_DOCTEST
+        >>> from pyhesaff.ctypes_interface import *  # NOQA
+        >>> libname = 'hesaff'
+        >>> libnames = get_lib_fname_list(libname)
+        >>> result = ('libnames = %s' % (ut.repr2(libnames),))
+        >>> print(result)
     """
+    spec_list = [get_plat_specifier(), '']
+    prefix_list = ['lib' + libname]
     if sys.platform.startswith('win32'):
-        libnames = ['lib' + libname + '.dll', libname + '.dll']
+        prefix_list.append(libname)
+        ext = '.dll'
     elif sys.platform.startswith('darwin'):
-        libnames = ['lib' + libname + '.dylib']
+        ext = '.dylib'
     elif sys.platform.startswith('linux'):
-        libnames = ['lib' + libname + '.so']
+        ext = '.so'
     else:
         raise Exception('Unknown operating system: %s' % sys.platform)
+    # Construct priority ordering of libnames
+    libnames = [''.join((prefix, spec, ext))
+                for spec in spec_list
+                for prefix in prefix_list]
     return libnames
 
 
@@ -77,7 +110,8 @@ def find_lib_fpath(libname, root_dir, recurse_down=True, verbose=False):
 
 def load_clib(libname, root_dir):
     """
-    Does the work.
+    Searches for a library matching libname and loads it
+
     Args:
         libname:  library name (e.g. 'hesaff', not 'libhesaff')
 
@@ -109,3 +143,15 @@ def load_clib(libname, root_dir):
     errmsg = '[C] Cannot LOAD %r dynamic library. ' % (libname,) + errsuffix
     print(errmsg)
     raise ImportError(errmsg)
+
+
+if __name__ == '__main__':
+    r"""
+    CommandLine:
+        python -m pyhesaff.ctypes_interface
+        python -m pyhesaff.ctypes_interface --allexamples
+    """
+    import multiprocessing
+    multiprocessing.freeze_support()  # for win32
+    import utool as ut  # NOQA
+    ut.doctest_funcs()
