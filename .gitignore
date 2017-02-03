@@ -2,6 +2,7 @@ hesaff
 build
 .DS_Store
 *.pyc
+*.pyo
 *.egg-info
 dist
 *.dylib
