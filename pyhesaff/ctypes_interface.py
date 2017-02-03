@@ -17,7 +17,10 @@ def get_plat_specifier():
     Standard platform specifier used by distutils
     """
     import distutils
-    plat_name = distutils.util.get_platform()
+    try:
+        plat_name = distutils.util.get_platform()
+    except AttributeError:
+        plat_name = distutils.sys.platform
     plat_specifier = ".%s-%s" % (plat_name, sys.version[0:3])
     if hasattr(sys, 'gettotalrefcount'):
         plat_specifier += '-pydebug'
