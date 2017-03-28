@@ -79,7 +79,7 @@ def sift_test():
 
     import plottool as pt
     import utool as ut
-    ut.qt4ensure()
+    ut.qtensure()
 
     fig = pt.figure(fnum=1, pnum=None)
     def draw_sift(sift, pnum, title, **kwargs):
