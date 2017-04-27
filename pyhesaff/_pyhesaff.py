@@ -988,7 +988,7 @@ def test_rot_invar():
         print('-----------------')
         print('theta = %r' % (theta,))
         #theta = ut.get_argval('--theta', type_=float, default=TAU * 3 / 8)
-        img_fpath = vt.rotate_image_ondisk(img_fpath2, theta, borderMode=cv2.BORDER_REPLICATE)
+        img_fpath = vt.rotate_image_ondisk(img_fpath2, theta, border_mode=cv2.BORDER_REPLICATE)
         if not ut.get_argflag('--nocpp'):
             (kpts_list_ri, vecs_list2) = detect_feats(img_fpath, rotation_invariance=True)
             kpts_ri = ut.strided_sample(kpts_list_ri, 2)

@@ -274,23 +274,12 @@ template <class T, class Iterator> Histogram<T> computeInterpolatedHistogram(
     FIXME: We assume this histogram is wrapped
 
     CommandLine:
-        ./unix_build.sh --fast && ./build/hesaffexe /home/joncrall/.config/utool/star.png
+        python -m pyhesaff test_rot_invar --show
+        ./unix_build.sh --fast && ./build/hesaffexe ~/.config/utool/star.png
         python -m vtool.patch --test-find_dominant_kp_orientations
 
-        mingw_build.bat
-        build\hesaffexe.exe /home/joncrall/.config/utool/star.png
-        python -c "import utool; print(utool.grab_test_imgpath('star.png'))"
-        build\hesaffexe.exe C:\Users\joncrall\AppData\Roaming\utool\star.png
-        mingw_build.bat && build\hesaffexe.exe C:\Users\joncrall\AppData\Roaming\utool\star.png
-        mingw_build.bat && python -c "import utool; print(utool.grab_test_imgpath('star.png'))" | build\hesaffexe.exe C:\Users\joncrall\AppData\Roaming\utool\star.png
-   
-     mingw_build.bat && build\hesaffexe.exe C:\Users\joncrall\AppData\Roaming\utool\star.png
-     build\hesaffexe.exe C:\Users\joncrall\AppData\Roaming\utool\star.png
-
-    ./unix_build.sh --fast && ./build/hesaffexe /home/joncrall/.config/utool/star.png
-
      */
-    // Input: Iterators over orientaitons and magnitudes and the number of bins to discretize the orientation domain
+    // Input: Iterators over orientations and magnitudes and the number of bins to discretize the orientation domain
     const bool interpolation_wrap = true;
     const T start = range_min;
     const T stop = range_max;
@@ -298,13 +287,13 @@ template <class T, class Iterator> Histogram<T> computeInterpolatedHistogram(
     const T half_step = step / 2.0;
     const T data_offset = start + half_step;
     // debug info
-    //    printDBG_ORI("nbins = " << nbins)
-    //    printDBG_ORI("step = " << step)
-    //    printDBG_ORI("half_step = " << half_step)
-    //    printDBG_ORI("data_offset = " << data_offset)
+    printDBG_ORI("nbins = " << nbins)
+    printDBG_ORI("step = " << step)
+    printDBG_ORI("half_step = " << half_step)
+    printDBG_ORI("data_offset = " << data_offset)
     // data offset should be 0, but is around for more general case of
     // interpolated histogram
-    assert(data_offset == 0);
+    //assert(data_offset == 0);
     // 
     Histogram<T> hist;  // structure of bins and edges
     hist.step = step;
@@ -322,8 +311,10 @@ template <class T, class Iterator> Histogram<T> computeInterpolatedHistogram(
         ++data_iter, ++weight_iter
        )
     {
+        // Read the item and determine which bins it should vote into
         T data = *data_iter;
         T weight = *weight_iter;
+        
         T fracBinIndex = (data - data_offset) / step;
         int left_index = int(floor(fracBinIndex));
         int right_index = left_index + 1;

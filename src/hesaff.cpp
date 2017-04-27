@@ -607,6 +607,8 @@ public:
         orientations += M_GRAVITY_THETA; // adjust for 0 being downward
         // Keep orientations inside range (0, TAU)
         // Hacky, shoud just define modulus func for cvMat
+        //orientations -= floor(orientations / M_TAU) * M_TAU
+
         for (int r = 0; r < orientations.rows; r+=1)
         {
             for (int c = 0; c < orientations.cols; c+=1)
@@ -631,7 +633,8 @@ public:
         const float sigma0 = (magnitudes.rows / 2) * .4;
         const float sigma1 = (magnitudes.cols / 2) * .4;
         cv::Mat gauss_weights;
-        make_2d_gauss_patch_01(magnitudes.rows, magnitudes.cols, sigma0, sigma1, gauss_weights);
+        make_2d_gauss_patch_01(magnitudes.rows, magnitudes.cols, sigma0,
+                sigma1, gauss_weights);
         // Weight magnitudes using a gaussian kernel
         cv::Mat weights = magnitudes.mul(gauss_weights);
 

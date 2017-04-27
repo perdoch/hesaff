@@ -17,7 +17,7 @@
 #python /dev/fd/42 $@
 # L_________________________________________________
 echo "[hesaff.unix_build] checking if build dir should be removed"
-python2.7 -c "import utool as ut; print('keeping build dir' if ut.get_argflag(('--fast', '--no-rmbuild')) else ut.delete('build'))" $@
+#python -c "import utool as ut; print('keeping build dir' if ut.get_argflag(('--fast', '--no-rmbuild')) else ut.delete('build'))" $@
 
 #################################
 echo 'Removing old build'
@@ -31,12 +31,11 @@ mkdir build
 cd build
 #################################
 
-export PYEXE=$(which python)
 if [[ "$VIRTUAL_ENV" == ""  ]]; then
     export LOCAL_PREFIX=/usr/local
     export _SUDO="sudo"
 else
-    export LOCAL_PREFIX=$($PYEXE -c "import sys; print(sys.prefix)")/local
+    export LOCAL_PREFIX=$(python -c "import sys; print(sys.prefix)")
     export _SUDO=""
 fi
 
