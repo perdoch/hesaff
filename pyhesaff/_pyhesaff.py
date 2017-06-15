@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 """
 The python hessian affine keypoint module
 
@@ -397,7 +398,7 @@ def detect_feats(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kw
         python -m pyhesaff detect_feats
         python -m pyhesaff detect_feats --show
         python -m pyhesaff detect_feats --show --fname star.png
-        python -m pyhesaff detect_feats --show --fname zebra.jpg
+        python -m pyhesaff detect_feats --show --fname zebra.png
         python -m pyhesaff detect_feats --show --fname lena.png
         python -m pyhesaff detect_feats --show --fname carl.jpg
 
@@ -457,14 +458,20 @@ def detect_feats(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kw
         >>> img_fpath = vt.rotate_image_ondisk(fpath, theta)
         >>> kwargs = argparse_hesaff_params()
         >>> print('kwargs = %r' % (kwargs,))
-        >>> (kpts_list, vecs_list) = detect_feats(img_fpath, **kwargs)
-        >>> kpts = kpts_list
-        >>> vecs = vecs_list
+        >>> (kpts, vecs) = detect_feats(img_fpath, **kwargs)
         >>> # Show keypoints
-        >>> imgBGR = vt.imread(img_fpath)
         >>> ut.quit_if_noshow()
-        >>> pt.interact_keypoints.ishow_keypoints(imgBGR, kpts, vecs, ori=True, ell_alpha=.4, color='distinct')
-        >>> pt.set_figtitle('Detect Kpts in Image')
+        >>> imgBGR = vt.imread(img_fpath)
+        >>> # take a random stample
+        >>> frac = ut.get_argval('--frac', default=1.0)
+        >>> print('frac = %r' % (frac,))
+        >>> idxs = ut.random_indexes(len(vecs), int(len(vecs) * frac))
+        >>> vecs, kpts = vecs[idxs], kpts[idxs]
+        >>> default_showkw = dict(ori=False, ell=True, ell_linewidth=2,
+        >>>                       ell_alpha=.4, ell_color='distinct')
+        >>> print('default_showkw = %r' % (default_showkw,))
+        >>> showkw = ut.argparse_dict(default_showkw)
+        >>> pt.interact_keypoints.ishow_keypoints(imgBGR, kpts, vecs, **showkw)
         >>> pt.show_if_requested()
     """
     if __DEBUG__:
