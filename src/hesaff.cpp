@@ -771,7 +771,7 @@ public:
             define CV_32S  4 define CV_32F  5 define CV_64F  6
 
              cvk = 'CV_8U, CV_8S, CV_16U, CV_16S, CV_32S, CV_32F, CV_64F'.split()
-             print(ut.dict_str(dict(zip(cvk, ut.dict_take(cv2.__dict__, cvk)))))
+             print(ut.repr2(dict(zip(cvk, ut.dict_take(cv2.__dict__, cvk)))))
          */
         //DBG: write out patches
         run_system_command("python -c \"import utool as ut; ut.ensuredir('patches', verbose=False)\"");

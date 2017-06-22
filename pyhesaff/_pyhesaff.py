@@ -478,7 +478,7 @@ def detect_feats(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kw
         print('[hes] Detecting Keypoints')
         print('[hes] use_adaptive_scale=%r' % (use_adaptive_scale,))
         print('[hes] nogravity_hack=%r' % (nogravity_hack,))
-        print('[hes] kwargs=%s' % (ut.dict_str(kwargs),))
+        print('[hes] kwargs=%s' % (ut.repr2(kwargs),))
     # Load image
     hesaff_ptr = _new_fpath_hesaff(img_fpath, **kwargs)
     if __DEBUG__:
