@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 2.8)
 if (APPLE)
     set(CMAKE_MACOSX_RPATH 1)
     message("Detected APPLE system")
-    SET(CLANG2 On)
+    SET(CLANG2 Off)
 endif()
 
 if (APPLE AND CLANG2)
