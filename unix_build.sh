@@ -31,7 +31,7 @@ mkdir build
 cd build
 #################################
 
-if [[ "$VIRTUAL_ENV" == ""  ]]; then
+if [[ "$VIRTUAL_ENV" == ""  ]] && [[ "$CONDA_PREFIX" == "" ]]; then
     export LOCAL_PREFIX=/usr/local
     export _SUDO="sudo"
 else
