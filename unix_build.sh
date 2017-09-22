@@ -30,12 +30,17 @@ echo 'Creating new build'
 mkdir build
 cd build
 #################################
+export LOCAL_PREFIX_CONDA=$HOME/anaconda3
 
 if [[ "$VIRTUAL_ENV" == ""  ]] && [[ "$CONDA_PREFIX" == "" ]]; then
     export LOCAL_PREFIX=/usr/local
     export _SUDO="sudo"
 else
-    export LOCAL_PREFIX=$(python -c "import sys; print(sys.prefix)")
+    if [[ "$CONDA_PREFIX" == "" ]]; then
+        export LOCAL_PREFIX=$(python -c "import sys; print(sys.prefix)")
+    else
+        export LOCAL_PREFIX=$LOCAL_PREFIX_CONDA
+    fi
     export _SUDO=""
 fi
 
@@ -46,6 +51,7 @@ if [[ "$OSTYPE" == "msys"* ]]; then
     export INSTALL32="c:/Program Files (x86)"
     export OPENCV_DIR=$INSTALL32/OpenCV
 else
+    echo $LOCAL_PREFIX
     export OPENCV_DIR=$LOCAL_PREFIX/share/OpenCV
 fi
 
