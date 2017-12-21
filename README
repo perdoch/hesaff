@@ -14,6 +14,35 @@ descriptor(Lowe 1999, Lowe 2004) computed.
 
 IMPLEMENTATION
 
+## Installing OpenCV
+```
+git clone https://github.com/opencv/opencv.git
+cd opencv
+git checkout 2154e62 # Checkout for 2.3.1 version commit point
+mkdir build
+cd build
+cmake ..
+make -j8
+sudo make install
+```
+
+## Build
+
+```
+cd hesaff
+export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+make
+```
+
+## Run
+
+```
+# Assume that libopencv_core.so.2.3 in in /usr/local/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+# Usage: hesaff image_name.ppm
+hesaff oxford_001.ppm
+```
+
 Implementation depends on OpenCV (2.3.1+). Although, the code is
 original, the affine iteration and normalization was derived from the
 code of Krystian Mikolajczyk.
