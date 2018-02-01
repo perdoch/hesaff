@@ -1,4 +1,4 @@
-DESCRIPTION
+# DESCRIPTION
 
 This is an implementation of Hessian-Affine detector. 
 
@@ -12,7 +12,7 @@ neighbourhood is normalized to a fixed size patch and SIFT
 descriptor(Lowe 1999, Lowe 2004) computed.
 
 
-IMPLEMENTATION
+# IMPLEMENTATION
 
 ## Installing OpenCV
 ```
@@ -21,7 +21,8 @@ cd opencv
 git checkout 2154e62 # Checkout for 2.3.1 version commit point
 mkdir build
 cd build
-cmake ..
+# This old OpenCV may not support your recent GPU. Just disable it.
+cmake -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX=/usr/local -D WITH_CUDA=OFF ..
 make -j8
 sudo make install
 ```
@@ -53,7 +54,7 @@ use of SIFT code, files siftdesc.cpp/siftdesc.h, in commercial
 applications (see LICENSE.SIFT for details)
 
 
-OUTPUT
+# OUTPUT
 
 The built binary rewrites output file: <input_image_name>.hesaff.sift
 
@@ -73,7 +74,7 @@ u1 v1 a1 b1 c1 d1(1) d1(2) d1(3) ... d1(N)
 um vm am bm cm dm(1) dm(2) dm(3) ... dm(N)
 
 
-PROPER USE
+# PROPER USE
 
 If you use this code, please refer to
 
