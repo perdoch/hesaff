@@ -30,7 +30,8 @@ echo 'Creating new build'
 mkdir build
 cd build
 #################################
-export LOCAL_PREFIX_CONDA=$HOME/anaconda3
+#export LOCAL_PREFIX_CONDA=$HOME/anaconda3
+export LOCAL_PREFIX_CONDA=$CONDA_PREFIX
 
 if [[ "$VIRTUAL_ENV" == ""  ]] && [[ "$CONDA_PREFIX" == "" ]]; then
     export LOCAL_PREFIX=/usr/local
@@ -40,6 +41,9 @@ else
         export LOCAL_PREFIX=$(python -c "import sys; print(sys.prefix)")
     else
         export LOCAL_PREFIX=$LOCAL_PREFIX_CONDA
+        echo "If this fails run `conda install opencv` and then try again"
+        # Ensure:
+        # conda install opencv
     fi
     export _SUDO=""
 fi

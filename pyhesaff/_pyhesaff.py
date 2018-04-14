@@ -399,11 +399,11 @@ def detect_feats(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kw
         python -m pyhesaff detect_feats --show
         python -m pyhesaff detect_feats --show --fname star.png
         python -m pyhesaff detect_feats --show --fname zebra.png
-        python -m pyhesaff detect_feats --show --fname lena.png
+        python -m pyhesaff detect_feats --show --fname astro.png
         python -m pyhesaff detect_feats --show --fname carl.jpg
 
-        python -m pyhesaff detect_feats --show --fname lena.png --ri
-        python -m pyhesaff detect_feats --show --fname lena.png --ai
+        python -m pyhesaff detect_feats --show --fname astro.png --ri
+        python -m pyhesaff detect_feats --show --fname astro.png --ai
 
         python -m pyhesaff detect_feats --show --fname easy1.png --no-ai
         python -m pyhesaff detect_feats --show --fname easy1.png --no-ai --numberOfScales=1 --verbose
@@ -430,16 +430,16 @@ def detect_feats(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kw
             --verbose --scale-max=30 --darken .5
 
         # DENSE KEYPOINTS
-        python -m pyhesaff detect_feats --show --fname lena.png \
+        python -m pyhesaff detect_feats --show --fname astro.png \
             --no-affine-invariance --numberOfScales=1 --maxPyramidLevels=1 \
             --use_dense --dense_stride=64
-        python -m pyhesaff detect_feats --show --fname lena.png \
+        python -m pyhesaff detect_feats --show --fname astro.png \
             --no-affine-invariance --numberOfScales=1 --maxPyramidLevels=1 \
             --use_dense --dense_stride=64 --rotation-invariance
-        python -m pyhesaff detect_feats --show --fname lena.png \
+        python -m pyhesaff detect_feats --show --fname astro.png \
             --affine-invariance --numberOfScales=1 --maxPyramidLevels=1 \
             --use_dense --dense_stride=64
-        python -m pyhesaff detect_feats --show --fname lena.png \
+        python -m pyhesaff detect_feats --show --fname astro.png \
             --no-affine-invariance --numberOfScales=3 \
             --maxPyramidLevels=2 --use_dense --dense_stride=32
 
@@ -453,7 +453,7 @@ def detect_feats(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kw
         >>> import utool as ut
         >>> import vtool as vt
         >>> TAU = 2 * np.pi
-        >>> fpath = ut.grab_test_imgpath(ut.get_argval('--fname', default='lena.png'))
+        >>> fpath = ut.grab_test_imgpath(ut.get_argval('--fname', default='astro.png'))
         >>> theta = ut.get_argval('--theta', float, 0)  # TAU * 3 / 8)
         >>> img_fpath = vt.rotate_image_ondisk(fpath, theta)
         >>> kwargs = argparse_hesaff_params()
@@ -560,7 +560,7 @@ def detect_feats_list(image_paths_list, **kwargs):
         >>> # ENABLE_DOCTEST
         >>> from pyhesaff._pyhesaff import *  # NOQA
         >>> import utool as ut
-        >>> lena_fpath = ut.grab_test_imgpath('lena.png')
+        >>> lena_fpath = ut.grab_test_imgpath('astro.png')
         >>> image_paths_list = [ut.grab_test_imgpath('carl.jpg'), ut.grab_test_imgpath('star.png'), lena_fpath]
         >>> (kpts_list, vecs_list) = detect_feats_list(image_paths_list)
         >>> #print((kpts_list, vecs_list))
@@ -633,7 +633,7 @@ def detect_feats_in_image(img, **kwargs):
         >>> # ENABLE_DOCTEST
         >>> from pyhesaff._pyhesaff import *  # NOQA
         >>> import vtool as vt
-        >>> img_fpath = ut.grab_test_imgpath('lena.png')
+        >>> img_fpath = ut.grab_test_imgpath('astro.png')
         >>> img= vt.imread(img_fpath)
         >>> (kpts, vecs) = detect_feats_in_image(img)
         >>> ut.quit_if_noshow()
@@ -679,12 +679,13 @@ def detect_num_feats_in_image(img, **kwargs):
     CommandLine:
         python -m pyhesaff detect_num_feats_in_image:0 --show
         python -m pyhesaff detect_num_feats_in_image:1 --show
+        python -m xdoctest pyhesaff detect_num_feats_in_image:0
 
     Example:
         >>> # ENABLE_DOCTEST
         >>> from pyhesaff._pyhesaff import *  # NOQA
         >>> import vtool as vt
-        >>> img_fpath = ut.grab_test_imgpath('lena.png')
+        >>> img_fpath = ut.grab_test_imgpath('zebra.png')
         >>> img = vt.imread(img_fpath)
         >>> nKpts = detect_num_feats_in_image(img)
         >>> kpts, vecs = detect_feats_in_image(img)
@@ -746,7 +747,7 @@ def extract_vecs(img_fpath, kpts, **kwargs):
 
     CommandLine:
         python -m pyhesaff extract_vecs:0
-        python -m pyhesaff extract_vecs:1 --fname=lena.png
+        python -m pyhesaff extract_vecs:1 --fname=astro.png
         python -m pyhesaff extract_vecs:1 --fname=patsy.jpg --show
         python -m pyhesaff extract_vecs:1 --fname=carl.jpg
         python -m pyhesaff extract_vecs:1 --fname=zebra.png
@@ -765,7 +766,7 @@ def extract_vecs(img_fpath, kpts, **kwargs):
         >>> # ENABLE_DOCTEST
         >>> from pyhesaff._pyhesaff import *  # NOQA
         >>> import vtool as vt
-        >>> img_fpath = ut.grab_test_imgpath(ut.get_argval('--fname', default='lena.png'))
+        >>> img_fpath = ut.grab_test_imgpath(ut.get_argval('--fname', default='astro.png'))
         >>> # Extract original keypoints
         >>> kpts, vecs1 = detect_feats(img_fpath)
         >>> # Re-extract keypoints
@@ -814,7 +815,7 @@ def extract_patches(img_or_fpath, kpts, **kwargs):
 
     CommandLine:
         python -m pyhesaff extract_patches:0 --show
-        python -m pyhesaff extract_vecs:1 --fname=lena.png
+        python -m pyhesaff extract_vecs:1 --fname=astro.png
         python -m pyhesaff extract_vecs:1 --fname=patsy.jpg --show
         python -m pyhesaff extract_vecs:1 --fname=carl.jpg
         python -m pyhesaff extract_vecs:1 --fname=zebra.png
@@ -871,7 +872,7 @@ def extract_desc_from_patches(patch_list):
         >>> # ENABLE_DOCTEST
         >>> from pyhesaff._pyhesaff import *  # NOQA
         >>> import vtool as vt
-        >>> img_fpath = ut.grab_test_imgpath(ut.get_argval('--fname', default='lena.png'))
+        >>> img_fpath = ut.grab_test_imgpath(ut.get_argval('--fname', default='astro.png'))
         >>> # First extract keypoints normally
         >>> (orig_kpts_list, orig_vecs_list) = detect_feats(img_fpath)
         >>> # Take 9 keypoints
@@ -888,7 +889,7 @@ def extract_desc_from_patches(patch_list):
         >>> # ENABLE_DOCTEST
         >>> from pyhesaff._pyhesaff import *  # NOQA
         >>> import vtool as vt
-        >>> img_fpath = ut.grab_test_imgpath(ut.get_argval('--fname', default='lena.png'))
+        >>> img_fpath = ut.grab_test_imgpath(ut.get_argval('--fname', default='astro.png'))
         >>> # First extract keypoints normally
         >>> (orig_kpts_list, orig_vecs_list) = detect_feats(img_fpath)
         >>> # Take 9 keypoints
