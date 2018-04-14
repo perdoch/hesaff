@@ -78,6 +78,10 @@ else
     cmake -G "Unix Makefiles" \
         -DCMAKE_INSTALL_PREFIX=$LOCAL_PREFIX \
         -DOpenCV_DIR=$OPENCV_DIR \
+        -DCMAKE_C_FLAGS="${CMAKE_C_FLAGS}" \
+        -DCMAKE_CXX_FLAGS="${CMAKE_CXX_FLAGS}" \
+        -DCMAKE_SHARED_LINKER_FLAGS="${CMAKE_SHARED_LINKER_FLAGS}" \
+        -DCMAKE_EXE_LINKER_FLAGS="${CMAKE_EXE_LINKER_FLAGS}" \
         ..
 fi
 
