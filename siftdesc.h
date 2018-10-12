@@ -4,7 +4,7 @@
  *
  * This file is part of the HessianAffine detector and is made available under
  * the terms of the BSD license (see the COPYING file).
- * 
+ *
  */
 
 // The SIFT descriptor is subject to US Patent 6,711,293
@@ -13,7 +13,7 @@
 #define __SIFTDESC_H__
 
 #include <vector>
-#include <cv.h>
+#include <opencv2/opencv.hpp>
 #include "helpers.h"
 
 struct SIFTDescriptorParams
@@ -28,7 +28,7 @@ struct SIFTDescriptorParams
          orientationBins = 8;
          maxBinValue = 0.2f;
          patchSize = 41;
-      } 
+      }
 };
 
 
@@ -39,7 +39,7 @@ public:
    // top level interface
    SIFTDescriptor(const SIFTDescriptorParams &par) :
       mask(par.patchSize, par.patchSize, CV_32FC1),
-      grad(par.patchSize, par.patchSize, CV_32FC1), 
+      grad(par.patchSize, par.patchSize, CV_32FC1),
       ori(par.patchSize, par.patchSize, CV_32FC1)
       {
          this->par = par;
@@ -47,7 +47,7 @@ public:
          computeCircularGaussMask(mask);
          precomputeBinsAndWeights();
       }
-   
+
    void computeSiftDescriptor(cv::Mat &patch);
 
 public:
@@ -55,7 +55,7 @@ public:
 
 private:
    // helper functions
-   
+
 float normalize();
    void sample();
    void samplePatch();

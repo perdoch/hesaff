@@ -4,14 +4,14 @@
  *
  * This file is part of the HessianAffine detector and is made available under
  * the terms of the BSD license (see the COPYING file).
- * 
+ *
  */
 
 #ifndef __PYRAMID_H__
 #define __PYRAMID_H__
 
-#include <cv.h>
-#include <highgui.h>
+#include <opencv2/opencv.hpp>
+#include <opencv2/highgui/highgui.hpp>
 
 using namespace cv;
 
@@ -25,7 +25,7 @@ struct PyramidParams
    float initialSigma;
    // noise dependent threshold on the response (sensitivity)
    float threshold;
-   // ratio of the eigenvalues 
+   // ratio of the eigenvalues
    float edgeEigenValueRatio;
    // number of pixels ignored at the border of image
    int  border;
@@ -61,9 +61,9 @@ public:
       // thresholds are squared, response of det H is proportional to square of derivatives!
       finalThreshold(par.threshold * par.threshold),
       positiveThreshold(0.8 * finalThreshold),
-      negativeThreshold(-positiveThreshold) 
+      negativeThreshold(-positiveThreshold)
       {
-         this->par = par;  
+         this->par = par;
          hessianKeypointCallback = 0;
       }
    void setHessianKeypointCallback(HessianKeypointCallback *callback)
@@ -71,13 +71,13 @@ public:
          hessianKeypointCallback = callback;
       }
    void detectPyramidKeypoints(const Mat &image);
-   
-protected:   
+
+protected:
    void detectOctaveKeypoints(const Mat &firstLevel, float pixelDistance, Mat &nextOctaveFirstLevel);
    void localizeKeypoint(int r, int c, float curScale, float pixelDistance);
    void findLevelKeypoints(float curScale, float pixelDistance);
    Mat hessianResponse(const Mat &inputImage, float norm);
-   
+
 private:
    // some constants derived from parameters
    const float edgeScoreThreshold;
