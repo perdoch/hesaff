@@ -41,7 +41,7 @@ else
         export LOCAL_PREFIX=$(python -c "import sys; print(sys.prefix)")
     else
         export LOCAL_PREFIX=$LOCAL_PREFIX_CONDA
-        echo "If this fails run `conda install opencv` and then try again"
+        echo 'If this fails run `conda install opencv` and then try again'
         # Ensure:
         # conda install opencv
     fi

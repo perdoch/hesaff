@@ -1,40 +1,62 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.13.0)
+
 
 #######################################
 # Clang2 = Clang + OpenMP built for OSX Mavericks
 # http://goo.gl/1Tg0Zj
 if (APPLE)
     set(CMAKE_MACOSX_RPATH 1)
-    message("Detected APPLE system")
+    message(STATUS "Detected APPLE system")
     SET(CLANG2 Off)
 endif()
 
 if (APPLE AND CLANG2)
-    message("Using clang2")
+    message(STATUS "Using clang2")
     set(CMAKE_C_COMPILER "clang2")
     set(CMAKE_CXX_COMPILER "clang2++")
 endif()
 
 #######################################
-project(hesaff) #### !!!!IMPORTANT!!!! THIS MUST BE DOWN HERE FOR CLANG2
+project(hesaff LANGUAGES C CXX) #### !!!!IMPORTANT!!!! THIS MUST BE DOWN HERE FOR CLANG2
 #set(CMAKE_BUILD_TYPE "Release")
 
 if (APPLE)
     #MacPorts
-    message("USING MACPORTS")
+    message(STATUS "USING MACPORTS")
     include_directories(/opt/local/include)
     link_directories(/opt/local/lib)
 endif()
 
+
+#option(USE_CUDA "Build with CUDA" TRUE)
+#if (USE_CUDA)
+#    include(CheckLanguage)
+#    check_language(CUDA)
+#    if(CMAKE_CUDA_COMPILER)
+#        enable_language(CUDA)
+#    elseif()
+#        message(STATUS "CUDA not found, CUDA library will not be built")
+#        set(USE_CUDA OFF)
+#    endif()
+#endif()
+
+# Setup basic python stuff and ensure we have skbuild
+list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_SOURCE_DIR}/CMake")
+include( skbuild-helpers )
+
 #######################################
-message(STATUS "Checking OpenCV")
 find_package( OpenCV REQUIRED )
 include_directories(${OpenCV_INCLUDE_DIRS})
+IF(OPENMP_FOUND)
+  message(STATUS "Found OpenCV! ^_^")
+ELSE()
+  message(FATAL_ERROR "Missing OpenCV! x.x")
+ENDIF()
 
 #######################################
 if(APPLE AND CLANG2)
     # Add flags to support clang2
-    message("APPLE + CLANG2: Adding stdlib flags for clang")
+    message(STATUS "APPLE + CLANG2: Adding stdlib flags for clang")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -stdlib=libc++")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lc++")
@@ -46,10 +68,9 @@ endif()
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb")
 
 #######################################
-message(STATUS "Checking OpenMP")
 find_package(OpenMP)
 IF(OPENMP_FOUND)
-    message("Found OpenMP! ^_^")
+    message(STATUS "Found OpenMP! ^_^")
     # add flags for OpenMP
     #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS} -fopenmp")
     #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} -fopenmp")
@@ -58,8 +79,28 @@ IF(OPENMP_FOUND)
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${OpenMP_C_FLAGS} ${OpenMP_SHARED_LINKER_FLAGS}")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_C_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 ELSE()
-    message("Missed OpenMP! x_x")
+  message(STATUS "Missed OpenMP! x_x")
 ENDIF()
+
+
+###
+# Status string for debugging
+#
+set(PYTHON_SETUP_STATUS "
+  * PYTHON_EXECUTABLE = \"${PYTHON_EXECUTABLE}\"
+
+  * PYTHON_INCLUDE_DIR = \"${PYTHON_INCLUDE_DIR}\"
+  * PYTHON_LIBRARY = \"${PYTHON_LIBRARY}\"
+  * PYTHON_LIBRARY_DEBUG = \"${PYTHON_LIBRARY_DEBUG}\"
+
+  * skbuild_location = \"${skbuild_location}\"
+  * skbuild_cmake_dir = \"${skbuild_cmake_dir}\"
+")
+
+
+
+#find_package(Cython REQUIRED)
+#find_package(NumPy REQUIRED)
 
 #######################################
 set(SOURCE_FILES

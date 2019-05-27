@@ -54,3 +54,11 @@ CVPR09. June 2009.
 
 TBD: A reference to technical report describing the details and some
 retrieval results will be placed here.
+
+
+NOTES:
+
+Requires opencv. On ubuntu you can: 
+
+sudo apt-get install libopencv-dev 
+# python3-opencv

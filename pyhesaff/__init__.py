@@ -1,10 +1,6 @@
 # flake8: noqa
 from __future__ import absolute_import, print_function, division
-
 __version__ = '1.2'
-
-import utool as ut
-ut.noinject(__name__, '[pyhesaff.__init__]')
 
 
 from pyhesaff import ctypes_interface
@@ -31,8 +27,6 @@ from pyhesaff._pyhesaff import (DESC_DIM, HESAFF_CLIB,
 #                                get_hesaff_default_params, extract_desc_from_patches,
 #                                KPTS_DIM, DESC_DIM, __LIB_FPATH__, HESAFF_CLIB)
 #from pyhesaff._pyhesaff import *  # NOQA
-
-
 """
 # ut.util_inspect.get_module_owned_functions(pyhesaff._pyhesaff)
 import pyhesaff

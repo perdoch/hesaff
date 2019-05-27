@@ -43,8 +43,7 @@ def get_lib_fname_list(libname):
         >>> from pyhesaff.ctypes_interface import *  # NOQA
         >>> libname = 'hesaff'
         >>> libnames = get_lib_fname_list(libname)
-        >>> result = ('libnames = %s' % (ut.repr2(libnames),))
-        >>> print(result)
+        >>> print('libnames = {}'.format(ub.repr2(libnames)))
     """
     spec_list = [get_plat_specifier(), '']
     prefix_list = ['lib' + libname]
@@ -154,7 +153,5 @@ if __name__ == '__main__':
         python -m pyhesaff.ctypes_interface
         python -m pyhesaff.ctypes_interface --allexamples
     """
-    import multiprocessing
-    multiprocessing.freeze_support()  # for win32
-    import utool as ut  # NOQA
-    ut.doctest_funcs()
+    import xdoctest
+    xdoctest.doctest_module(__file__)
