@@ -46,7 +46,6 @@ include( skbuild-helpers )
 
 #######################################
 find_package( OpenCV REQUIRED )
-include_directories(${OpenCV_INCLUDE_DIRS})
 IF(OpenCV_FOUND)
   message(STATUS "Found OpenCV! ^_^")
 ELSE()
@@ -129,8 +128,13 @@ ENDIF()
 add_library(hesaff SHARED ${SOURCE_FILES})
 add_executable(hesaffexe ${SOURCE_FILES})
 
-#######################################
-target_link_libraries(hesaff ${OpenCV_LIBS})
-target_link_libraries(hesaffexe ${OpenCV_LIBS})
+target_include_directories(hesaff PRIVATE ${OpenCV_INCLUDE_DIR})
+target_include_directories(hesaffexe PRIVATE ${OpenCV_INCLUDE_DIR})
 
+#######################################
+target_link_libraries(hesaff ${OpenCV_LIBRARIES})
+target_link_libraries(hesaffexe ${OpenCV_LIBRARIES})
+
+file(RELATIVE_PATH _install_dest "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
+install(TARGETS ${module_name} LIBRARY DESTINATION "${_install_dest}")
 #message(STATUS CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE})

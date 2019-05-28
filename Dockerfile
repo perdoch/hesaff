@@ -1,7 +1,7 @@
 # Set defaults for --build-arg
 #FROM nvidia/cuda:9.2-cudnn7-devel-ubuntu18.04
-
-FROM jjanzic/docker-python3-opencv
+#FROM jjanzic/docker-python3-opencv
+FROM spmallick/opencv-docker:opencv
 ENV TERM linux
 
 # Fixes display issues when we write out utf-8 text
@@ -10,9 +10,8 @@ ENV LANG=C.UTF-8
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         nano vim curl git bzip2 openssh-client make \
-        gcc g++ gfortran build-essential ninja-build \
-        imagemagick \
-        tree htop tmux astyle wmctrl xsel xdotool xclip \
+        gcc g++ gfortran build-essential \
+        tree htop tmux astyle \
         libglib2.0-0 libsm6 libice6 libsm6 libxt6 libxrender1 libfontconfig1 libcups2 libxext6 \
         && \
     rm -rf /var/lib/apt/lists/*
@@ -20,8 +19,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 SHELL ["/bin/bash", "-c"]  
 #RUN ln -sf /bin/bash /bin/sh
 
-RUN pip install pip -U
-RUN pip install scikit-build numpy
+RUN python3 -m pip install pip -U
+RUN python3 -m pip install cmake ninja -U
+RUN python3 -m pip install scikit-build numpy
 
 WORKDIR /root
 RUN mkdir -p $HOME/code/hesaff
@@ -35,10 +35,11 @@ COPY pyproject.toml /root/code/hesaff/pyproject.toml
 COPY requirements.txt /root/code/hesaff/requirements.txt
 COPY run_developer_setup.sh /root/code/hesaff/run_developer_setup.sh
 
-RUN pip install cmake -U
-
 WORKDIR /root/code/hesaff
-RUN ./run_developer_setup.sh
+#RUN ./run_developer_setup.sh
+#RUN python3 setup.py clean
+RUN python3 -m pip install -r requirements.txt
+RUN python3 setup.py develop
 
 RUN ls $HOME/code/hesaff
 

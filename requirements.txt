@@ -1,2 +1,3 @@
 numpy
 ubelt
+scikit-build

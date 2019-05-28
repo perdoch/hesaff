@@ -5,7 +5,7 @@ from __future__ import absolute_import, division, print_function
 # import utool as ut
 # from os.path import dirname
 from skbuild import setup
-from setuptools import find_packages
+# from setuptools import find_packages
 # from setuptools import setup
 
 
@@ -70,6 +70,7 @@ version = parse_version('pyhesaff')  # needs to be a global var for git tags
 
 INSTALL_REQUIRES = [
     'numpy >= 1.9.0',
+    'ubelt',
 ]
 
 if __name__ == '__main__':
@@ -79,6 +80,7 @@ if __name__ == '__main__':
         url='https://github.com/Erotemic/hesaff',
         author=ORIGINAL_AUTHORS + ', ' + EXTENDED_AUTHORS,
         author_email='erotemic@gmail.com',
+        version=version,
         #packages=util_setup.find_packages(),
         # packages=['pyhesaff', 'build', 'pyhesaff.tests'],
         # version=util_setup.parse_package_for_version('pyhesaff'),
@@ -91,7 +93,8 @@ if __name__ == '__main__':
         #     'tests': parse_requirements('requirements/tests.txt'),
         # },
         install_requires=INSTALL_REQUIRES,
-        packages=find_packages(include='pyhesaff.*'),
+        # packages=find_packages(include='pyhesaff.*'),
+        packages=['pyhesaff'],
         # package_data={'build': util_cplat.get_dynamic_lib_globstrs()},
         # build_command=lambda: ut.std_build_command(dirname(__file__)),
         classifiers=[
@@ -101,12 +104,10 @@ if __name__ == '__main__':
             # This should be interpreted as Apache License v2.0
             'License :: OSI Approved :: Apache Software License',
             # Supported Python versions
-            'Programming Language :: Python :: 2.7',
             'Programming Language :: Python :: 3.5',
             'Programming Language :: Python :: 3.6',
             'Programming Language :: Python :: 3.7',
             'Programming Language :: Python :: 3.8',
         ],
     )
-    # kwargs = util_setup.setuptools_setup(**setup_dict)
     setup(**kwargs)
