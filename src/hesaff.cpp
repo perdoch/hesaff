@@ -40,7 +40,7 @@ CommandLine:
 #endif
 #include <opencv2/core.hpp>
 
-#define USE_FREAK 1
+#define USE_FREAK 0
 
 #ifdef USE_FREAK
 //#include <opencv2/nonfree.hpp>
@@ -48,6 +48,7 @@ CommandLine:
 
 //#include <opencv2/core/utility.hpp>
 
+#include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
 
