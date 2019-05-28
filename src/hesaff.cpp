@@ -38,18 +38,18 @@ CommandLine:
 #if DEBUG_HESAFF
 #include <assert.h>
 #endif
-#include <opencv2/core/core.hpp>
+#include <opencv2/core.hpp>
 
 #define USE_FREAK 1
 
 #ifdef USE_FREAK
-//#include <opencv2/nonfree/nonfree.hpp>
+//#include <opencv2/nonfree.hpp>
 #endif
 
 //#include <opencv2/core/utility.hpp>
 
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/highgui.hpp>
 
 #include <stdlib.h> // malloc
 #include <string.h> // strcpy
@@ -276,8 +276,8 @@ public:
     void extractDesc(int nKpts, float* kpts, uint8* desc)
     {
         /*
-         The following are variable conventions in python. 
-         The code here might not be compliant. 
+         The following are variable conventions in python.
+         The code here might not be compliant.
          We should strive to change code HERE to
          match the python code, which is consistent
 
@@ -286,7 +286,7 @@ public:
                V : maps from ellipse to ucircle      (perdoch.A)
                Z : the conic matrix                  (perdoch.E)
          */
-        
+
         // Extract descriptors from user specified keypoints
         float x, y, iv11, iv12, iv21, iv22;
         float sc;
@@ -334,7 +334,7 @@ public:
         /*
          * Warps underlying keypoints into patches
          */
-        
+
         // Extract descriptors from user specified keypoints
         float x, y, iv11, iv12, iv21, iv22;
         float sc;
@@ -485,20 +485,20 @@ public:
             global_nkpts++;
             // sample the patch (populates this->patch)
             // (from affine.cpp)
-            // 
+            //
             if (hesPar.only_count)
             {
-                // HACK, if we are only counting we dont need to 
-                // interpolate new patches. (this does seem to cause 
+                // HACK, if we are only counting we dont need to
+                // interpolate new patches. (this does seem to cause
                 // minor inconsistencies)
-                if(!this->normalizeAffineCheckBorders(this->image, x, y, s, a11, a12, a21, a22, ori)) 
+                if(!this->normalizeAffineCheckBorders(this->image, x, y, s, a11, a12, a21, a22, ori))
                 {
                 this->num_kpts++;
                 }
             }
             else
             {
-                if(!this->normalizeAffine(this->image, x, y, s, a11, a12, a21, a22, ori)) 
+                if(!this->normalizeAffine(this->image, x, y, s, a11, a12, a21, a22, ori))
                 {
                     this->push_new_keypoint(x, y, s, a11, a12, a21, a22, ori, type, response);
                 }
@@ -509,7 +509,7 @@ public:
     // END void onAffineShapeFound
     //------------------------------------------------------------
     void push_new_keypoint(float x, float y, float s, float a11, float a12,
-                           float a21, float a22, float ori, int type, 
+                           float a21, float a22, float ori, int type,
                            float response)
     {
         this->num_kpts++;
@@ -539,7 +539,7 @@ public:
     }
 
     float localizeKeypointOrientation(const cv::Mat& img, float x, float y,
-            float s, 
+            float s,
             float a11, float a12,
             float a21, float a22,
             std::vector<float>& submaxima_oris)
@@ -550,17 +550,17 @@ public:
         between bins, and fits a parabaloa (2nd degree taylor expansion)
         to localize sub-bin orientation.
 
-        Args: 
+        Args:
             img : an image
             pat : a keypoints image patch
 
         OutVars:
             submaxima_oris : dominant gradient orientations
-         
-        Returns: 
+
+        Returns:
             bool : success flag
 
-        References: 
+        References:
              http://docs.opencv.org/modules/imgproc/doc/filtering.html?highlight=sobel#sobel
 
         CommandLine:
@@ -569,7 +569,7 @@ public:
         global_c2++;
 
         // Enforce that the shape is pointing down and sample the patch when the
-        // orientation is the gravity vector 
+        // orientation is the gravity vector
         const float ori = R_GRAVITY_THETA;
         rectifyAffineTransformationUpIsUp(a11, a12, a21, a22);
         // sample the patch (populates this->patch)
@@ -585,16 +585,16 @@ public:
         //normalizeAffine does the job of ptool.get_warped_patch, but uses a
         //class variable to store the output (messy)
         // Compute gradient
-        
+
         cv::Mat xgradient(this->patch.rows, this->patch.cols, this->patch.depth());
         cv::Mat ygradient(this->patch.rows, this->patch.cols, this->patch.depth());
 
         // NEW: COMPUTE GRADIENT WITH SOBEL
-        cv::Sobel(this->patch, xgradient, this->patch.depth(), 
+        cv::Sobel(this->patch, xgradient, this->patch.depth(),
                 1, 0, 1, 1.0, 0, cv::BORDER_DEFAULT);
-        cv::Sobel(this->patch, ygradient, this->patch.depth(), 
+        cv::Sobel(this->patch, ygradient, this->patch.depth(),
                 0, 1, 1, 1.0, 0, cv::BORDER_DEFAULT);
-        
+
         // Compute magnitude and orientation
         cv::Mat orientations;
         cv::Mat magnitudes;
@@ -626,7 +626,7 @@ public:
         #if DEBUG_ROTINVAR
             this->DBG_dump_patch("orientationsaft", orientations);
         #endif
-        
+
         // gaussian weight magnitudes
         //float sigma0 = (magnitudes.rows / 2) * .95;
         //float sigma1 = (magnitudes.cols / 2) * .95;
@@ -670,7 +670,7 @@ public:
             //this->DBG_print_mat(weights, 10, "WEIGHTS");
             //cv::waitKey(0);
         #endif
-        
+
         // HISTOGRAM INTERPOLOATION PART
         // Compute ori histogram, splitting votes using linear interpolation
         const int nbins = 36;
@@ -682,7 +682,7 @@ public:
         Histogram<float> wrapped_hist = htool::wrap_histogram(hist);
         std::vector<float> submaxima_xs, submaxima_ys;
         // inplace wrap histogram (because orientations are circular)
-        htool::hist_edges_to_centers(wrapped_hist); 
+        htool::hist_edges_to_centers(wrapped_hist);
         // Compute orientation as maxima of wrapped histogram
         const float maxima_thresh = this->hesPar.ori_maxima_thresh;
 
@@ -691,7 +691,7 @@ public:
         for (int i = 0; i < submaxima_xs.size(); i ++ )
         {
             float submax_ori = submaxima_xs[i];
-            float submax_ori2 = ensure_0toTau<float>(submax_ori); 
+            float submax_ori2 = ensure_0toTau<float>(submax_ori);
             submaxima_oris.push_back(submax_ori);
             #if DEBUG_ROTINVAR
                 if (submax_ori != submax_ori2)
@@ -709,19 +709,19 @@ public:
         #if DEBUG_ROTINVAR
             /*
              python -m pyhesaff._pyhesaff --test-test_rot_invar --show --rebuild-hesaff --no-rmbuild
-             python -m pyhesaff._pyhesaff --test-test_rot_invar --show 
+             python -m pyhesaff._pyhesaff --test-test_rot_invar --show
              */
-            
-            //make_str(cmd_str1, 
-            //        "python -m vtool.patch --test-test_ondisk_find_patch_fpath_dominant_orientations --show" << 
+
+            //make_str(cmd_str1,
+            //        "python -m vtool.patch --test-test_ondisk_find_patch_fpath_dominant_orientations --show" <<
             //        " --patch-fpath " << patch_fpath <<
             //        "&"
             //        ""
             //        );
             //run_system_command(cmd_str1);
 
-            make_str(cmd_str2, 
-                    "python -m vtool.histogram --test-show_ori_image_ondisk --show" << 
+            make_str(cmd_str2,
+                    "python -m vtool.histogram --test-show_ori_image_ondisk --show" <<
                     " --patch_img_fpath "   << patch_fpath <<
                     " --ori_img_fpath "     << ori_fpath01 <<
                     " --weights_img_fpath " << weights_fpath <<
@@ -778,7 +778,7 @@ public:
         make_str(patch_fpath, "patches/KP_" << this->keys.size() << "_" << str_name << ".png");
         printDBG("[DBG] ----------------------")
         printDBG("[DBG] Dumping patch to patch_fpath = " << patch_fpath);
-        printDBG("[DBG] patch.shape = (" << 
+        printDBG("[DBG] patch.shape = (" <<
                 dbgpatch.rows << ", " <<
                 dbgpatch.cols << ", " <<
                 dbgpatch.channels() << ")"
@@ -819,7 +819,7 @@ public:
         DBG_kp_shape_invV(x, y, iv11, iv12, iv21, iv22, ori);
     }
 
-    void DBG_kp_shape_invV(float x, float y, float iv11, float iv12, 
+    void DBG_kp_shape_invV(float x, float y, float iv11, float iv12,
                      float iv21, float iv22, float ori)
     {
         printDBG("+---");
@@ -848,7 +848,7 @@ public:
     {
         printDBG("----------------------")
         printDBG("Matrix Info")
-        printDBG(name << ".shape = (" << 
+        printDBG(name << ".shape = (" <<
                 M.rows << ", " <<
                 M.cols << ", " <<
                 M.channels() << ")"
@@ -865,8 +865,8 @@ public:
             {
                 if (M.type() == 5)
                 {
-                std::cout << 
-                    //std::fixed << std::setw(5) << std::setprecision(2) << 
+                std::cout <<
+                    //std::fixed << std::setw(5) << std::setprecision(2) <<
                     M.at<float>(r, c) << ", ";
                 }
                 else if (M.type() == 6)
@@ -910,7 +910,7 @@ public:
     printDBG(" * hesPar.augment_orientation  = " << hesPar.augment_orientation);
     printDBG(" * hesPar.ori_maxima_thresh    = " << hesPar.ori_maxima_thresh);
     printDBG(" * hesPar.affine_invariance    = " << hesPar.affine_invariance);
-    }       
+    }
 
 
 };
@@ -1111,7 +1111,7 @@ PYHESAFF AffineHessianDetector* new_hesaff_image(uint8 *imgin, int rows, int col
     }
 
     __HESAFF_DEFINE_PARAMS_FROM_CALL__
-    
+
     // Create detector
     AffineHessianDetector* detector = new AffineHessianDetector(image, pyrParams, affShapeParams, siftParams, hesParams);
     detector->DBG_params();
@@ -1209,7 +1209,7 @@ PYHESAFF void writeFeatures(AffineHessianDetector* detector,
 }
 
 PYHESAFF void extractDescFromPatches(int num_patches,
-                                     int patch_h, 
+                                     int patch_h,
                                      int patch_w,
                                      uint8* patches_array,
                                      uint8* descriptors_array)
@@ -1234,7 +1234,7 @@ PYHESAFF void extractDescFromPatches(int num_patches,
     {
         pp = patch.ptr<float>(0);
         for(int r = 0; r < patch_h; r++)
-        { 
+        {
             for(int c = 0; c < patch_w; c++)
             {
                 *pp = (float) patches_array[(i * patch_h * patch_w) + (r * patch_w) + c];
@@ -1245,7 +1245,7 @@ PYHESAFF void extractDescFromPatches(int num_patches,
         for(int ix = 0; ix < DESC_DIM; ix++)
         {
             // populate outvar
-            descriptors_array[(i * DESC_DIM) + ix] = (uint8) sift.vec[ix]; 
+            descriptors_array[(i * DESC_DIM) + ix] = (uint8) sift.vec[ix];
         }
     }
 
@@ -1285,11 +1285,11 @@ PYHESAFF void detectFeaturesListStep2(int num_fpaths, AffineHessianDetector** de
     }
 }
 
-PYHESAFF void detectFeaturesListStep3(int num_fpaths, 
-                                       AffineHessianDetector** detector_array, 
+PYHESAFF void detectFeaturesListStep3(int num_fpaths,
+                                       AffineHessianDetector** detector_array,
                                        int* length_array,
                                        int* offset_array,
-                                       float* flat_keypoints, 
+                                       float* flat_keypoints,
                                        uint8* flat_descriptors)
 {
     printDBG("detectFeaturesListStep3()");
@@ -1337,13 +1337,13 @@ int main(int argc, char **argv)
          cd build
          ./hesaffexe lena.png
 
-         gprof hesaffexe 
+         gprof hesaffexe
          gprof hesaffexe | gprof2dot | dot -Tpng -o output.png
          eog output.png
     */
     const char* about_message = "\nUsage: hesaffexe image_name.png\nDescribes elliptical keypoints (with gravity vector) given in kpts_file.txt using a SIFT descriptor. The help message has unfortunately been deleted. Check github history for details. https://github.com/perdoch/hesaff/blob/master/hesaff.cpp\n\n";
     // Parser Reference: http://docs.opencv.org/trunk/modules/core/doc/command_line_parser.html
-    
+
     if(argc > 1)
     {
         printDBG("main()");

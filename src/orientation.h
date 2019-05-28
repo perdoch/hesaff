@@ -1,14 +1,17 @@
 #ifndef __ORIENTATION_H__
 #define __ORIENTATION_H__
 
-#include <opencv2/core/core.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <cv.h>
+#include <opencv2/core.hpp>
+#include <opencv2/imgproc.hpp>
 #include <cmath>
 #include <vector>
 #include <numeric>
 #include <iostream>
 #include "helpers.h"
+
+//#include <cv.h>
+#include <opencv2/opencv.hpp>
+using namespace cv;
 
 #ifndef M_TAU
 #define M_TAU 6.28318
@@ -161,7 +164,7 @@ template <class T> void print_vector(std::vector<T> vec, const char* name="vec")
     for(int i = 0; i < vec.size(); ++i)
     {
         std::cout <<
-            //std::setprecision(8) << 
+            //std::setprecision(8) <<
             //std::setprecision(2) <<
             vec[i] << ", " ;
         if (i % 6 == 0 && i > 0)
@@ -181,9 +184,9 @@ template <class T> void show_hist_submaxima(const Histogram<T>& hist, float maxi
     make_str(basecmd, "python -m vtool.histogram --test-show_hist_submaxima --show");
     printDBG_ORI("SHOWING HIST SUBMAXIMA WITH PYTHON");
     make_str(cmdstr, basecmd <<
-            " --hist=\"" << hist.data << "\"" << 
+            " --hist=\"" << hist.data << "\"" <<
             " --edges=\"" << hist.edges << "\"" <<
-            " --maxima_thesh " << maxima_thresh << 
+            " --maxima_thesh " << maxima_thresh <<
             " --title cpporihist" <<
             //" --legend"
             ""
@@ -266,7 +269,7 @@ template <class T> T python_modulus(T numer, T denom)
 }
 
 template <class T, class Iterator> Histogram<T> computeInterpolatedHistogram(
-        Iterator data_beg, Iterator data_end, 
+        Iterator data_beg, Iterator data_end,
         Iterator weight_beg, Iterator weight_end,
         int nbins, T range_max, T range_min)
 {
@@ -294,7 +297,7 @@ template <class T, class Iterator> Histogram<T> computeInterpolatedHistogram(
     // data offset should be 0, but is around for more general case of
     // interpolated histogram
     //assert(data_offset == 0);
-    // 
+    //
     Histogram<T> hist;  // structure of bins and edges
     hist.step = step;
     hist.range_min = range_min;
@@ -306,7 +309,7 @@ template <class T, class Iterator> Histogram<T> computeInterpolatedHistogram(
     }
     // For each pixel orientation and magnidue
     for(
-        Iterator data_iter = data_beg, weight_iter = weight_beg; 
+        Iterator data_iter = data_beg, weight_iter = weight_beg;
         (data_iter != data_end) && (weight_iter != weight_end);
         ++data_iter, ++weight_iter
        )
@@ -314,7 +317,7 @@ template <class T, class Iterator> Histogram<T> computeInterpolatedHistogram(
         // Read the item and determine which bins it should vote into
         T data = *data_iter;
         T weight = *weight_iter;
-        
+
         T fracBinIndex = (data - data_offset) / step;
         int left_index = int(floor(fracBinIndex));
         int right_index = left_index + 1;
@@ -322,14 +325,14 @@ template <class T, class Iterator> Histogram<T> computeInterpolatedHistogram(
         // Wrap around indices
         //    static int nprint = 0;
         //    bool doprint = false && (left_index < 0 || right_index >= nbins);
-        //    if (doprint) 
+        //    if (doprint)
         //    {
         //        printDBG_ORI("+----")
         //        printDBG_ORI("range = " << left_index << ", " << right_index)
         //    }
         left_index  = python_modulus(left_index, nbins);
         right_index = python_modulus(right_index, nbins);
-        //    if (doprint) 
+        //    if (doprint)
         //    {
         //        printDBG_ORI("range = " << left_index << ", " << right_index)
         //        printDBG_ORI("L___")
@@ -339,7 +342,7 @@ template <class T, class Iterator> Histogram<T> computeInterpolatedHistogram(
         // bins (maybe do quadratic)
         hist.data[left_index]  += weight * (1 - right_alpha);
         hist.data[right_index] += weight * (right_alpha);
-    
+
     }
     return hist;
 }
@@ -350,7 +353,7 @@ namespace htool
 
 template <class T> Histogram<T> wrap_histogram(const Histogram<T>& input)
 {
-    // FIXME; THIS NEEDS INFORMATION ABOUT THE DISTANCE FROM THE LAST BIN 
+    // FIXME; THIS NEEDS INFORMATION ABOUT THE DISTANCE FROM THE LAST BIN
     // TO THE FIRST. IT IS OK AS LONG AS ALL STEPS ARE EQUAL, BUT IT IS NOT
     // GENERAL
     std::vector<int> tmp;
@@ -387,7 +390,7 @@ template <class T> Histogram<T> wrap_histogram(const Histogram<T>& input)
 //    step = (stop-start)/float((num-1))
 //    y = _nx.arange(0, num, dtype=dtype) * step + start
 //    y[-1] = stop
-//    */ 
+//    */
 //    std::vector<T> domain;
 //    if (num == 1)
 //    {
@@ -492,8 +495,8 @@ template <class T> void interpolate_submaxima(int argmaxima, const Histogram<T>&
 }
 
 template <class T> void vector_take(
-        const std::vector<T>& item_list, 
-        const std::vector<int>& index_list, 
+        const std::vector<T>& item_list,
+        const std::vector<int>& index_list,
         std::vector<T>& item_sublist)
 {
     //item_sublist.resize(index_list.size());

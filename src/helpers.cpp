@@ -9,14 +9,7 @@
 
 #include <cmath>
 #include <iostream>
-//#ifdef WIN32
-#include <opencv2/imgproc/imgproc.hpp>
-//#else
-//#include <opencv2/imgproc.hpp>
-//#endif
-//C:\Program Files (x86)\OpenCV\include
-//#include <opencv2/imgproc.hpp>
-//#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/imgproc.hpp>
 
 #include "helpers.h"
 

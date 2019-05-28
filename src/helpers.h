@@ -10,12 +10,16 @@
 #ifndef __HELPERS_H__
 #define __HELPERS_H__
 
-#include <opencv2/core/core.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <cv.h>
+#include <opencv2/core.hpp>
+#include <opencv2/imgproc.hpp>
 #include <cmath>
 #include <vector>
 #include <numeric>
+
+//#include <cv.h>
+#include <opencv2/opencv.hpp>
+//using namespace cv;
+
 
 #ifndef M_TAU
 #define M_TAU 6.28318

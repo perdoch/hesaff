@@ -64,6 +64,8 @@ SET(OpenCV_POSSIBLE_ROOT_DIRS
   "/usr/local"
   "/usr"
 	"/opt/local"
+  "$ENV{HOME}/.local"
+  "$ENV{HOME}/.local/opencv"
   )
 
 #
