@@ -3,7 +3,7 @@
 if __name__ == '__main__':
     import pytest
     import sys
-    package_name = 'kwimage'
+    package_name = 'pyhesaff'
     pytest_args = [
         '-p', 'no:doctest',
         '--cov-config', '.coveragerc',

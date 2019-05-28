@@ -6,6 +6,9 @@ import utool as ut
 
 
 def TEST_ptool_find_kpts_direction(imgBGR, kpts):
+    from plottool import draw_func2 as df2
+    from plottool.viz_keypoints import _annotate_kpts, show_keypoints
+    from plottool.viz_featrow import draw_feat_row
     import vtool.patch as ptool
     hrint = utool.horiz_print
     print('[rotinvar] +---')
@@ -20,6 +23,9 @@ def TEST_ptool_find_kpts_direction(imgBGR, kpts):
 
 
 def TEST_figure1(wpatch, gradx, grady, gmag, gori, hist, centers):
+    from plottool import draw_func2 as df2
+    import plottool
+    import vtool.patch as ptool
     print('[rotinvar] 4) Draw histogram with interpolation annotations')
     fnum = 1
     gorimag = plottool.color_orimag(gori, gmag, True)
@@ -52,6 +58,9 @@ def TEST_figure1(wpatch, gradx, grady, gmag, gori, hist, centers):
 
 def TEST_figure2(imgBGR, kpts, desc, sel, fnum=2):
     #df2.imshow(wpatch, fnum=2)
+    from plottool import draw_func2 as df2
+    from plottool.viz_keypoints import _annotate_kpts, show_keypoints
+    from plottool.viz_featrow import draw_feat_row
     sift = desc[sel]
     viz_kwargs = dict(ell=True, eig=False,
                       rect=True, ori_color=df2.DEEP_PINK, ell_alpha=1, fnum=fnum, pnum=(2, 1, 1))
@@ -62,6 +71,8 @@ def TEST_figure2(imgBGR, kpts, desc, sel, fnum=2):
 
 def TEST_keypoint(imgBGR, img_fpath, kpts, desc, sel):
     import pyhesaff
+    import vtool.patch as ptool
+    from plottool import draw_func2 as df2
     #----------------------#
     # --- Extract Data --- #
     #----------------------#
@@ -112,15 +123,11 @@ def test_patch_ori_main():
         python -m pyhesaff.tests.test_patch_orientation --test-test_patch_ori_main --show
 
     Example:
-        >>> # GUI_DOCTEST
+        >>> # xdoctest: +SKIP
         >>> from pyhesaff.tests.test_patch_orientation import *  # NOQA
         >>> test_patch_ori_main()
         >>> ut.show_if_requested()
     """
-    from plottool import draw_func2 as df2
-    from plottool.viz_keypoints import _annotate_kpts, show_keypoints
-    from plottool.viz_featrow import draw_feat_row
-    import plottool
     print('[rotinvar] loading test data')
     import pyhesaff.tests.pyhestest as pyhestest
     test_data = pyhestest.load_test_data(short=True, n=3)
