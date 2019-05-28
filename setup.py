@@ -94,7 +94,6 @@ if __name__ == '__main__':
         packages=find_packages(include='pyhesaff.*'),
         # package_data={'build': util_cplat.get_dynamic_lib_globstrs()},
         # build_command=lambda: ut.std_build_command(dirname(__file__)),
-        setup_fpath=__file__,
         classifiers=[
             # List of classifiers available at:
             # https://pypi.python.org/pypi?%3Aaction=list_classifiers
