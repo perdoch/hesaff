@@ -41,6 +41,10 @@ WORKDIR /root/code/hesaff
 RUN python3 -m pip install -r requirements.txt
 RUN python3 setup.py develop
 
+RUN pip install xdoctest
+COPY run_doctests.sh /root/code/hesaff/run_doctests.py
+# COPY run_tests.sh /root/code/hesaff/run_tests.py
+
 RUN ls $HOME/code/hesaff
 
 # docker build --tag build_hesaff -f Dockerfile .

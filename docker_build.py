@@ -46,19 +46,20 @@ def main():
         print('NOTE: sometimes reruning the command manually works')
         raise Exception('Building docker failed with exit code {}'.format(info['ret']))
 
-    print(ub.highlight_code(ub.codeblock(
+    # print(ub.highlight_code(ub.codeblock(
+    print(ub.codeblock(
         r'''
         # Finished creating the docker image.
         # To test / export you can do something like this:
 
-        DEMO_DIR={ROOT}/{NAME}-docker/demo
+        DEMO_DIR={ROOT}/{NAME}-docker/mount
         TAG={tag}
-        echo "DEMO_DIR = $DEMO_DIR"
-        mkdir -p $DEMO_DIR/work
-        ln -s $HOME/data $DEMO_DIR/
+
+        # Move deployment to the mount directory
+        docker run -v $DEMO_DIR:/root/vmnt -it {tag} bash -c 'cd /root/code/hesaff && python3 -m xdoctest pyhesaff'
 
         # Run system tests
-        docker run -v $DEMO_DIR:/root/vmnt -it {tag} bash -c 'cd /root/code/netharn && ./run_doctests.sh'
+        docker run -v $DEMO_DIR:/root/vmnt -it {tag} bash -c 'cd /root/code/hesaff && python3 run_doctests.py'
 
         # Test that we can get a bash terminal
         docker run -v $DEMO_DIR:/root/vmnt -it {tag} bash
@@ -68,7 +69,7 @@ def main():
 
         mkdir -p ${ROOT}/{NAME}-docker/dist
         docker save -o ${ROOT}/{NAME}-docker/dist/{tag}.docker.tar {tag}
-        ''').format(NAME=NAME, ROOT=ROOT, tag=tag), 'bash'))
+        ''').format(NAME=NAME, ROOT=ROOT, tag=tag))
 
 
 if __name__ == '__main__':
