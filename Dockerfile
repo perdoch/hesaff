@@ -39,10 +39,13 @@ WORKDIR /root/code/hesaff
 #RUN ./run_developer_setup.sh
 #RUN python3 setup.py clean
 RUN python3 -m pip install -r requirements.txt
+
+RUN python3 setup.py build_ext --inplace
+
 RUN python3 setup.py develop
 
 RUN pip install xdoctest
-COPY run_doctests.sh /root/code/hesaff/run_doctests.py
+COPY run_doctests.sh /root/code/hesaff/run_doctests.sh
 # COPY run_tests.sh /root/code/hesaff/run_tests.py
 
 RUN ls $HOME/code/hesaff

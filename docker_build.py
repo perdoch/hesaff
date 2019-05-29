@@ -19,15 +19,35 @@ def main():
     context_dpath = ub.expandpath(join(ROOT, 'pyhesaff-docker/context'))
     ub.ensuredir(context_dpath)
 
-    # dist_paths = [
-    #     'pyhesaff',
-    #     'src',
-    #     'CMakeLists.txt',
-    #     'setup.py',
-    #     'run_doctests.py',
-    # ]
-    # for d in dist_paths:
-    #     shutil.copytree(d, join(context_dpath, d))
+    dist_paths = [
+        'Dockerfile',
+        'pyhesaff',
+        'src',
+        'CMakeLists.txt',
+        'setup.py',
+        'run_doctests.sh',
+    ]
+    from os.path import isfile, exists
+
+    def copy3(src, dst):
+        if exists(dst) and isfile(dst):
+            os.unlink(dst)
+        shutil.copy2(src, dst)
+
+    copy_function = shutil.copy2
+    copy_function = copy3
+    for pname in dist_paths:
+        src = join(ROOT, pname)
+        dst = join(context_dpath, pname)
+        print('======')
+        print('src = {!r}'.format(src))
+        print('dst = {!r}'.format(dst))
+
+        if os.path.isdir(pname):
+            ub.delete(dst)
+            shutil.copytree(src, dst, copy_function=copy_function)
+        else:
+            copy_function(src, dst)
 
     docker_build_cli = ' '.join([
         'docker', 'build',
@@ -52,17 +72,18 @@ def main():
         # Finished creating the docker image.
         # To test / export you can do something like this:
 
-        DEMO_DIR={ROOT}/{NAME}-docker/mount
+        VMNT_DIR={ROOT}/{NAME}-docker/vmnt
+        mkdir -p VMNT_DIR
         TAG={tag}
 
-        # Move deployment to the mount directory
-        docker run -v $DEMO_DIR:/root/vmnt -it {tag} bash -c 'cd /root/code/hesaff && python3 -m xdoctest pyhesaff'
+        # Move deployment to the vmnt directory
+        docker run -v $VMNT_DIR:/root/vmnt -it {tag} bash -c 'cd /root/code/hesaff && python3 -m xdoctest pyhesaff'
 
         # Run system tests
-        docker run -v $DEMO_DIR:/root/vmnt -it {tag} bash -c 'cd /root/code/hesaff && python3 run_doctests.py'
+        docker run -v $VMNT_DIR:/root/vmnt -it {tag} bash -c 'cd /root/code/hesaff && python3 run_doctests.sh'
 
         # Test that we can get a bash terminal
-        docker run -v $DEMO_DIR:/root/vmnt -it {tag} bash
+        docker run -v $VMNT_DIR:/root/vmnt -it {tag} bash
 
         # Inside bash test that we can fit a new model
         python -m pyhessaff demo
