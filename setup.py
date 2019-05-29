@@ -1,24 +1,6 @@
 #!/usr/bin/env python
 from __future__ import absolute_import, division, print_function
-# from utool import util_cplat
-# from utool import util_setup
-# import utool as ut
-# from os.path import dirname
 from skbuild import setup
-# from setuptools import find_packages
-# from setuptools import setup
-
-
-#def build_command():
-#    """ Build command run by utool.util_setup
-#    TODO: can use ut.std_build_cmd instead
-#    """
-#    print('Running custom build')
-#    if util_cplat.WIN32:
-#        util_cplat.shell('mingw_build.bat')
-#    else:
-#        util_cplat.shell('./unix_build.sh')
-
 
 URL_LIST = [
     'http://cmp.felk.cvut.cz/~perdom1/hesaff/',
@@ -81,12 +63,10 @@ if __name__ == '__main__':
         author=ORIGINAL_AUTHORS + ', ' + EXTENDED_AUTHORS,
         author_email='erotemic@gmail.com',
         version=version,
-        #packages=util_setup.find_packages(),
-        # packages=['pyhesaff', 'build', 'pyhesaff.tests'],
-        # version=util_setup.parse_package_for_version('pyhesaff'),
-        # licence=util_setup.read_license('LICENSE'),
+        # license=['Apache 2', util_setup.read_license('LICENSE.SIFT')],
         # long_description=util_setup.parse_readme('README.md'),
-        # long_description=parse_description(),
+        # long_description_content_type='text/x-rst',
+        # long_description_content_type='text/markdown',
         # install_requires=parse_requirements('requirements/runtime.txt'),
         # extras_require={
         #     'all': parse_requirements('requirements.txt'),

@@ -8,11 +8,9 @@ sudo apt-get install libgtk2.0-dev pkg-config libavcodec-dev libavformat-dev lib
 sudo apt-get install libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libdc1394-22-dev
 
 
-
-
 cd $HOME/code
 git clone https://github.com/Itseez/opencv.git
-cd opencv
+cd $HOME/code/opencv
 git pull
 
 #if [[ "$VIRTUAL_ENV" == ""  ]]; then
@@ -44,12 +42,12 @@ git pull
 #mkdir -p $LOCAL_PREFIX
 
 
+LOCAL_PREFIX=$HOME/.local
 echo "LOCAL_PREFIX = $LOCAL_PREFIX"
         
 
 # Checkout opencv core
 # git clone https://github.com/Itseez/opencv.git
-cd $REPO_DIR
 # Checkout opencv extras
 #git clone https://github.com/Itseez/opencv_contrib.git
 # cd opencv_contrib
@@ -57,12 +55,11 @@ cd $REPO_DIR
 # cd ..
 # git pull
 build_dname=build-py3
-mkdir -p $REPO_DIR/${build_dname}
-cd $REPO_DIR/${build_dname}
+REPO_DIR=$HOME/code/opencv
+echo "REPO_DIR = $REPO_DIR"
+mkdir -p $REPO_DIR/$build_dname
+cd $REPO_DIR/$build_dname
 
-
-LOCAL_PREFIX=$HOME/.local/opencv
-export REPO_DIR=
 
 cd $HOME/code/opencv/build-py3
 cmake -G "Ninja" \
