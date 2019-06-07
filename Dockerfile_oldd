@@ -1,22 +1,28 @@
 # Set defaults for --build-arg
 #FROM nvidia/cuda:9.2-cudnn7-devel-ubuntu18.04
 #FROM jjanzic/docker-python3-opencv
-#FROM python:3.6
+FROM python:3.6
+#FROM spmallick/opencv-docker:opencv
 
-# Notes:
-# docker pull quay.io/skvark/manylinux1_x86_64
-#
-FROM quay.io/skvark/manylinux1_x86_64
-#FROM skvark/manylinux1_x86_64
+ENV TERM linux
 
-ARG MB_PYTHON_VERSION=3.6
-ARG ENABLE_CONTRIB=1
-ARG ENABLE_HEADLESS=0
+# Fixes display issues when we write out utf-8 text
+ENV PYTHONIOENCODING UTF-8
+ENV LANG=C.UTF-8
 
-WORKDIR /root
-RUN git clone https://github.com/matthew-brett/multibuild.git
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        nano vim curl yasm unzip git bzip2 openssh-client make pkg-config \
+        gcc g++ gfortran build-essential \
+        tree htop tmux astyle wget \
+        libswscale-dev libtbb2 libtbb-dev \
+        libjpeg-dev libpng-dev libtiff-dev \
+        libavformat-dev libpq-dev \
+        libglib2.0-0 libsm6 libice6 libsm6 libxt6 libxrender1 libfontconfig1 libcups2 libxext6 \
+        && \
+    rm -rf /var/lib/apt/lists/*
 
-RUN source multibuild/common_utils.sh
+SHELL ["/bin/bash", "-c"]  
+#RUN ln -sf /bin/bash /bin/sh
 
 RUN python3 -m pip install pip -U
 RUN python3 -m pip install cmake ninja -U

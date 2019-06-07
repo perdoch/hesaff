@@ -103,7 +103,7 @@ add_library(hesaff SHARED ${SOURCE_FILES})
 target_include_directories(hesaff PRIVATE ${OpenCV_INCLUDE_DIR})
 
 #######################################
-target_link_libraries(hesaff ${OpenCV_LIBRARIES})
+target_link_libraries(hesaff PRIVATE ${OpenCV_LIBRARIES})
 
 file(RELATIVE_PATH _install_dest "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
 install(TARGETS ${module_name} LIBRARY DESTINATION "${_install_dest}")

@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+"""
+References:
+    https://github.com/skvark/opencv-python
+"""
 from __future__ import absolute_import, division, print_function
 import ubelt as ub
 from os.path import join
