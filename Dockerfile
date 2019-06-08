@@ -115,7 +115,7 @@ cd opencv-${OPENCV_VERSION}/cmake_binary \
 
 RUN source /root/config.sh && \
     cd opencv-${OPENCV_VERSION}/cmake_binary && \
-    make install
+    make -j6 install || make
 
 #RUN ln -s \
 #  /usr/local/python/cv2/python-3.6/cv2.cpython-36m-x86_64-linux-gnu.so \
