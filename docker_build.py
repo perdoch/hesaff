@@ -5,31 +5,31 @@ References:
 """
 from __future__ import absolute_import, division, print_function
 import ubelt as ub
-from os.path import join
+import setup
+import sys
+import os
+from os.path import join, exists
 
 
-def main():
-    import shutil  # NOQA
-    import setup
-    import sys
-    import os
+def setup_staging():
+    """
+    # TODO: make robust
 
-    ROOT = os.getcwd()
-    VERSION = setup.version
-    PY_VER = sys.version_info.major
-    NAME = 'pyhesaff'
-    tag = '{}-{}-py{}'.format(NAME, VERSION, PY_VER)
-    dockerfile_relpath = join(ROOT, 'Dockerfile')
-    context_dpath = ub.expandpath(join(ROOT, 'pyhesaff-docker/context'))
-    ub.ensuredir(context_dpath)
+    OPENCV_VERSION="4.1.0"
+    cd ~/code/hesaff/docker/staging
+    wget https://github.com/opencv/opencv/archive/${OPENCV_VERSION}.zip
 
+    unzip ${OPENCV_VERSION}.zip
+    """
+    pass
+
+
+def stage_self(ROOT, staging_dpath):
+    import shutil
+    # stage the important files in this repo
     dist_paths = [
-        'Dockerfile',
-        'pyhesaff',
-        'src',
-        'CMakeLists.txt',
-        'setup.py',
-        'run_doctests.sh',
+        'pyhesaff', 'src', 'CMakeLists.txt', 'setup.py', 'run_doctests.sh',
+        'CMake', 'run_tests.py'
     ]
     from os.path import isfile, exists
 
@@ -38,11 +38,13 @@ def main():
             os.unlink(dst)
         shutil.copy2(src, dst)
 
+    mirror_dpath = ub.ensuredir((staging_dpath, 'hesaff'))
+
     copy_function = shutil.copy2
     copy_function = copy3
     for pname in dist_paths:
         src = join(ROOT, pname)
-        dst = join(context_dpath, pname)
+        dst = join(mirror_dpath, pname)
         print('======')
         print('src = {!r}'.format(src))
         print('dst = {!r}'.format(dst))
@@ -52,6 +54,24 @@ def main():
             shutil.copytree(src, dst, copy_function=copy_function)
         else:
             copy_function(src, dst)
+
+
+def main():
+    ROOT = join(os.getcwd())
+    VERSION = setup.version
+    PY_VER = sys.version_info.major
+    NAME = 'pyhesaff'
+    tag = '{}-{}-py{}'.format(NAME, VERSION, PY_VER)
+    dockerfile_relpath = join(ROOT, 'docker/Dockerfile')
+    # context_dpath = ub.ensuredir((ROOT, 'docker/context'))
+    staging_dpath = ub.ensuredir((ROOT, 'docker/staging'))
+
+    # Prestage the multibuild repo
+    if not exists(join(staging_dpath, 'multibuild')):
+        # FIXME: make robust in the case this fails
+        info = ub.cmd('git clone https://github.com/matthew-brett/multibuild.git', cwd=staging_dpath, verbose=3)
+
+    stage_self(ROOT, staging_dpath)
 
     docker_build_cli = ' '.join([
         'docker', 'build',
