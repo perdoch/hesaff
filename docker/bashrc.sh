@@ -65,6 +65,9 @@ if [ -d "$HOME/venv" ]; then
 fi
 
 
+# Don't exit docker run on a failure
+set +x
+
 
 __heredoc__="""
 

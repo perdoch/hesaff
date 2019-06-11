@@ -32,7 +32,7 @@ COPY utils.sh /root/utils.sh
 COPY bashrc.sh /root/.bashrc
 
 #RUN source /root/.bashrc && $PYTHON_EXE -m pip install --upgrade pip
-RUN source /root/.bashrc && setup_venv
+#RUN source /root/.bashrc && setup_venv
 
 #RUN source /root/.bashrc && python -m pip install cmake ninja -U && python -m pip install scikit-build numpy
 #RUN source /root/.bashrc.sh && build_openssl
