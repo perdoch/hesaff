@@ -75,6 +75,15 @@ def main():
         # FIXME: make robust in the case this fails
         info = ub.cmd('git clone https://github.com/matthew-brett/multibuild.git', cwd=staging_dpath, verbose=3)
 
+    if not exists(join(staging_dpath, 'opencv')):
+        # FIXME: make robust in the case this fails
+        opencv_version = '4.1.0'
+        fpath = ub.grabdata('https://github.com/opencv/opencv/archive/{}.zip'.format(opencv_version), verbose=1)
+        ub.cmd('ln -s {} .'.format(fpath), cwd=staging_dpath, verbose=3)
+        ub.cmd('unzip {}'.format(fpath), cwd=staging_dpath, verbose=3)
+        import shutil
+        shutil.move(join(staging_dpath, 'opencv-' + opencv_version), join(staging_dpath, 'opencv'))
+
     stage_self(ROOT, staging_dpath)
 
     dockerfile_fpath = join(ROOT, 'Dockerfile')
@@ -117,10 +126,28 @@ def main():
         # RUN source /root/.bashrc && \
         #     build_openssl && build_curl
 
-        COPY docker/staging/opencv-4.1.0 /root/code/opencv
+        COPY docker/staging/opencv /root/code/opencv
+
+        # ENV "PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'"
+        # pip dependencies to _test_ your project
+        ENV TEST_DEPENDS="numpy==1.11.1"
+        # params to bdist_wheel. used to set osx build target.
+        ENV BDIST_PARAMS=""
+        ENV USE_CCACHE=1
+        ENV PLAT=x86_64
+        ENV UNICODE_WIDTH=32
+
+        # TEST THIS WOKRS: todo figure out how to use
+        RUN source /root/.bashrc && \
+            source code/multibuild/common_utils.sh && \
+            source code/multibuild/travis_linux_steps.sh && \
+            echo "yes"
+
 
         # https://github.com/skvark/opencv-python/blob/master/setup.py
         RUN source /root/.bashrc && \
+            source code/multibuild/common_utils.sh && \
+            source code/multibuild/travis_linux_steps.sh && \
             mkdir -p /root/code/opencv/build && \
             cd /root/code/opencv/build && \
             cmake -G "Unix Makefiles" \
@@ -136,13 +163,25 @@ def main():
                    -DBUILD_DOCS=OFF \
                 /root/code/opencv
 
+        # source multibuild/travis_steps.sh
+        # source multibuild_customize.sh
+
         RUN source /root/.bashrc && \
             mkdir -p /root/code/opencv/build && \
             cd /root/code/opencv/build && \
-            make -j9
+            make
 
-        # ] + (["-DOPENCV_EXTRA_MODULES_PATH=" + os.path.abspath("opencv_contrib/modules")] if build_contrib else [])
-        # COPY docker/staging/hesaff /root/code/hesaff
+        COPY docker/staging/hesaff /root/code/hesaff
+
+        WORKDIR /root/code/hesaff
+        RUN source /root/.bashrc && \
+            python3 -m pip install -r requirements.txt
+
+        RUN source /root/.bashrc && \
+            CMAKE_FIND_LIBRARY_SUFFIXES=".a;.so" python3 setup.py build_ext --inplace
+
+        RUN source /root/.bashrc && \
+            pip install xdoctest
         ''')
 
     try:
