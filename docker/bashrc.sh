@@ -1,5 +1,6 @@
 #export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 #set -x
+source ./utils.sh
 
 export MB_PYTHON_VERSION=3.6
 export ENABLE_CONTRIB=1
@@ -17,23 +18,6 @@ echo "CONFIG_PATH = $CONFIG_PATH"
 
 mkdir -p /io
 
-
-function pre_build {
-    # Any stuff that you need to do before you start building the wheels
-    # Runs in the root directory of this repository.
-    :
-    echo "todo: define pre_build"
-}
-
-function run_tests {
-    # Runs tests on installed distribution from an empty directory
-    python --version
-    echo "todo: run tests"
-    #python -c 'import sys; import yourpackage; sys.exit(yourpackage.test())'
-}
-
-
-
 # HACK
 source $MULTIBUILD_DIR/manylinux_utils.sh
 source $MULTIBUILD_DIR/configure_build.sh
@@ -41,7 +25,12 @@ source $MULTIBUILD_DIR/library_builders.sh
 
 export PYTHON_ROOT=$(cpython_path $PYTHON_VERSION)
 export PYTHON_EXE=$PYTHON_ROOT/bin/python
-echo "PYTHON_EXE = $PYTHON_EXE"
+#echo "PYTHON_EXE = $PYTHON_EXE"
+export PYTHONPATH=/opt/python/cp36-cp36m/lib/python3.6/site-packages/:$PYTHONPATH
+export PATH=/opt/python/cp36-cp36m/bin:$PATH
+export LD_LIBRARY_PATH=/opt/python/cp36-cp36m/lib:$LD_LIBRARY_PATH
+export PYTHON_EXE=/opt/python/cp36-cp36m/bin/python
+#echo $($PYTHON_EXE --version)
 
 export PATH=$PYTHON_ROOT/bin:$PATH
 export LD_LIBRARY_PATH=$PYTHON_ROOT/lib:$LD_LIBRARY_PATH
@@ -49,21 +38,10 @@ export LD_LIBRARY_PATH=$PYTHON_ROOT/lib:$LD_LIBRARY_PATH
 echo "PATH = $PATH"
 echo "LD_LIBRARY_PATH = $LD_LIBRARY_PATH"
 
-function setup_venv(){
-    #$PYTHON_EXE -m pip install --upgrade pip
-    $PYTHON_EXE -m pip install virtualenv 
-    $PYTHON_EXE -m virtualenv --python=$PYTHON_EXE venv
-    pip install virtualenv
-    source $HOME/venv/bin/activate && \
-    python --version # just to check && \
-    pip install --upgrade pip wheel
-}
-
 
 if [ -d "$HOME/venv" ]; then 
     source $HOME/venv/bin/activate
 fi
-
 
 # Don't exit docker run on a failure
 set +x

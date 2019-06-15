@@ -83,26 +83,66 @@ def main():
         FROM quay.io/skvark/manylinux1_x86_64
 
         ARG MB_PYTHON_VERSION=3.6
+
         ARG ENABLE_CONTRIB=1
         ARG ENABLE_HEADLESS=0
 
         ENV PYTHON_VERSION=3.6
+        ENV PYTHONPATH=/opt/python/cp36-cp36m/lib/python3.6/site-packages/
+        ENV PATH=/opt/python/cp36-cp36m/bin:$PATH
+        ENV PYTHON_EXE=/opt/python/cp36-cp36m/python
         ENV MULTIBUILD_DIR=/root/code/multibuild
         ENV HOME=/root
 
         WORKDIR /root
-        COPY docker/staging/multibuild $MULTIBUILD_DIR
+        COPY docker/staging/multibuild /root/code/multibuild
         # Hack to fix issue
         RUN find $MULTIBUILD_DIR -iname "*.sh" -type f -exec sed -i 's/gh-clone/gh_clone/g' {} +
 
         COPY docker/utils.sh /root/utils.sh
         COPY docker/bashrc.sh /root/.bashrc
 
-        # RUN source /root/.bashrc && $PYTHON_EXE -m pip install --upgrade pip
-        # RUN source /root/.bashrc && setup_venv
-        # RUN source /root/.bashrc && python -m pip install cmake ninja -U && python -m pip install scikit-build numpy
-        # RUN source /root/.bashrc.sh && build_openssl
-        # RUN source /root/.bashrc.sh && build_curl
+        RUN source /root/.bashrc && \
+            $PYTHON_EXE -m pip install --upgrade pip
+
+        RUN source /root/.bashrc && \
+            $PYTHON_EXE -m pip install virtualenv
+
+        RUN source /root/.bashrc && \
+            $PYTHON_EXE -m virtualenv --python=$PYTHON_EXE venv
+
+        RUN source /root/.bashrc && \
+            pip install cmake ninja -U && python -m pip install scikit-build numpy wheel
+
+        # RUN source /root/.bashrc && \
+        #     build_openssl && build_curl
+
+        COPY docker/staging/opencv-4.1.0 /root/code/opencv
+
+        # https://github.com/skvark/opencv-python/blob/master/setup.py
+        RUN source /root/.bashrc && \
+            mkdir -p /root/code/opencv/build && \
+            cd /root/code/opencv/build && \
+            cmake -G "Unix Makefiles" \
+                   -DPYTHON3_EXECUTABLE=$PYTHON_EXE \
+                   -DBUILD_opencv_python3=ON \
+                   -DOPENCV_SKIP_PYTHON_LOADER=ON \
+                   -DOPENCV_PYTHON3_INSTALL_PATH=python \
+                   -DINSTALL_CREATE_DISTRIB=ON \
+                   -DBUILD_opencv_apps=OFF \
+                   -DBUILD_SHARED_LIBS=OFF \
+                   -DBUILD_TESTS=OFF \
+                   -DBUILD_PERF_TESTS=OFF \
+                   -DBUILD_DOCS=OFF \
+                /root/code/opencv
+
+        RUN source /root/.bashrc && \
+            mkdir -p /root/code/opencv/build && \
+            cd /root/code/opencv/build && \
+            make -j9
+
+        # ] + (["-DOPENCV_EXTRA_MODULES_PATH=" + os.path.abspath("opencv_contrib/modules")] if build_contrib else [])
+        # COPY docker/staging/hesaff /root/code/hesaff
         ''')
 
     try:
