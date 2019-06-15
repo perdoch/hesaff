@@ -42,27 +42,31 @@ def stage_self(ROOT, staging_dpath):
 
     copy_function = shutil.copy2
     copy_function = copy3
+    print('======')
     for pname in dist_paths:
         src = join(ROOT, pname)
         dst = join(mirror_dpath, pname)
-        print('======')
-        print('src = {!r}'.format(src))
-        print('dst = {!r}'.format(dst))
+        print('src={!r}, dst={!r}'.format(src, dst))
 
         if os.path.isdir(pname):
             ub.delete(dst)
             shutil.copytree(src, dst, copy_function=copy_function)
         else:
             copy_function(src, dst)
+    print('======')
 
 
 def main():
+    import os
     ROOT = join(os.getcwd())
+    ROOT = ub.expandpath('~/code/hesaff')
+    os.chdir(ROOT)
+
     VERSION = setup.version
     PY_VER = sys.version_info.major
     NAME = 'pyhesaff'
     tag = '{}-{}-py{}'.format(NAME, VERSION, PY_VER)
-    dockerfile_relpath = join(ROOT, 'docker/Dockerfile')
+
     # context_dpath = ub.ensuredir((ROOT, 'docker/context'))
     staging_dpath = ub.ensuredir((ROOT, 'docker/staging'))
 
@@ -73,25 +77,65 @@ def main():
 
     stage_self(ROOT, staging_dpath)
 
+    dockerfile_fpath = join(ROOT, 'Dockerfile')
+    docker_code = ub.codeblock(
+        '''
+        FROM quay.io/skvark/manylinux1_x86_64
+
+        ARG MB_PYTHON_VERSION=3.6
+        ARG ENABLE_CONTRIB=1
+        ARG ENABLE_HEADLESS=0
+
+        ENV PYTHON_VERSION=3.6
+        ENV MULTIBUILD_DIR=/root/code/multibuild
+        ENV HOME=/root
+
+        WORKDIR /root
+        COPY docker/staging/multibuild $MULTIBUILD_DIR
+        # Hack to fix issue
+        RUN find $MULTIBUILD_DIR -iname "*.sh" -type f -exec sed -i 's/gh-clone/gh_clone/g' {} +
+
+        COPY docker/utils.sh /root/utils.sh
+        COPY docker/bashrc.sh /root/.bashrc
+
+        # RUN source /root/.bashrc && $PYTHON_EXE -m pip install --upgrade pip
+        # RUN source /root/.bashrc && setup_venv
+        # RUN source /root/.bashrc && python -m pip install cmake ninja -U && python -m pip install scikit-build numpy
+        # RUN source /root/.bashrc.sh && build_openssl
+        # RUN source /root/.bashrc.sh && build_curl
+        ''')
+
+    try:
+        print(ub.color_text('\n--- DOCKER CODE ---', 'white'))
+        print(ub.highlight_code(docker_code, 'docker'))
+        print(ub.color_text('--- END DOCKER CODE ---\n', 'white'))
+    except Exception:
+        pass
+    with open(dockerfile_fpath, 'w') as file:
+        file.write(docker_code)
+
     docker_build_cli = ' '.join([
         'docker', 'build',
         # '--build-arg PY_VER={}'.format(PY_VER),
         '--tag {}'.format(tag),
-        '-f {}'.format(dockerfile_relpath),
+        '-f {}'.format(dockerfile_fpath),
         '.'
     ])
     print('docker_build_cli = {!r}'.format(docker_build_cli))
     info = ub.cmd(docker_build_cli, verbose=3, shell=True)
 
     if info['ret'] != 0:
+        print(ub.color_text('\n--- FAILURE ---', 'red'))
         print('Failed command:')
         print(info['command'])
         print(info['err'])
         print('NOTE: sometimes reruning the command manually works')
         raise Exception('Building docker failed with exit code {}'.format(info['ret']))
+    else:
+        print(ub.color_text('\n--- SUCCESS ---', 'green'))
 
     # print(ub.highlight_code(ub.codeblock(
-    print(ub.codeblock(
+    print(ub.highlight_code(ub.codeblock(
         r'''
         # Finished creating the docker image.
         # To test / export you can do something like this:
@@ -114,7 +158,7 @@ def main():
 
         mkdir -p ${ROOT}/{NAME}-docker/dist
         docker save -o ${ROOT}/{NAME}-docker/dist/{tag}.docker.tar {tag}
-        ''').format(NAME=NAME, ROOT=ROOT, tag=tag))
+        ''').format(NAME=NAME, ROOT=ROOT, tag=tag), 'bash'))
 
 
 if __name__ == '__main__':
