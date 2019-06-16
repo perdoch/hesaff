@@ -189,16 +189,32 @@ def main():
 
         COPY docker/staging/hesaff /root/code/hesaff
 
-        WORKDIR /root/code/hesaff
-        RUN source /root/.bashrc && \
-            python -m pip install -r requirements.txt
+        # # Use skbuild to build hesaff
+        # RUN source /root/.bashrc && \
+        #     cd /root/code/hesaff && \
+        #     CMAKE_FIND_LIBRARY_SUFFIXES=".a;.so" python setup.py build_ext --inplace
+        # export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 
-        # Use skbuild to build hesaff
+        # Use cmake to build hesaff
         RUN source /root/.bashrc && \
-            CMAKE_FIND_LIBRARY_SUFFIXES=".a;.so" python setup.py build_ext --inplace
+            export PYTHON_INCLUDE_DIRS=$PYTHON_ROOT/include/python3.6m && \
+            export CPATH=$PYTHON_INCLUDE_DIRS:$CPATH && \
+            export LD_LIBRARY_PATH=$PYTHON_ROOT/lib:$LD_LIBRARY_PATH && \
+            cd /root/code/hesaff/build && \
+            mkdir -p /root/code/hesaff/build && \
+            cd /root/code/hesaff/build && \
+            cmake -G "Unix Makefiles" \
+                -DPYTHON_INCLUDE_DIRS=$PYTHON_INCLUDE_DIRS \
+                /root/code/hesaff
 
-        RUN source /root/.bashrc && \
-            pip install xdoctest
+        # -DPYTHON_LIBRARY=$PYTHON_ROOT/
+
+        # RUN source /root/.bashrc && \
+        #     cd /root/code/hesaff/build && \
+        #     make
+
+        # RUN source /root/.bashrc && \
+        #     pip install xdoctest
         ''')
 
     try:

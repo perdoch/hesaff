@@ -39,8 +39,8 @@ if(APPLE AND CLANG2)
 endif()
 
 # Setup basic python stuff and ensure we have skbuild
-list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_SOURCE_DIR}/CMake")
-include( skbuild-helpers )
+#list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_SOURCE_DIR}/CMake")
+#include( skbuild-helpers )
 
 #######################################
 
