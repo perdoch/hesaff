@@ -9,9 +9,9 @@ Command Line:
     python -m pyhesaff detect_feats --show --siftPower=0.5,
 """
 from __future__ import absolute_import, print_function, division, unicode_literals
-import sys
 import six
 from six.moves import zip
+from six.moves import range
 from os.path import realpath, dirname
 import ctypes as C
 import numpy as np
@@ -21,9 +21,6 @@ try:
     from pyhesaff import ctypes_interface
 except ValueError:
     import ctypes_interface
-
-
-__DEBUG__ = '--debug-pyhesaff' in sys.argv or '--debug' in sys.argv
 
 #============================
 # hesaff ctypes interface
@@ -98,8 +95,10 @@ HESAFF_PARAM_TYPES = [type_ for (type_, key, val) in HESAFF_TYPED_PARAMS]
 
 
 def grab_test_imgpath(p):
-    import utool as ut
-    fpath = ut.grab_test_imgpath(ub.argval('--fname', default='astro.png'))
+    fpath = ub.grabdata('https://i.imgur.com/KXhKM72.png',
+                        fname='astro.png',
+                        hash_prefix='160b6e5989d2788c0296eac45b33e90fe612da23',
+                        hasher='sha1')
     return fpath
 
 
@@ -199,10 +198,6 @@ KPTS_DIM = HESAFF_CLIB.get_kpts_dim()
 DESC_DIM = HESAFF_CLIB.get_desc_dim()
 
 
-if __DEBUG__:
-    print('[hes] %r KPTS_DIM = %r' % (type(KPTS_DIM), KPTS_DIM))
-    print('[hes] %r DESC_DIM = %r' % (type(KPTS_DIM), DESC_DIM))
-
 #============================
 # helpers
 #============================
@@ -251,9 +246,6 @@ def _cast_strlist_to_C(py_strlist):
 def _new_fpath_hesaff(img_fpath, **kwargs):
     """ Creates new detector object which reads the image """
     hesaff_params = _make_hesaff_cpp_params(kwargs)
-    if __DEBUG__:
-        print('[hes] New Hesaff')
-        print('[hes] hesaff_params=%r' % (hesaff_params,))
     hesaff_args = hesaff_params.values()  # pass all parameters to HESAFF_CLIB
     img_realpath = realpath(img_fpath)
     if six.PY3:
@@ -272,9 +264,6 @@ def _new_fpath_hesaff(img_fpath, **kwargs):
 def _new_image_hesaff(img, **kwargs):
     """ Creates new detector object which reads the image """
     hesaff_params = _make_hesaff_cpp_params(kwargs)
-    if __DEBUG__:
-        print('[hes] New Hesaff')
-        print('[hes] hesaff_params=%r' % (hesaff_params,))
     hesaff_args = hesaff_params.values()  # pass all parameters to HESAFF_CLIB
     rows, cols = img.shape[0:2]
     if len(img.shape) == 2:
@@ -426,7 +415,6 @@ def detect_feats(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kw
         >>> # ENABLE_DOCTEST
         >>> # Test simple detect
         >>> from pyhesaff._pyhesaff import *  # NOQA
-        >>> import plottool as pt
         >>> import vtool as vt
         >>> TAU = 2 * np.pi
         >>> fpath = grab_test_imgpath(ub.argval('--fname', default='astro.png'))
@@ -447,40 +435,23 @@ def detect_feats(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kw
         >>>                       ell_alpha=.4, ell_color='distinct')
         >>> print('default_showkw = %r' % (default_showkw,))
         >>> #showkw = ut.argparse_dict(default_showkw)
+        >>> #import plottool as pt
         >>> #pt.interact_keypoints.ishow_keypoints(imgBGR, kpts, vecs, **showkw)
         >>> #pt.show_if_requested()
     """
-    if __DEBUG__:
-        print('[hes] Detecting Keypoints')
-        print('[hes] use_adaptive_scale=%r' % (use_adaptive_scale,))
-        print('[hes] nogravity_hack=%r' % (nogravity_hack,))
-        print('[hes] kwargs=%s' % (ub.repr2(kwargs),))
     # Load image
     hesaff_ptr = _new_fpath_hesaff(img_fpath, **kwargs)
-    if __DEBUG__:
-        print('[hes] detect')
     # Get num detected
     nKpts = HESAFF_CLIB.detect(hesaff_ptr)
-    if __DEBUG__:
-        print('[hes] allocate')
     # Allocate arrays
     kpts = alloc_kpts(nKpts)
     vecs = alloc_vecs(nKpts)
-    if __DEBUG__:
-        print('[hes] export')
     # Populate arrays
     HESAFF_CLIB.exportArrays(hesaff_ptr, nKpts, kpts, vecs)
     HESAFF_CLIB.free_hesaff(hesaff_ptr)
-    if __DEBUG__:
-        import vtool as vt
-        assert vt.check_sift_validity(vecs)
     if use_adaptive_scale:  # Adapt scale if requested
-        if __DEBUG__:
-            print('[hes] adapt_scale')
         kpts, vecs = adapt_scale(img_fpath, kpts)
     if nogravity_hack:
-        if __DEBUG__:
-            print('[hes] adapt_rotation')
         kpts, vecs = vtool_adapt_rotation(img_fpath, kpts)
     return kpts, vecs
 
@@ -618,17 +589,11 @@ def detect_feats_in_image(img, **kwargs):
     """
     #Valid keyword arguments are: + str(HESAFF_PARAM_DICT.keys())
     hesaff_ptr = _new_image_hesaff(img, **kwargs)
-    if __DEBUG__:
-        print('[hes] detect')
     # Get num detected
     nKpts = HESAFF_CLIB.detect(hesaff_ptr)
-    if __DEBUG__:
-        print('[hes] allocate')
     # Allocate arrays
     kpts = alloc_kpts(nKpts)
     vecs = alloc_vecs(nKpts)
-    if __DEBUG__:
-        print('[hes] export')
     HESAFF_CLIB.exportArrays(hesaff_ptr, nKpts, kpts, vecs)  # Populate arrays
     HESAFF_CLIB.free_hesaff(hesaff_ptr)
     return kpts, vecs
@@ -693,8 +658,6 @@ def detect_num_feats_in_image(img, **kwargs):
     #kwargs['only_count'] = False
     #Valid keyword arguments are: + str(HESAFF_PARAM_DICT.keys())
     hesaff_ptr = _new_image_hesaff(img, **kwargs)
-    if __DEBUG__:
-        print('[hes] detect')
     # Get num detected
     nKpts = HESAFF_CLIB.detect(hesaff_ptr)
     HESAFF_CLIB.free_hesaff(hesaff_ptr)
@@ -905,7 +868,6 @@ def extract_desc_from_patches(patch_list):
         HESAFF_CLIB.extractDescFromPatches(num_patches, patch_h, patch_w,
                                            patch_list, vecs_array)
     else:
-        from six.moves import range
         chunksize = 2048
         _iter = range(num_patches // chunksize)
         _progiter = ub.ProgIter(_iter, desc='extracting sift chunk')

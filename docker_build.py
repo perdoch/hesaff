@@ -112,6 +112,19 @@ def main():
         ENV PLAT=x86_64
         ENV UNICODE_WIDTH=32
 
+        # -e BUILD_COMMANDS="$build_cmds" \
+        # -e PYTHON_VERSION="$MB_PYTHON_VERSION" \
+        # -e UNICODE_WIDTH="$UNICODE_WIDTH" \
+        # -e BUILD_COMMIT="$BUILD_COMMIT" \
+        # -e CONFIG_PATH="$CONFIG_PATH" \
+        # -e ENV_VARS_PATH="$ENV_VARS_PATH" \
+        # -e WHEEL_SDIR="$WHEEL_SDIR" \
+        # -e MANYLINUX_URL="$MANYLINUX_URL" \
+        # -e BUILD_DEPENDS="$BUILD_DEPENDS" \
+        # -e USE_CCACHE="$USE_CCACHE" \
+        # -e REPO_DIR="$repo_dir" \
+        # -e PLAT="$PLAT" \
+
         # These are defined in the parent image
         # ENV JPEG_INCLUDE_DIR=/opt/libjpeg-turbo/include
         # ENV JPEG_LIBRARY=/opt/libjpeg-turbo/lib64/libjpeg.a
@@ -172,7 +185,7 @@ def main():
             source code/multibuild/common_utils.sh && \
             source code/multibuild/travis_linux_steps.sh && \
             cd /root/code/opencv/build && \
-            make && make install
+            make -j9 && make install
 
         COPY docker/staging/hesaff /root/code/hesaff
 
