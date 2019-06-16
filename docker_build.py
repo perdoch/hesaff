@@ -87,98 +87,102 @@ def main():
     stage_self(ROOT, staging_dpath)
 
     dockerfile_fpath = join(ROOT, 'Dockerfile')
+    # This docker code is very specific for building linux binaries.
+    # We will need to do a bit of refactoring to handle OSX and windows.
+    # But the goal is to get at least one OS working end-to-end.
     docker_code = ub.codeblock(
         '''
         FROM quay.io/skvark/manylinux1_x86_64
 
+        # SETUP ENV
         ARG MB_PYTHON_VERSION=3.6
-
-        ARG ENABLE_CONTRIB=1
-        ARG ENABLE_HEADLESS=0
-
+        ARG ENABLE_CONTRIB=0
+        ARG ENABLE_HEADLESS=1
         ENV PYTHON_VERSION=3.6
+        ENV PYTHON_ROOT=/opt/python/cp36-cp36m/
         ENV PYTHONPATH=/opt/python/cp36-cp36m/lib/python3.6/site-packages/
         ENV PATH=/opt/python/cp36-cp36m/bin:$PATH
         ENV PYTHON_EXE=/opt/python/cp36-cp36m/python
         ENV MULTIBUILD_DIR=/root/code/multibuild
         ENV HOME=/root
-
-        WORKDIR /root
-        COPY docker/staging/multibuild /root/code/multibuild
-        # Hack to fix issue
-        RUN find $MULTIBUILD_DIR -iname "*.sh" -type f -exec sed -i 's/gh-clone/gh_clone/g' {} +
-
-        COPY docker/utils.sh /root/utils.sh
-        COPY docker/bashrc.sh /root/.bashrc
-
-        RUN source /root/.bashrc && \
-            $PYTHON_EXE -m pip install --upgrade pip
-
-        RUN source /root/.bashrc && \
-            $PYTHON_EXE -m pip install virtualenv
-
-        RUN source /root/.bashrc && \
-            $PYTHON_EXE -m virtualenv --python=$PYTHON_EXE venv
-
-        RUN source /root/.bashrc && \
-            pip install cmake ninja -U && python -m pip install scikit-build numpy wheel
-
-        # RUN source /root/.bashrc && \
-        #     build_openssl && build_curl
-
-        COPY docker/staging/opencv /root/code/opencv
-
-        # ENV "PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'"
-        # pip dependencies to _test_ your project
-        ENV TEST_DEPENDS="numpy==1.11.1"
         # params to bdist_wheel. used to set osx build target.
+        ENV TEST_DEPENDS="numpy==1.11.1"
         ENV BDIST_PARAMS=""
         ENV USE_CCACHE=1
         ENV PLAT=x86_64
         ENV UNICODE_WIDTH=32
 
-        # TEST THIS WOKRS: todo figure out how to use
+        # These are defined in the parent image
+        # ENV JPEG_INCLUDE_DIR=/opt/libjpeg-turbo/include
+        # ENV JPEG_LIBRARY=/opt/libjpeg-turbo/lib64/libjpeg.a
+
+        RUN mkdir -p /io
+        WORKDIR /root
+
+        # Setup code / scripts
+        COPY docker/staging/multibuild /root/code/multibuild
+        # Hack to fix issue
+        RUN find $MULTIBUILD_DIR -iname "*.sh" -type f -exec sed -i 's/gh-clone/gh_clone/g' {} +
+
+        # Copy bash configs (mirrors the environs)
+        COPY docker/config.sh /root/config.sh
+        COPY docker/bashrc.sh /root/.bashrc
+
+        # Setup a virtualenv
         RUN source /root/.bashrc && \
-            source code/multibuild/common_utils.sh && \
-            source code/multibuild/travis_linux_steps.sh && \
-            echo "yes"
+            $PYTHON_EXE -m pip install --upgrade pip && \
+            $PYTHON_EXE -m pip install virtualenv && \
+            $PYTHON_EXE -m virtualenv --python=$PYTHON_EXE $HOME/venv
 
+        # Install packages in virtual environment
+        RUN source /root/.bashrc && \
+            pip install cmake ninja scikit-build wheel numpy
 
+        # This is very different for different operating systems
         # https://github.com/skvark/opencv-python/blob/master/setup.py
+        COPY docker/staging/opencv /root/code/opencv
         RUN source /root/.bashrc && \
             source code/multibuild/common_utils.sh && \
             source code/multibuild/travis_linux_steps.sh && \
             mkdir -p /root/code/opencv/build && \
             cd /root/code/opencv/build && \
             cmake -G "Unix Makefiles" \
-                   -DPYTHON3_EXECUTABLE=$PYTHON_EXE \
-                   -DBUILD_opencv_python3=ON \
-                   -DOPENCV_SKIP_PYTHON_LOADER=ON \
-                   -DOPENCV_PYTHON3_INSTALL_PATH=python \
                    -DINSTALL_CREATE_DISTRIB=ON \
+                   -DOPENCV_SKIP_PYTHON_LOADER=ON \
                    -DBUILD_opencv_apps=OFF \
                    -DBUILD_SHARED_LIBS=OFF \
                    -DBUILD_TESTS=OFF \
                    -DBUILD_PERF_TESTS=OFF \
                    -DBUILD_DOCS=OFF \
+                   -DWITH_QT=OFF \
+                   -DWITH_IPP=OFF \
+                   -DWITH_V4L=ON \
+                   -DBUILD_JPEG=OFF \
+                   -DENABLE_PRECOMPILED_HEADERS=OFF \
+                   -DJPEG_INCLUDE_DIR=/opt/libjpeg-turbo/include \
+                   -DJPEG_LIBRARY=/opt/libjpeg-turbo/lib64/libjpeg.a \
                 /root/code/opencv
 
-        # source multibuild/travis_steps.sh
-        # source multibuild_customize.sh
+       # Note: there is no need to compile the above with python
+       # -DPYTHON3_EXECUTABLE=$PYTHON_EXE \
+       # -DBUILD_opencv_python3=ON \
+       # -DOPENCV_PYTHON3_INSTALL_PATH=python \
 
         RUN source /root/.bashrc && \
-            mkdir -p /root/code/opencv/build && \
+            source code/multibuild/common_utils.sh && \
+            source code/multibuild/travis_linux_steps.sh && \
             cd /root/code/opencv/build && \
-            make
+            make && make install
 
         COPY docker/staging/hesaff /root/code/hesaff
 
         WORKDIR /root/code/hesaff
         RUN source /root/.bashrc && \
-            python3 -m pip install -r requirements.txt
+            python -m pip install -r requirements.txt
 
+        # Use skbuild to build hesaff
         RUN source /root/.bashrc && \
-            CMAKE_FIND_LIBRARY_SUFFIXES=".a;.so" python3 setup.py build_ext --inplace
+            CMAKE_FIND_LIBRARY_SUFFIXES=".a;.so" python setup.py build_ext --inplace
 
         RUN source /root/.bashrc && \
             pip install xdoctest
@@ -223,14 +227,14 @@ def main():
         mkdir -p VMNT_DIR
         TAG={tag}
 
+        # Test that we can get a bash terminal
+        docker run -v $VMNT_DIR:/root/vmnt -it {tag} bash
+
         # Move deployment to the vmnt directory
         docker run -v $VMNT_DIR:/root/vmnt -it {tag} bash -c 'cd /root/code/hesaff && python3 -m xdoctest pyhesaff'
 
         # Run system tests
         docker run -v $VMNT_DIR:/root/vmnt -it {tag} bash -c 'cd /root/code/hesaff && python3 run_doctests.sh'
-
-        # Test that we can get a bash terminal
-        docker run -v $VMNT_DIR:/root/vmnt -it {tag} bash
 
         # Inside bash test that we can fit a new model
         python -m pyhessaff demo

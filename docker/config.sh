@@ -28,5 +28,3 @@ function setup_venv(){
     python --version # just to check && \
     pip install --upgrade pip wheel
 }
-
-
