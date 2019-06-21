@@ -199,10 +199,8 @@ def main():
         RUN source /root/.bashrc && \
             mkdir -p /root/code/hesaff/build && \
             cd /root/code/hesaff/build && \
-            export CFLAGS="-std=c++11 $CFLAGS" \
-            cmake -G "Unix Makefiles" \
-                -DCMAKE_CXX_FLAGS="-std=c++11 $CFLAGS" \
-                /root/code/hesaff
+            CXXFLAGS="-std=c++11 $CXXFLAGS" cmake -G "Unix Makefiles" /root/code/hesaff && \
+            make
 
         # RUN source /root/.bashrc && \
         #     pip install xdoctest
