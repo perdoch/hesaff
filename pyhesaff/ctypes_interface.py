@@ -40,13 +40,14 @@ def get_lib_fname_list(libname):
         python -m pyhesaff.ctypes_interface get_lib_fname_list
 
     Example:
-        >>> # DISABLE_DOCTEST
         >>> from pyhesaff.ctypes_interface import *  # NOQA
         >>> libname = 'hesaff'
         >>> libnames = get_lib_fname_list(libname)
         >>> print('libnames = {}'.format(ub.repr2(libnames)))
     """
-    spec_list = [get_plat_specifier(), '']
+
+    spec_list = [get_plat_specifier(), '', '-manyliunx-todo-fixme']
+
     prefix_list = ['lib' + libname]
     if sys.platform.startswith('win32'):
         prefix_list.append(libname)
@@ -81,29 +82,43 @@ def find_lib_fpath(libname, root_dir, recurse_down=True, verbose=False):
     """ Search for the library """
     lib_fname_list = get_lib_fname_list(libname)
     tried_fpaths = []
-    while root_dir is not None:
-        for lib_fname in lib_fname_list:
-            for lib_dpath in get_lib_dpath_list(root_dir):
-                lib_fpath = normpath(join(lib_dpath, lib_fname))
-                if exists(lib_fpath):
-                    if verbose:
-                        print('\n[c] Checked: '.join(tried_fpaths))
-                    if __DEBUG_CLIB__:
-                        print('using: %r' % lib_fpath)
-                    return lib_fpath
-                else:
-                    # Remember which candiate library fpaths did not exist
-                    tried_fpaths.append(lib_fpath)
-            _new_root = dirname(root_dir)
-            if _new_root == root_dir:
-                root_dir = None
-                break
-            else:
-                root_dir = _new_root
-        if not recurse_down:
-            break
 
-    msg = ('\n[C!] load_clib(libname=%r root_dir=%r, recurse_down=%r, verbose=%r)' %
+    class FoundLib(Exception):
+        pass
+
+    FINAL_LIB_FPATH = None
+    try:
+        for lib_fname in lib_fname_list:
+            if verbose:
+                print('--')
+            curr_dpath = root_dir
+            while curr_dpath is not None:
+
+                for lib_dpath in get_lib_dpath_list(curr_dpath):
+                    lib_fpath = normpath(join(lib_dpath, lib_fname))
+                    tried_fpaths.append(lib_fpath)
+                    flag = exists(lib_fpath)
+                    if verbose:
+                        print('[c] Check: {}, exists={}'.format(lib_fpath, int(flag)))
+                    if flag:
+                        if verbose:
+                            print('using: {}'.format(lib_fpath))
+                        FINAL_LIB_FPATH = lib_fpath
+                        raise FoundLib
+
+                _new_dpath = dirname(curr_dpath)
+                if _new_dpath == curr_dpath:
+                    curr_dpath = None
+                    break
+                else:
+                    curr_dpath = _new_dpath
+            if not recurse_down:
+                break
+    except FoundLib:
+        pass
+        return FINAL_LIB_FPATH
+
+    msg = ('\n[C!] find_lib_fpath(libname=%r root_dir=%r, recurse_down=%r, verbose=%r)' %
            (libname, root_dir, recurse_down, verbose) +
            '\n[c!] Cannot FIND dynamic library')
     print(msg)

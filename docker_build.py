@@ -235,6 +235,28 @@ def main():
     else:
         print(ub.color_text('\n--- SUCCESS ---', 'green'))
 
+    DEPLOY = True
+
+    if DEPLOY:
+        VMNT_DIR = '{ROOT}/{NAME}-docker/vmnt'.format(NAME=NAME, ROOT=ROOT)
+        print('VMNT_DIR = {!r}'.format(VMNT_DIR))
+        ub.ensuredir(VMNT_DIR)
+
+        docker_run_cli = ' '.join([
+            'docker', 'run',
+            '-v {}:/root/vmnt/'.format(VMNT_DIR),
+            '-it', tag,
+            'bash -c "cp code/hesaff/build/libhesaff.so /root/vmnt"'
+        ])
+        print(docker_run_cli)
+        info = ub.cmd(docker_run_cli, verbose=3)
+        assert info['ret'] == 0
+
+        import shutil
+        src = join(VMNT_DIR, 'libhesaff.so')
+        dst = join(ROOT, 'pyhesaff', 'libhesaff.so')
+        shutil.copy(src, dst)
+
     # print(ub.highlight_code(ub.codeblock(
     print(ub.highlight_code(ub.codeblock(
         r'''
