@@ -1,5 +1,13 @@
 #!/bin/bash
 __heredoc__="""
+Execute the multibuild.
+
+This file is the entry point for a multibuild. It can either be run locally in
+the root of the primary repo checkout, or it can be run via a CI server via
+travis. The specific binary will (try) to target the users environment by
+default. 
+
+Note that this script uses the network to stage its dependencies.
 """
 
 #### --- GLOBAL --- ####
@@ -13,11 +21,9 @@ export BDIST_PARAMS=""
 export USE_CCACHE=1
 export PLAT=x86_64
 export UNICODE_WIDTH=32
-export CONFIG_PATH="travis_config.sh"
-
+export CONFIG_PATH="multibuild_config.sh"
 
 # TODO: PASS THESE IN VIA PARAMS
-
 
 #### --- MATRIX --- ####
 # The env part of travis.yml
@@ -32,40 +38,44 @@ set -x
 
 setup-staging(){ 
     REPO_NAME=hesaff
-    THIS_REPO_DIR=$(realpath $(dirname "${BASH_SOURCE[0]}"))
-    STAGING_DPATH=$THIS_REPO_DIR/_staging
-    REPO_DIR=$STAGING_DPATH/$REPO_NAME
-    mkdir -p $STAGING_DPATH
+    _SOURCE_REPO=$(realpath $(dirname "${BASH_SOURCE[0]}"))
+    _STAGEING_DPATH=$_SOURCE_REPO/_staging
+    _STAGED_REPO=$_STAGEING_DPATH/$REPO_NAME
+    mkdir -p $_STAGEING_DPATH
 
-    #echo "THIS_REPO_DIR = $THIS_REPO_DIR"
-    #echo "REPO_DIR = $REPO_DIR"
+    #echo "_SOURCE_REPO = $_SOURCE_REPO"
+    #echo "_STAGED_REPO = $_STAGED_REPO"
 
     # Create a copy of this repo in the staging dir, but ignore build side effects
-    _EXCLUDE="'_staging','*.so','*.dylib','*.dll','_skbuild','*.egg.*','_dist','__*'"
-    bash -c "rsync -avrP --exclude={$_EXCLUDE} . $REPO_DIR"  # wrapped due to format issue in editor
+    _EXCLUDE="'_staging','*.so','*.dylib','*.dll','_skbuild','*.egg.*','_dist','__pycache__','.git'"
+    bash -c "rsync -avrP --exclude={$_EXCLUDE} . $_STAGED_REPO"  # wrapped due to format issue in editor
 
     # Ensure multibuild exists in this copy of this repo
-    if [ ! -d $REPO_DIR/multibuild ]; then
-        git clone https://github.com/matthew-brett/multibuild.git $REPO_DIR/multibuild
+    if [ ! -d $_STAGED_REPO/multibuild ]; then
+        git clone https://github.com/matthew-brett/multibuild.git $_STAGED_REPO/multibuild
     fi
     # Patch multibuild so we can start from a local docker image  
-    find $REPO_DIR/multibuild -iname "*.sh" -type f -exec sed -i 's/ retry docker pull/ #retry docker pull/g' {} +
+    find $_STAGED_REPO/multibuild -iname "*.sh" -type f -exec sed -i 's/ retry docker pull/ #retry docker pull/g' {} +
 
     # Ensure that the manylinux1_x86_64-opencv4.1.0-py3.6 docker image exists
-    python docker/build_opencv_docker.py --dpath=$STAGING_DPATH
+    python docker/build_opencv_docker.py --dpath=$_STAGEING_DPATH
 
-    DOCKER_IMAGE=$(cat $STAGING_DPATH/opencv-docker-tag.txt)
+    DOCKER_IMAGE=$(cat $_STAGEING_DPATH/opencv-docker-tag.txt)
     echo "DOCKER_IMAGE = $DOCKER_IMAGE"
 }
 
 setup-staging
 
 
+echo "BASH_SOURCE = $BASH_SOURCE"
 # Change directory into the staging copy and procede with the build
-cd $REPO_DIR
-source $REPO_DIR/multibuild/common_utils.sh
+cd $_STAGED_REPO
+REPO_DIR="."
+mkdir -p wheelhouse
+
+source multibuild/common_utils.sh
 if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export ARCH_FLAGS=" "; fi
-source $REPO_DIR/multibuild/travis_steps.sh
+source multibuild/travis_steps.sh
 
 
 # I have no idea what this does
