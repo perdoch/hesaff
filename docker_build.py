@@ -195,12 +195,18 @@ def main():
         #     CMAKE_FIND_LIBRARY_SUFFIXES=".a;.so" python setup.py build_ext --inplace
         # export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 
-        # Use cmake to build hesaff
+        # Use cmake to build hesaff 9maybe not needed?)
         RUN source /root/.bashrc && \
             mkdir -p /root/code/hesaff/build && \
             cd /root/code/hesaff/build && \
             CXXFLAGS="-std=c++11 $CXXFLAGS" cmake -G "Unix Makefiles" /root/code/hesaff && \
             make
+
+        # Use skbuild to build hesaff
+        RUN source /root/.bashrc && \
+            cd /root/code/hesaff && \
+            python setup.py build && \
+            python setup.py bdist_wheel
 
         # RUN source /root/.bashrc && \
         #     pip install xdoctest
@@ -253,6 +259,7 @@ def main():
             cp /root/ffmpeg_build/lib/libavformat.so.58 /root/vmnt
             cp /root/ffmpeg_build/lib/libavutil.so.56 /root/vmnt
             cp /root/ffmpeg_build/lib/libswscale.so.5 /root/vmnt
+            cp code/hesaff/dist/pyhesaff*.whl /root/vmnt
             ''').split('\n'))
 
         docker_run_cli = ' '.join([

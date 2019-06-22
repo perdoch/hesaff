@@ -56,6 +56,7 @@ INSTALL_REQUIRES = [
 ]
 
 if __name__ == '__main__':
+    import sysconfig
     kwargs = dict(
         name='pyhesaff',
         description='Routines for computation of hessian affine keypoints in images.',
@@ -72,9 +73,18 @@ if __name__ == '__main__':
         #     'all': parse_requirements('requirements.txt'),
         #     'tests': parse_requirements('requirements/tests.txt'),
         # },
+        maintainer="Jon Crall",
         install_requires=INSTALL_REQUIRES,
+        include_package_data=True,
         # packages=find_packages(include='pyhesaff.*'),
         packages=['pyhesaff'],
+        package_data={
+            'pyhesaff':
+                # ['*%s' % sysconfig.get_config_var('SO')]  # +
+                ['*.so']
+                # (['*.dll'] if os.name == 'nt' else []) +
+                # ["LICENSE.txt", "LICENSE-3RD-PARTY.txt"],
+        },
         # package_data={'build': util_cplat.get_dynamic_lib_globstrs()},
         # build_command=lambda: ut.std_build_command(dirname(__file__)),
         classifiers=[

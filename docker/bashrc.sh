@@ -6,7 +6,7 @@ export ENABLE_HEADLESS=1
 export MB_PYTHON_VERSION=3.6
 export PYTHON_VERSION=$MB_PYTHON_VERSION
 export MULTIBUILD_DIR=/root/code/multibuild
-export BUILD_COMMANDS="echo 'this is a dummy build command'"
+#export BUILD_COMMANDS="echo 'this is a dummy build command'"
 
 export TEST_DEPENDS="numpy==1.11.1"
 export BDIST_PARAMS=""
