@@ -108,7 +108,7 @@ if __name__ == '__main__':
     setup(**kwargs)
 
     if True:
-        print("DONE SETUP")
+        print("[setup.py] FINISHING UP")
         import sys
         if '--inplace' in sys.argv:
             print("DOING INPLACE HACK")

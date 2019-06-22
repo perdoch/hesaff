@@ -13,12 +13,25 @@ function build_wheel {
 function bdist_wheel_cmd {
     # copied from multibuild's common_utils.sh
     # add osx deployment target so it doesnt default to 10.6
+    echo "-- IN CUSTOM BUILD WHEEL CMD --"
     local abs_wheelhouse=$1
 
-    python setup.py build
+    echo "-- RUN SETUP BUILD --"
+
+    echo "BDIST_PARAMS = $BDIST_PARAMS"
+    rm -rf _skbuild
+
+    #python setup.py build $BDIST_PARAMS
+    # HACK TO GET LIBS IN THE RIGHT PLACE  
+    python setup.py build_ext --inplace $BDIST_PARAMS
+
+    echo "-- RUN SETUP BDIST_WHEEL --"
     python setup.py bdist_wheel $BDIST_PARAMS
+
     cp dist/*.whl $abs_wheelhouse
     if [ -n "$USE_CCACHE" -a -z "$BREW_BOOTSTRAP_MODE" ]; then ccache -s; fi
+
+    echo "-- FINISH CUSTOM BUILD WHEEL CMD --"
 }
 
 if [ -n "$IS_OSX" ]; then
@@ -130,32 +143,7 @@ function pre_build {
 
   PYTHON=python$PYTHON_VERSION
   $PYTHON -m pip install pip  -U
-  $PYTHON -m pip install cmake -U
-
-   ## BUILD AND INSTALL OPENCV
-   ## TODO: it would be nice if we could start from an opencv-python image that
-   ## already had all of this built.
-   #(mkdir -p opencv/build && \
-   # cd opencv/build && \
-   # cmake -G "Unix Makefiles" \
-   #    -DINSTALL_CREATE_DISTRIB=ON \
-   #    -DOPENCV_SKIP_PYTHON_LOADER=ON \
-   #    -DBUILD_opencv_apps=OFF \
-   #    -DBUILD_SHARED_LIBS=OFF \
-   #    -DBUILD_TESTS=OFF \
-   #    -DBUILD_PERF_TESTS=OFF \
-   #    -DBUILD_DOCS=OFF \
-   #    -DWITH_QT=OFF \
-   #    -DWITH_IPP=OFF \
-   #    -DWITH_V4L=ON \
-   #    -DBUILD_JPEG=OFF \
-   #    -DENABLE_PRECOMPILED_HEADERS=OFF \
-   #    ..)
-    
-   #(cd opencv/build && make -j9 && make install)
-
-  $PYTHON -m pip install numpy 
-  $PYTHON -m pip install scikit-build ubelt -U
+  $PYTHON -m pip install numpy scikit-build ubelt cmake ninja -U
 }
 
 function run_tests {
