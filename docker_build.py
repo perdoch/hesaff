@@ -196,11 +196,11 @@ def main():
         # export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 
         # Use cmake to build hesaff 9maybe not needed?)
-        RUN source /root/.bashrc && \
-            mkdir -p /root/code/hesaff/build && \
-            cd /root/code/hesaff/build && \
-            CXXFLAGS="-std=c++11 $CXXFLAGS" cmake -G "Unix Makefiles" /root/code/hesaff && \
-            make
+        # RUN source /root/.bashrc && \
+        #     mkdir -p /root/code/hesaff/build && \
+        #     cd /root/code/hesaff/build && \
+        #     CXXFLAGS="-std=c++11 $CXXFLAGS" cmake -G "Unix Makefiles" /root/code/hesaff && \
+        #     make
 
         # Use skbuild to build hesaff
         RUN source /root/.bashrc && \
@@ -252,13 +252,13 @@ def main():
         # ls -a ~/.local/conda/envs/py36/lib/python3.6/site-packages/cv2/
         # ls ~/.local/conda/envs/py36/lib/python3.6/site-packages/cv2/.libs
 
+        # cp code/hesaff/build/libhesaff.so /root/vmnt
+        # cp /root/ffmpeg_build/lib/libavcodec.so.58 /root/vmnt
+        # cp /root/ffmpeg_build/lib/libavformat.so.58 /root/vmnt
+        # cp /root/ffmpeg_build/lib/libavutil.so.56 /root/vmnt
+        # cp /root/ffmpeg_build/lib/libswscale.so.5 /root/vmnt
         inside_cmds = ' && '.join(ub.codeblock(
             '''
-            cp code/hesaff/build/libhesaff.so /root/vmnt
-            cp /root/ffmpeg_build/lib/libavcodec.so.58 /root/vmnt
-            cp /root/ffmpeg_build/lib/libavformat.so.58 /root/vmnt
-            cp /root/ffmpeg_build/lib/libavutil.so.56 /root/vmnt
-            cp /root/ffmpeg_build/lib/libswscale.so.5 /root/vmnt
             cp code/hesaff/dist/pyhesaff*.whl /root/vmnt
             ''').split('\n'))
 
@@ -272,15 +272,15 @@ def main():
         info = ub.cmd(docker_run_cli, verbose=3)
         assert info['ret'] == 0
 
-        import shutil
-        PKG_DIR = join(ROOT, 'pyhesaff')
-        shutil.copy(join(VMNT_DIR, 'libhesaff.so'), join(PKG_DIR, 'libhesaff-manylinux1-x86.so'))
+        # import shutil
+        # PKG_DIR = join(ROOT, 'pyhesaff')
+        # shutil.copy(join(VMNT_DIR, 'libhesaff.so'), join(PKG_DIR, 'libhesaff-manylinux1_x86_64.so'))
 
         # TODO: do this correctly
-        shutil.copy(join(VMNT_DIR, 'libhesaff.so'), join(PKG_DIR, 'libavcodec.so.58'))
-        shutil.copy(join(VMNT_DIR, 'libavformat.so.58'), join(PKG_DIR, 'libavformat.so.58'))
-        shutil.copy(join(VMNT_DIR, 'libavutil.so.56'), join(PKG_DIR, 'libavutil.so.56'))
-        shutil.copy(join(VMNT_DIR, 'libswscale.so.5'), join(PKG_DIR, 'libswscale.so.5'))
+        # shutil.copy(join(VMNT_DIR, 'libhesaff.so'), join(PKG_DIR, 'libavcodec.so.58'))
+        # shutil.copy(join(VMNT_DIR, 'libavformat.so.58'), join(PKG_DIR, 'libavformat.so.58'))
+        # shutil.copy(join(VMNT_DIR, 'libavutil.so.56'), join(PKG_DIR, 'libavutil.so.56'))
+        # shutil.copy(join(VMNT_DIR, 'libswscale.so.5'), join(PKG_DIR, 'libswscale.so.5'))
 
     # print(ub.highlight_code(ub.codeblock(
     print(ub.highlight_code(ub.codeblock(

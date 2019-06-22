@@ -56,7 +56,10 @@ INSTALL_REQUIRES = [
 ]
 
 if __name__ == '__main__':
-    import sysconfig
+    # import sysconfig
+    class EmptyListWithLength(list):
+        def __len__(self):
+            return 1
     kwargs = dict(
         name='pyhesaff',
         description='Routines for computation of hessian affine keypoints in images.',
@@ -74,6 +77,7 @@ if __name__ == '__main__':
         #     'tests': parse_requirements('requirements/tests.txt'),
         # },
         maintainer="Jon Crall",
+        ext_modules=EmptyListWithLength(),  # hack for including ctypes bins
         install_requires=INSTALL_REQUIRES,
         include_package_data=True,
         # packages=find_packages(include='pyhesaff.*'),
