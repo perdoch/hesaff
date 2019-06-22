@@ -36,6 +36,10 @@ if(APPLE AND CLANG2)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -lc++")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lc++")
+else()
+    # TODO: this is gcc only, fix for clang
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c++11")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 endif()
 
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -stdlib=libc++")

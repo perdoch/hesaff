@@ -43,6 +43,7 @@ def get_lib_fname_list(libname):
         >>> from pyhesaff.ctypes_interface import *  # NOQA
         >>> libname = 'hesaff'
         >>> libnames = get_lib_fname_list(libname)
+        >>> import ubelt as ub
         >>> print('libnames = {}'.format(ub.repr2(libnames)))
     """
 

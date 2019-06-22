@@ -91,3 +91,16 @@ if __name__ == '__main__':
         ],
     )
     setup(**kwargs)
+
+    if True:
+        print("DONE SETUP")
+        import sys
+        if '--inplace' in sys.argv:
+            print("DOING INPLACE HACK")
+            # HACK: I THINK A NEW SCIKIT-BUILD WILL FIX THIS
+            import os
+            from os.path import join
+            src = join(os.getcwd(), '_skbuild/linux-x86_64-3.6/cmake-build/libhesaff.so')
+            dst = join(os.getcwd(), 'pyhesaff/libhesaff.so')
+            import shutil
+            shutil.copy(src, dst)
