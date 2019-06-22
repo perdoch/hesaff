@@ -242,20 +242,38 @@ def main():
         print('VMNT_DIR = {!r}'.format(VMNT_DIR))
         ub.ensuredir(VMNT_DIR)
 
+        # TODO: Correctly mangle the ffmpeg libs as done via
+        # ls -a ~/.local/conda/envs/py36/lib/python3.6/site-packages/cv2/
+        # ls ~/.local/conda/envs/py36/lib/python3.6/site-packages/cv2/.libs
+
+        inside_cmds = ' && '.join(ub.codeblock(
+            '''
+            cp code/hesaff/build/libhesaff.so /root/vmnt
+            cp /root/ffmpeg_build/lib/libavcodec.so.58 /root/vmnt
+            cp /root/ffmpeg_build/lib/libavformat.so.58 /root/vmnt
+            cp /root/ffmpeg_build/lib/libavutil.so.56 /root/vmnt
+            cp /root/ffmpeg_build/lib/libswscale.so.5 /root/vmnt
+            ''').split('\n'))
+
         docker_run_cli = ' '.join([
             'docker', 'run',
             '-v {}:/root/vmnt/'.format(VMNT_DIR),
             '-it', tag,
-            'bash -c "cp code/hesaff/build/libhesaff.so /root/vmnt"'
+            'bash -c "{}"'.format(inside_cmds)
         ])
         print(docker_run_cli)
         info = ub.cmd(docker_run_cli, verbose=3)
         assert info['ret'] == 0
 
         import shutil
-        src = join(VMNT_DIR, 'libhesaff.so')
-        dst = join(ROOT, 'pyhesaff', 'libhesaff.so')
-        shutil.copy(src, dst)
+        PKG_DIR = join(ROOT, 'pyhesaff')
+        shutil.copy(join(VMNT_DIR, 'libhesaff.so'), join(PKG_DIR, 'libhesaff-manylinux1-x86.so'))
+
+        # TODO: do this correctly
+        shutil.copy(join(VMNT_DIR, 'libhesaff.so'), join(PKG_DIR, 'libavcodec.so.58'))
+        shutil.copy(join(VMNT_DIR, 'libavformat.so.58'), join(PKG_DIR, 'libavformat.so.58'))
+        shutil.copy(join(VMNT_DIR, 'libavutil.so.56'), join(PKG_DIR, 'libavutil.so.56'))
+        shutil.copy(join(VMNT_DIR, 'libswscale.so.5'), join(PKG_DIR, 'libswscale.so.5'))
 
     # print(ub.highlight_code(ub.codeblock(
     print(ub.highlight_code(ub.codeblock(

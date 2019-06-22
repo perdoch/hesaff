@@ -47,7 +47,11 @@ def get_lib_fname_list(libname):
         >>> print('libnames = {}'.format(ub.repr2(libnames)))
     """
 
-    spec_list = [get_plat_specifier(), '', '-manyliunx-todo-fixme']
+    if sys.platform.startswith('linux'):
+        # TODO: correct ABI tags
+        spec_list = [get_plat_specifier(), '-manylinux1_x86_64', '']
+    else:
+        spec_list = [get_plat_specifier(), '']
 
     prefix_list = ['lib' + libname]
     if sys.platform.startswith('win32'):
