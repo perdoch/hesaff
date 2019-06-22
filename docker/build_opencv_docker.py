@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 """
+Setup the base image containing the opencv deps that pyhesaff needs to build
+
 References:
     https://github.com/skvark/opencv-python
 """
@@ -11,34 +13,28 @@ from os.path import join, exists
 
 
 def main():
-    ROOT = join(os.getcwd())
-    ROOT = ub.expandpath('~/code/hesaff')
-    os.chdir(ROOT)
+    dpath = ub.argval('--dpath', default=os.getcwd())
+    os.chdir(dpath)
 
     BASE = 'manylinux1_x86_64'
+    BASE_REPO = 'quay.io/skvark'
+    OPENCV_VERSION = '4.1.0'
+    PY_VER = '{}.{}'.format(sys.version_info.major, sys.version_info.minor)
+    tag = '{}-opencv{}-py{}'.format(BASE, OPENCV_VERSION, PY_VER)
 
-    PY_VER = sys.version_info.major
-    tag = '{}-opencv-py{}'.format(BASE, PY_VER)
-
-    # context_dpath = ub.ensuredir((ROOT, 'docker/context'))
-    staging_dpath = ub.ensuredir((ROOT, 'docker/staging'))
-
-    if not exists(join(staging_dpath, 'opencv')):
+    if not exists(join(dpath, 'opencv-' + OPENCV_VERSION)):
         # FIXME: make robust in the case this fails
-        opencv_version = '4.1.0'
-        fpath = ub.grabdata('https://github.com/opencv/opencv/archive/{}.zip'.format(opencv_version), verbose=1)
-        ub.cmd('ln -s {} .'.format(fpath), cwd=staging_dpath, verbose=3)
-        ub.cmd('unzip {}'.format(fpath), cwd=staging_dpath, verbose=3)
-        import shutil
-        shutil.move(join(staging_dpath, 'opencv-' + opencv_version), join(staging_dpath, 'opencv'))
+        fpath = ub.grabdata('https://github.com/opencv/opencv/archive/{}.zip'.format(OPENCV_VERSION), dpath=dpath, verbose=1)
+        ub.cmd('ln -s {} .'.format(fpath), cwd=dpath, verbose=3)
+        ub.cmd('unzip {}'.format(fpath), cwd=dpath, verbose=3)
 
-    dockerfile_fpath = join(ROOT, 'docker/Dockerfile')
+    dockerfile_fpath = join(dpath, 'Dockerfile_' + tag)
     # This docker code is very specific for building linux binaries.
     # We will need to do a bit of refactoring to handle OSX and windows.
     # But the goal is to get at least one OS working end-to-end.
     docker_code = ub.codeblock(
         '''
-        FROM quay.io/skvark/manylinux1_x86_64
+        FROM {BASE_REPO}/{BASE}
 
         # SETUP ENV
         ARG MB_PYTHON_VERSION=3.6
@@ -60,7 +56,7 @@ def main():
 
         # This is very different for different operating systems
         # https://github.com/skvark/opencv-python/blob/master/setup.py
-        COPY docker/staging/opencv /root/code/opencv
+        COPY opencv-{OPENCV_VERSION} /root/code/opencv
         RUN mkdir -p /root/code/opencv/build && \
             cd /root/code/opencv/build && \
             cmake -G "Unix Makefiles" \
@@ -84,7 +80,7 @@ def main():
        # -DOPENCV_PYTHON3_INSTALL_PATH=python \
 
         RUN cd /root/code/opencv/build && make -j9 && make install
-        ''')
+        '''.format(**locals()))
 
     try:
         print(ub.color_text('\n--- DOCKER CODE ---', 'white'))
@@ -113,17 +109,10 @@ def main():
         print('NOTE: sometimes reruning the command manually works')
         raise Exception('Building docker failed with exit code {}'.format(info['ret']))
     else:
+        # write out what the tag is
+        with open(join(dpath, 'opencv-docker-tag.txt'), 'w') as file:
+            file.write(tag)
         print(ub.color_text('\n--- SUCCESS ---', 'green'))
-
-    # print(ub.highlight_code(ub.codeblock(
-    print(ub.highlight_code(ub.codeblock(
-        r'''
-        # Finished creating the docker image.
-        # To test / export you can do something like this:
-
-        # Test that we can get a bash terminal
-        docker run -it {tag} bash
-        ''').format(ROOT=ROOT, tag=tag), 'bash'))
 
 
 if __name__ == '__main__':
