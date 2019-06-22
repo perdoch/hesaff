@@ -56,7 +56,8 @@ INSTALL_REQUIRES = [
 ]
 
 if __name__ == '__main__':
-    # import sysconfig
+    import sysconfig
+    import os
     class EmptyListWithLength(list):
         def __len__(self):
             return 1
@@ -84,10 +85,10 @@ if __name__ == '__main__':
         packages=['pyhesaff'],
         package_data={
             'pyhesaff':
-                # ['*%s' % sysconfig.get_config_var('SO')]  # +
-                ['*.so']
-                # (['*.dll'] if os.name == 'nt' else []) +
-                # ["LICENSE.txt", "LICENSE-3RD-PARTY.txt"],
+                ['*%s' % sysconfig.get_config_var('SO')]  +
+                ['*.so'] +
+                (['*.dll'] if os.name == 'nt' else []) +
+                ["LICENSE.txt", "LICENSE-3RD-PARTY.txt", "LICENSE.SIFT"],
         },
         # package_data={'build': util_cplat.get_dynamic_lib_globstrs()},
         # build_command=lambda: ut.std_build_command(dirname(__file__)),

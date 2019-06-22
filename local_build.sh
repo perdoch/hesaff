@@ -1,4 +1,6 @@
 #!/bin/bash
+__heredoc__="""
+"""
 
 #### --- GLOBAL --- ####
 
@@ -24,17 +26,39 @@ export ENABLE_HEADLESS=1
 
 
 #### --- BEFORE INSTALL --- ####
-#set -e
+export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+set -e
+set -x
 
-git clone https://github.com/matthew-brett/multibuild.git
+if [ ! -d multibuild ]; then
+    git clone https://github.com/matthew-brett/multibuild.git
+fi
+
+# Ensure that the manylinux1_x86_64-opencv-py3 docker image exists
+#python docker/build_opencv_docker.py
+
+#LOCAL_IMAGE_NAME=localhost:5000/retag
+#docker tag manylinux1_x86_64-opencv-py3 localhost:5000/manylinux1_x86_64-opencv-py3
+#docker push localhost:5000/manylinux1_x86_64-opencv-py3
+
+# Remove docker pulls because we will have a local image
+find multibuild -iname "*.sh" -type f -exec sed -i 's/ retry docker pull/ #retry docker pull/g' {} +
+
 
 source multibuild/common_utils.sh
 
 if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export ARCH_FLAGS=" "; fi
 
+
 source multibuild/travis_steps.sh
 # This sets -x
-source travis_multibuild_customize.sh
+#source travis_multibuild_customize.sh
+
+REPO_DIR=$(dirname "${BASH_SOURCE[0]}")
+DOCKER_IMAGE='manylinux1_x86_64-opencv-py3'
+#DOCKER_IMAGE='quay.io/skvark/manylinux1_$plat'
+#DOCKER_IMAGE='quay.io/skvark/manylinux1_$plat'
+
 echo $ENABLE_CONTRIB > contrib.enabled
 echo $ENABLE_HEADLESS > headless.enabled
 
