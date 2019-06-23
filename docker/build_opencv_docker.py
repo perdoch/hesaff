@@ -128,14 +128,8 @@ def main():
     ])
     print('docker_build_cli = {!r}'.format(docker_build_cli))
 
-    try:
-        from xdoctest.utils import strip_ansi
-        info = ub.cmd(docker_build_cli, verbose=0, shell=True)
-        print(strip_ansi(info['out']))
-        print(strip_ansi(info['err']))
-    except Exception:
-        print('EXEC DOCKER')
-        info = ub.cmd(docker_build_cli, verbose=0, shell=True)
+    print('EXEC DOCKER')
+    info = ub.cmd(docker_build_cli, verbose=3, shell=True)
 
     if info['ret'] != 0:
         print(ub.color_text('\n--- FAILURE ---', 'red'))
