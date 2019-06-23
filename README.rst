@@ -1,4 +1,8 @@
-DESCRIPTION
+|CircleCI| |Travis| |Appveyor| |Codecov| |Pypi| |Downloads| |ReadTheDocs|
+
+
+Hessian Affine + SIFT keypoints in Python
+=========================================
 
 This is an implementation of Hessian-Affine detector. 
 
@@ -13,6 +17,7 @@ descriptor(Lowe 1999, Lowe 2004) computed.
 
 
 IMPLEMENTATION
+--------------
 
 Implementation depends on OpenCV (2.3.1+). Although, the code is
 original, the affine iteration and normalization was derived from the
@@ -25,6 +30,9 @@ applications (see LICENSE.SIFT for details)
 
 
 OUTPUT
+------
+
+NOTE THIS IS NO LONGER THE CASE. 
 
 The built binary rewrites output file: <input_image_name>.hesaff.sift
 
@@ -36,15 +44,18 @@ affine region is followed by N descriptor values (N = 128).
 
 File format:
 
-N
-m
-u1 v1 a1 b1 c1 d1(1) d1(2) d1(3) ... d1(N)
-      :
-      :
-um vm am bm cm dm(1) dm(2) dm(3) ... dm(N)
+::
+
+    N
+    m
+    u1 v1 a1 b1 c1 d1(1) d1(2) d1(3) ... d1(N)
+          :
+          :
+    um vm am bm cm dm(1) dm(2) dm(3) ... dm(N)
 
 
 PROPER USE
+----------
 
 If you use this code, please refer to
 
@@ -56,9 +67,23 @@ TBD: A reference to technical report describing the details and some
 retrieval results will be placed here.
 
 
-NOTES:
+NOTES
+-----
 
-Requires opencv. On ubuntu you can: 
+Requires opencv. On ubuntu you can: ``sudo apt-get install libopencv-dev``. You can also build / use wheels. 
 
-sudo apt-get install libopencv-dev 
-# python3-opencv
+
+.. |CircleCI| image:: https://circleci.com/gh/Erotemic/hesaff.svg?style=svg
+    :target: https://circleci.com/gh/Erotemic/hesaff
+.. |Travis| image:: https://img.shields.io/travis/Erotemic/hesaff/master.svg?label=Travis%20CI
+   :target: https://travis-ci.org/Erotemic/hesaff?branch=master
+.. |Appveyor| image:: https://ci.appveyor.com/api/projects/status/github/Erotemic/hesaff?branch=master&svg=True
+   :target: https://ci.appveyor.com/project/Erotemic/hesaff/branch/master
+.. |Codecov| image:: https://codecov.io/github/Erotemic/hesaff/badge.svg?branch=master&service=github
+   :target: https://codecov.io/github/Erotemic/hesaff?branch=master
+.. |Pypi| image:: https://img.shields.io/pypi/v/hesaff.svg
+   :target: https://pypi.python.org/pypi/hesaff
+.. |Downloads| image:: https://img.shields.io/pypi/dm/hesaff.svg
+   :target: https://pypistats.org/packages/hesaff
+.. |ReadTheDocs| image:: https://readthedocs.org/projects/hesaff/badge/?version=latest
+    :target: http://hesaff.readthedocs.io/en/latest/
