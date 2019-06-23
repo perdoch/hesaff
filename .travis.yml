@@ -1,6 +1,9 @@
 env:
     global:
         - "PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'"
+        - TEST_DEPENDS="numpy==1.11.1"
+        - BDIST_PARAMS=""
+        - CONFIG_PATH="travis_config.sh"
         - USE_CCACHE=1
         - PLAT=x86_64
         - UNICODE_WIDTH=32

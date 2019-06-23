@@ -1,38 +1,24 @@
 #### --- GLOBAL --- ####
-
 # env global for travis.yml
-export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 set -e
 set -x
-export TEST_DEPENDS="numpy xdoctest ubelt"
-export CONFIG_PATH="multibuild_config.sh"
-export BDIST_PARAMS=${BDIST_PARAMS:""}
+TEST_DEPENDS="numpy xdoctest ubelt"
+CONFIG_PATH="multibuild_config.sh"
+BDIST_PARAMS=${BDIST_PARAMS:""}
 
-export USE_CCACHE=${USE_CCACHE:1}
-export PLAT=${PLAT:$(arch)}
-export UNICODE_WIDTH=${UNICODE_WIDTH:32}  # TODO introspect
+USE_CCACHE=${USE_CCACHE:1}
+PLAT=${PLAT:$(arch)}
+UNICODE_WIDTH=${UNICODE_WIDTH:32}  # TODO introspect
 #python -c "import sysconfig, ubelt; print(ubelt.repr2(sysconfig.get_config_vars(), nl=1))" | grep -i width
 #python -c "import sysconfig, ubelt; print(sysconfig.get_config_vars().get('Py_UNICODE_SIZE', 4) * 8)"
-export MB_PYTHON_VERSION=${UNICODE_WIDTH:auto}
+MB_PYTHON_VERSION=${MB_PYTHON_VERSION:auto}
 if [[ "$MB_PYTHON_VERSION" = auto ]]; then
-    export MB_PYTHON_VERSION=$(python -c "import sys; print('{}.{}'.format(*sys.version_info[0:2]))")
-    echo "MB_PYTHON_VERSION = $MB_PYTHON_VERSION"
+    MB_PYTHON_VERSION=$(python -c "import sys; print('{}.{}'.format(*sys.version_info[0:2]))")
 fi
-
-
-
-# TODO: PASS THESE IN VIA PARAMS
-
-#### --- MATRIX --- ####
-# The env part of travis.yml
-## TODO: vary depending on platform
-
-
-#### --- BEFORE INSTALL --- ####
 
 setup-staging(){ 
     REPO_NAME=hesaff
-    _SOURCE_REPO=$(realpath $(dirname "${BASH_SOURCE[0]}"))
+    _SOURCE_REPO=$(dirname "${BASH_SOURCE[0]}")
     _STAGEING_DPATH=$_SOURCE_REPO/_staging
     _STAGED_REPO=$_STAGEING_DPATH/$REPO_NAME
     mkdir -p $_STAGEING_DPATH
