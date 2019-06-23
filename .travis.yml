@@ -161,15 +161,13 @@ matrix:
 before_install: |
     # Check out and prepare the source
     set -e
-
-source :
-    #source local_multibuild.sh
     source stage_multibuild.sh
     set +x
 
 install: |
     # Build and package
     set -x
+    #source local_multibuild.sh
     build_wheel $REPO_DIR $PLAT
     set +x
 
