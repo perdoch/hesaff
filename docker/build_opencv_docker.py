@@ -50,7 +50,7 @@ def build_opencv_cmake_args(config):
                 'jpeg_include_dir': os.environ['JPEG_INCLUDE_DIR'],
                 'jpeg_library': os.environ['JPEG_LIBRARY'],
             }
-        unknown_ops = ub.dict_diff(config, default_config)
+        unknown_ops = set(config) - set(default_config)
         assert not unknown_ops
         for key, value in default_config.items():
             if key not in config:
