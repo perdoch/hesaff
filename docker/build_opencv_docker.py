@@ -14,6 +14,8 @@ from os.path import join, exists, realpath
 
 def build_opencv_cmake_args(config):
     """
+    Create cmake configuration args for opencv depending on the target platform
+
     References:
         https://github.com/skvark/opencv-python/blob/master/setup.py
 
@@ -135,10 +137,17 @@ def build_opencv_cmake_args(config):
         cmake_args.append("-DCMAKE_CXX_FLAGS=-stdlib=libc++")
         cmake_args.append("-DCMAKE_OSX_DEPLOYMENT_TARGET:STRING=10.7")
 
-    return ' '.join(cmake_args)
+    return cmake_args
 
 
 def main():
+    """
+    Usage:
+        cd ~/code/hesaff/docker
+        python ~/code/hesaff/docker/build_opencv_docker.py --publish --no-exec
+        python ~/code/hesaff/docker/build_opencv_docker.py --publish
+    """
+    import multiprocessing
 
     def argval(clikey, envkey=None, default=ub.NoParam):
         if envkey is not None:
@@ -148,19 +157,32 @@ def main():
         return ub.argval(clikey, default=default)
 
     DEFAULT_PY_VER = '{}.{}'.format(sys.version_info.major, sys.version_info.minor)
-    PY_VER = argval('--pyver', 'MB_PYTHON_VERSION', default=DEFAULT_PY_VER)
-
-    dpath = argval('--dpath', None, default=os.getcwd())
-    PLAT = argval('--plat', 'PLAT', default='x86_64')
-
-    UNICODE_WIDTH = argval('--unicode_width', 'UNICODE_WIDTH', '32')
-
-    import multiprocessing
+    DPATH = argval('--dpath', None, default=os.getcwd())
     MAKE_CPUS = argval('--make_cpus', 'MAKE_CPUS', multiprocessing.cpu_count() + 1)
+    UNICODE_WIDTH = argval('--unicode_width', 'UNICODE_WIDTH', '32')
+    EXEC = not ub.argflag('--no-exec')
+
+    if ub.argflag('--publish'):
+        fpaths = []
+        plat = ['i686', 'x86_64']
+        pyver = ['2.7', '3.4', '3.5', '3.6', '3.7']
+        for PLAT in plat:
+            for PY_VER in pyver:
+                fpaths += [build(DPATH, MAKE_CPUS, UNICODE_WIDTH, PLAT, PY_VER, EXEC=EXEC)]
+
+        print("WROTE TO: ")
+        print('\n'.join(fpaths))
+    else:
+        PY_VER = argval('--pyver', 'MB_PYTHON_VERSION', default=DEFAULT_PY_VER)
+        PLAT = argval('--plat', 'PLAT', default='x86_64')
+        build(DPATH, MAKE_CPUS, UNICODE_WIDTH, PLAT, PY_VER, EXEC=EXEC)
+
+
+def build(DPATH, MAKE_CPUS, UNICODE_WIDTH, PLAT, PY_VER, EXEC=True):
 
     OPENCV_VERSION = '4.1.0'
 
-    dpath = realpath(ub.expandpath(dpath))
+    dpath = realpath(ub.expandpath(DPATH))
     dpath = ub.ensuredir(dpath)
     os.chdir(dpath)
 
@@ -172,43 +194,44 @@ def main():
     # do we need the unicode width in this tag?
     DOCKER_TAG = '{}-opencv{}-py{}'.format(BASE, OPENCV_VERSION, PY_VER)
 
-    if not exists(join(dpath, 'opencv-' + OPENCV_VERSION)):
-        # FIXME: make robust in the case this fails
-        print('downloading opencv')
-        fpath = ub.grabdata(
-            'https://github.com/opencv/opencv/archive/{}.zip'.format(OPENCV_VERSION),
-            dpath=dpath, hash_prefix='1a00f2cdf2b1bd62e5a700a6f15026b2f2de9b1',
-            hasher='sha512', verbose=0
-        )
-        ub.cmd('ln -s {} .'.format(fpath), cwd=dpath, verbose=0)
-        ub.cmd('unzip {}'.format(fpath), cwd=dpath, verbose=0)
+    if False and EXEC:
+        if not exists(join(dpath, 'opencv-' + OPENCV_VERSION)):
+            # FIXME: make robust in the case this fails
+            print('downloading opencv')
+            fpath = ub.grabdata(
+                'https://github.com/opencv/opencv/archive/{}.zip'.format(OPENCV_VERSION),
+                dpath=dpath, hash_prefix='1a00f2cdf2b1bd62e5a700a6f15026b2f2de9b1',
+                hasher='sha512', verbose=0
+            )
+            ub.cmd('ln -s {} .'.format(fpath), cwd=dpath, verbose=0)
+            ub.cmd('unzip {}'.format(fpath), cwd=dpath, verbose=0)
 
     config = {
         'is_64bit': PLAT in {'x86_64'},
         'build_contrib': False,
         'build_headless': True,
-        'python_args': None,
-        # {
-        #     'py_ver': PY_VER,
-        #     'py_executable': PY_VER,
-        # },
+        'python_args': {
+            'py_ver': PY_VER,
+            'py_executable': PY_VER,
+        },
         'linux_jpeg_args': {
             'jpeg_include_dir': '${JPEG_INCLUDE_DIR}',
             'jpeg_library': '${JPEG_LIBRARY}',
         }
     }
-    CMAKE_ARGS = build_opencv_cmake_args(config)
+    CMAKE_ARGS = ' \\\n                '.join(build_opencv_cmake_args(config))
 
     dockerfile_fpath = join(dpath, 'Dockerfile_' + DOCKER_TAG)
     # This docker code is very specific for building linux binaries.
     # We will need to do a bit of refactoring to handle OSX and windows.
     # But the goal is to get at least one OS working end-to-end.
     docker_code = ub.codeblock(
-        '''
+        r'''
         FROM {BASE_REPO}/{BASE}
 
         # SETUP ENV
         ARG MB_PYTHON_VERSION={PY_VER}
+        ENV _MY_DOCKER_TAG={DOCKER_TAG}
         ENV PYTHON_VERSION={PY_VER}
         ENV PYTHON_ROOT=/opt/python/{PY_TAG}/
         ENV PYTHONPATH=/opt/python/{PY_TAG}/lib/python{PY_VER}/site-packages/
@@ -219,40 +242,22 @@ def main():
         ENV UNICODE_WIDTH={UNICODE_WIDTH}
 
         # Update python environment
-        RUN echo "$PYTHON_EXE"
-        RUN $PYTHON_EXE -m pip install --upgrade pip && \
-            $PYTHON_EXE -m pip install cmake ninja scikit-build wheel numpy
+        RUN $PYTHON_EXE -m pip install -q --no-cache-dir --upgrade pip  && \
+            $PYTHON_EXE -m pip install -q --no-cache-dir ubelt xdoctest cmake ninja scikit-build wheel numpy
 
-        # This is very different for different operating systems
-        # https://github.com/skvark/opencv-python/blob/master/setup.py
-        COPY opencv-{OPENCV_VERSION} /root/code/opencv
-        # RUN mkdir -p /root/code/opencv/build && \
-        #     cd /root/code/opencv/build && \
-        #     cmake -G "Unix Makefiles" \
-        #            -DINSTALL_CREATE_DISTRIB=ON \
-        #            -DOPENCV_SKIP_PYTHON_LOADER=ON \
-        #            -DBUILD_opencv_apps=OFF \
-        #            -DBUILD_SHARED_LIBS=OFF \
-        #            -DBUILD_TESTS=OFF \
-        #            -DBUILD_PERF_TESTS=OFF \
-        #            -DBUILD_DOCS=OFF \
-        #            -DWITH_QT=OFF \
-        #            -DWITH_IPP=OFF \
-        #            -DWITH_V4L=ON \
-        #            -DBUILD_JPEG=OFF \
-        #            -DENABLE_PRECOMPILED_HEADERS=OFF \
-        #         /root/code/opencv
-
-        RUN mkdir -p /root/code/opencv/build && \
+        # Obtain opencv source and run platform-specific cmake command
+        RUN $PYTHON_EXE -c "import ubelt; print(ubelt.grabdata('https://github.com/opencv/opencv/archive/{OPENCV_VERSION}.zip', fpath='opencv.zip', hash_prefix='1a00f2cdf2b1bd62e5a700a6f15026b2f2de9b1', hasher='sha512', verbose=0))" && \
+            unzip opencv.zip && \
+            rm opencv.zip && \
+            mkdir -p /root/code && \
+            mv opencv-{OPENCV_VERSION} /root/code/opencv && \
+            mkdir -p /root/code/opencv/build && \
             cd /root/code/opencv/build && \
-            cmake {CMAKE_ARGS} /root/code/opencv
-
-        # Note: there is no need to compile the above with python
-        # -DPYTHON3_EXECUTABLE=$PYTHON_EXE \
-        # -DBUILD_opencv_python3=ON \
-        # -DOPENCV_PYTHON3_INSTALL_PATH=python \
-
-        RUN cd /root/code/opencv/build && make -j{MAKE_CPUS} && make install
+            cmake {CMAKE_ARGS} /root/code/opencv && \
+            cd /root/code/opencv/build && \
+            make -j{MAKE_CPUS} && \
+            make install && \
+            rm /root/code/opencv
         '''.format(**locals()))
 
     if 1:
@@ -274,26 +279,52 @@ def main():
     ])
     print('docker_build_cli = {!r}'.format(docker_build_cli))
 
-    print('EXEC DOCKER')
-    info = ub.cmd(docker_build_cli, verbose=3, shell=True)
-
-    if info['ret'] != 0:
-        print(ub.color_text('\n--- FAILURE ---', 'red'))
-        print('Failed command:')
-        print(info['command'])
-        print(info['err'])
-        print('NOTE: sometimes reruning the command manually works')
-        raise Exception('Building docker failed with exit code {}'.format(info['ret']))
+    if not EXEC:
+        print('-- NO EXEC --')
     else:
-        # write out what the tag is
-        with open(join(dpath, 'opencv-docker-tag.txt'), 'w') as file:
-            file.write(DOCKER_TAG)
-        print(ub.color_text('\n--- SUCCESS ---', 'green'))
+        print('EXEC DOCKER')
+        info = ub.cmd(docker_build_cli, verbose=3, shell=True)
+
+        if info['ret'] != 0:
+            print(ub.color_text('\n--- FAILURE ---', 'red'))
+            print('Failed command:')
+            print(info['command'])
+            print(info['err'])
+            print('NOTE: sometimes reruning the command manually works')
+            raise Exception('Building docker failed with exit code {}'.format(info['ret']))
+        else:
+            # write out what the tag is
+            with open(join(dpath, 'opencv-docker-tag.txt'), 'w') as file:
+                file.write(DOCKER_TAG)
+            print(ub.color_text('\n--- SUCCESS ---', 'green'))
+
+    print('DOCKER_TAG = {!r}'.format(DOCKER_TAG))
+    print('dockerfile_fpath = {!r}'.format(dockerfile_fpath))
+
+    push_cmd = 'docker push quay.io/erotemic/manylinux-opencv:manylinux1_x86_64-opencv4.1.0-py3.6'
+    print('push_cmd = {!r}'.format(push_cmd))
+    print(push_cmd)
+    if 0:
+        # ub.cmd('docker login quay.io')
+        ub.cmd(push_cmd)
+
+    """
+    manylinux-opencv
+    """
+    return dockerfile_fpath
 
 
 if __name__ == '__main__':
     """
     CommandLine:
-        python ~/code/hesaff/docker_build.py
+        python ~/code/hesaff/docker/build_opencv_docker.py --no-exec
+
+        docker login quay.io
+
+
+        docker tag pyhesaff-1.2-py3 quay.io/erotemic/test-repo:pyhesaff-1.2-py3
+        docker push quay.io/erotemic/test-repo:pyhesaff-1.2-py3
+
+        docker push quay.io/erotemic/manylinux-opencv:manylinux1_x86_64-opencv4.1.0-py3.6
     """
     main()

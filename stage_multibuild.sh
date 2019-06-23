@@ -49,7 +49,7 @@ setup-staging(){
     find $_STAGED_REPO/multibuild -iname "*.sh" -type f -exec sed -i 's/ retry docker pull/ #retry docker pull/g' {} +
 
     # Ensure that the manylinux1_x86_64-opencv4.1.0-py3.6 docker image exists
-    python docker/build_opencv_docker.py --dpath=$_STAGEING_DPATH
+    python docker/build_opencv_docker.py --dpath=$_STAGEING_DPATH --no-exec
 
     DOCKER_IMAGE=$(cat $_STAGEING_DPATH/opencv-docker-tag.txt)
     echo "DOCKER_IMAGE = $DOCKER_IMAGE"
