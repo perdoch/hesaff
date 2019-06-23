@@ -61,6 +61,9 @@ if __name__ == '__main__':
     class EmptyListWithLength(list):
         def __len__(self):
             return 1
+
+    soconfig = sysconfig.get_config_var('SO')
+    print('soconfig = {!r}'.format(soconfig))
     kwargs = dict(
         name='pyhesaff',
         description='Routines for computation of hessian affine keypoints in images.',
@@ -85,8 +88,8 @@ if __name__ == '__main__':
         packages=['pyhesaff'],
         package_data={
             'pyhesaff':
-                ['*%s' % sysconfig.get_config_var('SO')]  +
-                ['*.so'] +
+                ['*%s' % soconfig] +
+                # ['*.so'] +
                 (['*.dll'] if os.name == 'nt' else []) +
                 ["LICENSE.txt", "LICENSE-3RD-PARTY.txt", "LICENSE.SIFT"],
         },
@@ -111,11 +114,28 @@ if __name__ == '__main__':
         print("[setup.py] FINISHING UP")
         import sys
         if '--inplace' in sys.argv:
+            def get_plat_specifier():
+                """
+                Standard platform specifier used by distutils
+                """
+                import distutils
+                try:
+                    plat_name = distutils.util.get_platform()
+                except AttributeError:
+                    plat_name = distutils.sys.platform
+                plat_specifier = ".%s-%s" % (plat_name, sys.version[0:3])
+                if hasattr(sys, 'gettotalrefcount'):
+                    plat_specifier += '-pydebug'
+                return plat_specifier
             print("DOING INPLACE HACK")
             # HACK: I THINK A NEW SCIKIT-BUILD WILL FIX THIS
             import os
             from os.path import join
-            src = join(os.getcwd(), '_skbuild/linux-x86_64-3.6/cmake-build/libhesaff.so')
-            dst = join(os.getcwd(), 'pyhesaff/libhesaff.so')
+            spec = get_plat_specifier()
+            dspec = spec.lstrip('.')
+            src = join(os.getcwd(), '_skbuild/{}/cmake-build/libhesaff.so'.format(dspec))
+            # src = join(os.getcwd(), '_skbuild/linux-x86_64-3.6/cmake-build/libhesaff.so')
+            dst = join(os.getcwd(), 'pyhesaff/libhesaff{}.so'.format(spec))
             import shutil
+            print('copy {} -> {}'.format(src, dst))
             shutil.copy(src, dst)

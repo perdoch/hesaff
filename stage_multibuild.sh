@@ -6,12 +6,13 @@ TEST_DEPENDS="numpy xdoctest ubelt"
 CONFIG_PATH="multibuild_config.sh"
 BDIST_PARAMS=${BDIST_PARAMS:""}
 
-USE_CCACHE=${USE_CCACHE:1}
-PLAT=${PLAT:$(arch)}
-UNICODE_WIDTH=${UNICODE_WIDTH:32}  # TODO introspect
+USE_CCACHE=${USE_CCACHE:=1}
+PLAT=${PLAT:=$(arch)}
+UNICODE_WIDTH=${UNICODE_WIDTH:=32}  # TODO introspect
 #python -c "import sysconfig, ubelt; print(ubelt.repr2(sysconfig.get_config_vars(), nl=1))" | grep -i width
 #python -c "import sysconfig, ubelt; print(sysconfig.get_config_vars().get('Py_UNICODE_SIZE', 4) * 8)"
-MB_PYTHON_VERSION=${MB_PYTHON_VERSION:auto}
+MB_PYTHON_VERSION=${MB_PYTHON_VERSION:=auto}
+echo "MB_PYTHON_VERSION = $MB_PYTHON_VERSION"
 if [[ "$MB_PYTHON_VERSION" = auto ]]; then
     MB_PYTHON_VERSION=$(python -c "import sys; print('{}.{}'.format(*sys.version_info[0:2]))")
 fi
@@ -19,14 +20,19 @@ fi
 setup-staging(){ 
     REPO_NAME=hesaff
     _SOURCE_REPO=$(dirname "${BASH_SOURCE[0]}")
+    _SOURCE_REPO=$(python -c "import os; print(os.path.realpath('$_SOURCE_REPO'))")
+    echo "_SOURCE_REPO = $_SOURCE_REPO"
     _STAGEING_DPATH=$_SOURCE_REPO/_staging
     _STAGED_REPO=$_STAGEING_DPATH/$REPO_NAME
     mkdir -p $_STAGEING_DPATH
 
-    cd $_SOURCE_REPO
-    rm -rf _staging/hesaff/wheelhouse
-    mkdir -p _staging/hesaff/wheelhouse
-    ln -s _staging/hesaff/wheelhouse wheelhouse 
+    #rm -rf _staging/hesaff/wheelhouse
+    mkdir -p $_STAGEING_DPATH/wheelhouse
+
+    #unlink wheelhouse
+    if [ ! -d $_SOURCE_REPO/wheelhouse ]; then
+        ln -s $_STAGEING_DPATH/wheelhouse $_SOURCE_REPO/wheelhouse
+    fi
 
     #echo "_SOURCE_REPO = $_SOURCE_REPO"
     #echo "_STAGED_REPO = $_STAGED_REPO"
@@ -77,4 +83,3 @@ if [ -n "$IS_OSX" ]; then
 
     brew_cache_cleanup
 fi
-

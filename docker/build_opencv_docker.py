@@ -109,12 +109,13 @@ def main():
         RUN cd /root/code/opencv/build && make -j{MAKE_CPUS} && make install
         '''.format(**locals()))
 
-    try:
-        print(ub.color_text('\n--- DOCKER CODE ---', 'white'))
-        print(ub.highlight_code(docker_code, 'docker'))
-        print(ub.color_text('--- END DOCKER CODE ---\n', 'white'))
-    except Exception:
-        pass
+    if 0:
+        try:
+            print(ub.color_text('\n--- DOCKER CODE ---', 'white'))
+            print(ub.highlight_code(docker_code, 'docker'))
+            print(ub.color_text('--- END DOCKER CODE ---\n', 'white'))
+        except Exception:
+            pass
     with open(dockerfile_fpath, 'w') as file:
         file.write(docker_code)
 
@@ -133,7 +134,8 @@ def main():
         print(strip_ansi(info['out']))
         print(strip_ansi(info['err']))
     except Exception:
-        info = ub.cmd(docker_build_cli, verbose=3, shell=True)
+        print('EXEC DOCKER')
+        info = ub.cmd(docker_build_cli, verbose=0, shell=True)
 
     if info['ret'] != 0:
         print(ub.color_text('\n--- FAILURE ---', 'red'))
