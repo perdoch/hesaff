@@ -23,16 +23,14 @@ Implementation depends on OpenCV (2.3.1+). Although, the code is
 original, the affine iteration and normalization was derived from the
 code of Krystian Mikolajczyk.
 
-The SIFT descriptor code is protected under a US Patent 6,711,293. A
-license MUST be obtained from the University of British Columbia for
-use of SIFT code, files siftdesc.cpp/siftdesc.h, in commercial
-applications (see LICENSE.SIFT for details)
+The SIFT descriptor code was patented under a US Patent 6,711,293, which
+expired on March 7th 2019, so the license is no longer required for use. 
 
 
 OUTPUT
 ------
 
-NOTE THIS IS NO LONGER THE CASE. 
+NOTE THIS IS NO LONGER THE CASE. WE MAY REINSTATE THIS.
 
 The built binary rewrites output file: <input_image_name>.hesaff.sift
 
