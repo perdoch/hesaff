@@ -164,6 +164,7 @@ matrix:
 before_install: |
     # Check out and prepare the source
     set -e
+    pip install ubelt
     source stage_multibuild.sh
     set +x
 
