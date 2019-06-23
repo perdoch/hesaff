@@ -23,11 +23,16 @@ setup-staging(){
     _STAGED_REPO=$_STAGEING_DPATH/$REPO_NAME
     mkdir -p $_STAGEING_DPATH
 
+    cd $_SOURCE_REPO
+    rm -rf _staging/hesaff/wheelhouse
+    mkdir -p _staging/hesaff/wheelhouse
+    ln -s _staging/hesaff/wheelhouse wheelhouse 
+
     #echo "_SOURCE_REPO = $_SOURCE_REPO"
     #echo "_STAGED_REPO = $_STAGED_REPO"
 
     # Create a copy of this repo in the staging dir, but ignore build side effects
-    _EXCLUDE="'_staging','*.so','*.dylib','*.dll','_skbuild','*.egg.*','_dist','__pycache__','.git'"
+    _EXCLUDE="'_staging','*.so','*.dylib','*.dll','_skbuild','*.egg.*','_dist','__pycache__','.git','wheelhouse'"
     bash -c "rsync -avrP --exclude={$_EXCLUDE} . $_STAGED_REPO"  # wrapped due to format issue in editor
 
     # Ensure multibuild exists in this copy of this repo
@@ -51,7 +56,6 @@ echo "BASH_SOURCE = $BASH_SOURCE"
 # Change directory into the staging copy and procede with the build
 cd $_STAGED_REPO
 REPO_DIR="."
-mkdir -p wheelhouse
 
 source multibuild/common_utils.sh
 if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export ARCH_FLAGS=" "; fi
