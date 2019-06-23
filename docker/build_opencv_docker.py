@@ -9,7 +9,7 @@ from __future__ import absolute_import, division, print_function
 import ubelt as ub
 import sys
 import os
-from os.path import join, exists
+from os.path import join, exists, realpath
 
 
 def main():
@@ -25,6 +25,7 @@ def main():
     PY_VER = argval('--pyver', 'MB_PYTHON_VERSION', default=DEFAULT_PY_VER)
 
     dpath = argval('--dpath', None, default=os.getcwd())
+    dpath = realpath(ub.expandpath(dpath))
     PLAT = argval('--plat', 'PLAT', default='x86_64')
 
     UNICODE_WIDTH = argval('--unicode_width', 'UNICODE_WIDTH', '32')
@@ -34,6 +35,7 @@ def main():
 
     OPENCV_VERSION = '4.1.0'
 
+    dpath = ub.ensuredir(dpath)
     os.chdir(dpath)
 
     BASE = 'manylinux1_{}'.format(PLAT)
@@ -46,7 +48,11 @@ def main():
 
     if not exists(join(dpath, 'opencv-' + OPENCV_VERSION)):
         # FIXME: make robust in the case this fails
-        fpath = ub.grabdata('https://github.com/opencv/opencv/archive/{}.zip'.format(OPENCV_VERSION), dpath=dpath, verbose=1)
+        fpath = ub.grabdata(
+            'https://github.com/opencv/opencv/archive/{}.zip'.format(OPENCV_VERSION),
+            dpath=dpath,
+            verbose=1
+        )
         ub.cmd('ln -s {} .'.format(fpath), cwd=dpath, verbose=3)
         ub.cmd('unzip {}'.format(fpath), cwd=dpath, verbose=3)
 
