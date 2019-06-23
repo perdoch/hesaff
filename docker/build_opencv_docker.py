@@ -25,7 +25,6 @@ def main():
     PY_VER = argval('--pyver', 'MB_PYTHON_VERSION', default=DEFAULT_PY_VER)
 
     dpath = argval('--dpath', None, default=os.getcwd())
-    dpath = realpath(ub.expandpath(dpath))
     PLAT = argval('--plat', 'PLAT', default='x86_64')
 
     UNICODE_WIDTH = argval('--unicode_width', 'UNICODE_WIDTH', '32')
@@ -35,6 +34,7 @@ def main():
 
     OPENCV_VERSION = '4.1.0'
 
+    dpath = realpath(ub.expandpath(dpath))
     dpath = ub.ensuredir(dpath)
     os.chdir(dpath)
 
@@ -48,13 +48,14 @@ def main():
 
     if not exists(join(dpath, 'opencv-' + OPENCV_VERSION)):
         # FIXME: make robust in the case this fails
+        print('downloading opencv')
         fpath = ub.grabdata(
             'https://github.com/opencv/opencv/archive/{}.zip'.format(OPENCV_VERSION),
-            dpath=dpath,
-            verbose=1
+            dpath=dpath, hash_prefix='1a00f2cdf2b1bd62e5a700a6f15026b2f2de9b1',
+            hasher='sha512', verbose=0
         )
-        ub.cmd('ln -s {} .'.format(fpath), cwd=dpath, verbose=3)
-        ub.cmd('unzip {}'.format(fpath), cwd=dpath, verbose=3)
+        ub.cmd('ln -s {} .'.format(fpath), cwd=dpath, verbose=0)
+        ub.cmd('unzip {}'.format(fpath), cwd=dpath, verbose=0)
 
     dockerfile_fpath = join(dpath, 'Dockerfile_' + DOCKER_TAG)
     # This docker code is very specific for building linux binaries.
@@ -125,7 +126,14 @@ def main():
         '.'
     ])
     print('docker_build_cli = {!r}'.format(docker_build_cli))
-    info = ub.cmd(docker_build_cli, verbose=3, shell=True)
+
+    try:
+        from xdoctest.utils import strip_ansi
+        info = ub.cmd(docker_build_cli, verbose=0, shell=True)
+        print(strip_ansi(info['out']))
+        print(strip_ansi(info['err']))
+    except Exception:
+        info = ub.cmd(docker_build_cli, verbose=3, shell=True)
 
     if info['ret'] != 0:
         print(ub.color_text('\n--- FAILURE ---', 'red'))
