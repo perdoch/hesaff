@@ -1,0 +1,223 @@
+env:
+    global:
+        - "PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'"
+        - USE_CCACHE=1
+        - PLAT=x86_64
+        - UNICODE_WIDTH=32
+
+
+# Host Python is never used
+language: generic
+# Required to invoke docker ourselves as per https://docs.travis-ci.com/user/docker/
+sudo: required
+services: docker
+# https://docs.travis-ci.com/user/reference/trusty/
+dist: trusty
+
+# Save some time, we and setup check them out on demand instead
+# https://docs.travis-ci.com/user/customizing-the-build/#Git-Clone-Depth
+git:
+    submodules: false
+
+# https://docs.travis-ci.com/user/caching
+cache:
+  directories:
+    # https://stackoverflow.com/questions/39930171/cache-brew-builds-with-travis-ci
+    - $HOME/Library/Caches/Homebrew
+    - /usr/local/Homebrew/
+    # used in OSX custom build script dealing with local bottle caching
+    - $HOME/local_bottle_metadata
+    # `cache: ccache: true` has no effect if `language:` is not `c` or `cpp`
+    - $HOME/.ccache
+
+# Add more cache stages (s2 etc) and corresponding OSX jobs like s1
+# if brew builds start to take longer than one Travis time limit
+stages:
+  - s1
+  - final
+
+matrix:
+  fast_finish: true
+  include:
+
+    # builds for MacOS
+    - &osx-70
+      os: osx
+      osx_image: xcode8.3
+      env:
+        - MB_PYTHON_VERSION=2.7
+      stage: final
+    - <<: *osx-70
+      stage: s1
+    - &osx-80
+      os: osx
+      osx_image: xcode8.3
+      env:
+        - MB_PYTHON_VERSION=3.4
+      stage: final
+    - <<: *osx-80
+      stage: s1
+    - &osx-90
+      os: osx
+      osx_image: xcode8.3
+      env:
+        - MB_PYTHON_VERSION=3.5
+      stage: final
+    - <<: *osx-90
+      stage: s1
+    - &osx-100
+      os: osx
+      osx_image: xcode8.3
+      env:
+        - MB_PYTHON_VERSION=3.6
+    - <<: *osx-100
+      stage: s1
+    - &osx-110
+      os: osx
+      osx_image: xcode8.3
+      env:
+        - MB_PYTHON_VERSION=3.7
+      stage: final
+    - <<: *osx-110
+      stage: s1
+
+    # headless builds for Linux
+    - os: linux
+      # the following jobs will use the same stage name by default
+      stage: s1
+      env:
+        - MB_PYTHON_VERSION=2.7
+      cache:
+        directories: $HOME/.ccache
+    - os: linux
+      env:
+        - MB_PYTHON_VERSION=2.7
+        - UNICODE_WIDTH=16
+      cache:
+        directories: $HOME/.ccache
+    - os: linux
+      env:
+        - MB_PYTHON_VERSION=2.7
+        - PLAT=i686
+      cache:
+        directories: $HOME/.ccache
+    - os: linux
+      env:
+        - MB_PYTHON_VERSION=2.7
+        - PLAT=i686
+        - UNICODE_WIDTH=16
+      cache:
+        directories: $HOME/.ccache
+    - os: linux
+      env:
+        - MB_PYTHON_VERSION=3.4
+      cache:
+        directories: $HOME/.ccache
+    - os: linux
+      env:
+        - MB_PYTHON_VERSION=3.4
+        - PLAT=i686
+      cache:
+        directories: $HOME/.ccache
+    - os: linux
+      env:
+        - MB_PYTHON_VERSION=3.5
+      cache:
+        directories: $HOME/.ccache
+    - os: linux
+      env:
+        - MB_PYTHON_VERSION=3.5
+        - PLAT=i686
+      cache:
+        directories: $HOME/.ccache
+    - os: linux
+      env:
+        - MB_PYTHON_VERSION=3.6
+        - TEST_DEPENDS=numpy==1.11.3
+      cache:
+        directories: $HOME/.ccache
+    - os: linux
+      env:
+        - MB_PYTHON_VERSION=3.6
+        - PLAT=i686
+        - TEST_DEPENDS=numpy==1.11.3
+      cache:
+        directories: $HOME/.ccache
+    - os: linux
+      env:
+        - MB_PYTHON_VERSION=3.7
+        - TEST_DEPENDS=numpy==1.14.5
+      cache:
+        directories: $HOME/.ccache
+    - os: linux
+      env:
+        - MB_PYTHON_VERSION=3.7
+        - PLAT=i686
+        - TEST_DEPENDS=numpy==1.14.5
+      cache:
+        directories: $HOME/.ccache
+
+# The first line is printed in the folding header in Travis output
+before_install: |
+    # Check out and prepare the source
+    set -e
+
+source :
+    source local_multibuild.sh
+    set +x
+
+install: |
+    # Build and package
+    set -x
+    build_wheel $REPO_DIR $PLAT
+    set +x
+
+script: |
+    # Install and run tests
+    set -x
+    install_run $PLAT && rc=$? || rc=$?
+    set +x
+
+    #otherwise, Travis logic terminates prematurely
+    #https://travis-ci.community/t/shell-session-update-command-not-found-in-build-log-causes-build-to-fail-if-trap-err-is-set/817
+    trap ERR
+
+    test "$rc" -eq 0
+
+before_cache: |
+    # Cleanup dirs to be cached
+    set -e; set -x
+    if [ -n "$IS_OSX" ]; then
+
+        # When Taps is cached, this dir causes "Error: file exists" on `brew update`
+        if [ -e "$(brew --repository)/Library/Taps/homebrew/homebrew-cask/homebrew-cask" ]; then
+            rm -rf "$(brew --repository)/Library/Taps/homebrew/homebrew-cask/homebrew-cask"
+        fi
+
+        brew_cache_cleanup
+
+    fi
+    set +x; set +e
+
+after_success: |
+    # Upload wheels to pypi if requested
+    if [ -n "$TRAVIS_TAG" ]; then
+        set -x
+
+        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+          pip install --user twine
+          pip install --user --upgrade six
+        fi
+
+        if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+          pip install twine
+          pip install --upgrade pyOpenSSL
+        fi
+
+        # TODO:
+        echo "TRAVIS_BUILD_DIR $TRAVIS_BUILD_DIR"
+        # twine upload -u ${USER} -p ${PASS} --skip-existing ${TRAVIS_BUILD_DIR}/wheelhouse/opencv*
+        set +x
+    else
+        echo "Tag not set, deployment skipped."
+    fi

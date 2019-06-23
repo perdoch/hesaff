@@ -13,14 +13,36 @@ from os.path import join, exists
 
 
 def main():
-    dpath = ub.argval('--dpath', default=os.getcwd())
+
+    def argval(clikey, envkey=None, default=ub.NoParam):
+        if envkey is not None:
+            envval = os.environ.get(envkey)
+            if envval:
+                default = envval
+        return ub.argval(clikey, default=default)
+
+    DEFAULT_PY_VER = '{}.{}'.format(sys.version_info.major, sys.version_info.minor)
+    PY_VER = argval('--pyver', 'MB_PYTHON_VERSION', default=DEFAULT_PY_VER)
+
+    dpath = argval('--dpath', None, default=os.getcwd())
+    PLAT = argval('--plat', 'PLAT', default='x86_64')
+
+    UNICODE_WIDTH = argval('--unicode_width', 'UNICODE_WIDTH', '32')
+
+    import multiprocessing
+    MAKE_CPUS = argval('--make_cpus', 'MAKE_CPUS', multiprocessing.cpu_count() + 1)
+
+    OPENCV_VERSION = '4.1.0'
+
     os.chdir(dpath)
 
-    BASE = 'manylinux1_x86_64'
+    BASE = 'manylinux1_{}'.format(PLAT)
     BASE_REPO = 'quay.io/skvark'
-    OPENCV_VERSION = '4.1.0'
-    PY_VER = '{}.{}'.format(sys.version_info.major, sys.version_info.minor)
-    tag = '{}-opencv{}-py{}'.format(BASE, OPENCV_VERSION, PY_VER)
+
+    PY_TAG = 'cp{ver}-cp{ver}m'.format(ver=PY_VER.replace('.', ''))
+
+    # do we need the unicode width in this tag?
+    DOCKER_TAG = '{}-opencv{}-py{}'.format(BASE, OPENCV_VERSION, PY_VER)
 
     if not exists(join(dpath, 'opencv-' + OPENCV_VERSION)):
         # FIXME: make robust in the case this fails
@@ -28,7 +50,7 @@ def main():
         ub.cmd('ln -s {} .'.format(fpath), cwd=dpath, verbose=3)
         ub.cmd('unzip {}'.format(fpath), cwd=dpath, verbose=3)
 
-    dockerfile_fpath = join(dpath, 'Dockerfile_' + tag)
+    dockerfile_fpath = join(dpath, 'Dockerfile_' + DOCKER_TAG)
     # This docker code is very specific for building linux binaries.
     # We will need to do a bit of refactoring to handle OSX and windows.
     # But the goal is to get at least one OS working end-to-end.
@@ -37,17 +59,15 @@ def main():
         FROM {BASE_REPO}/{BASE}
 
         # SETUP ENV
-        ARG MB_PYTHON_VERSION=3.6
-        ARG ENABLE_CONTRIB=0
-        ARG ENABLE_HEADLESS=1
-        ENV PYTHON_VERSION=3.6
-        ENV PYTHON_ROOT=/opt/python/cp36-cp36m/
-        ENV PYTHONPATH=/opt/python/cp36-cp36m/lib/python3.6/site-packages/
-        ENV PATH=/opt/python/cp36-cp36m/bin:$PATH
-        ENV PYTHON_EXE=/opt/python/cp36-cp36m/bin/python
+        ARG MB_PYTHON_VERSION={PY_VER}
+        ENV PYTHON_VERSION={PY_VER}
+        ENV PYTHON_ROOT=/opt/python/{PY_TAG}/
+        ENV PYTHONPATH=/opt/python/{PY_TAG}/lib/python{PY_VER}/site-packages/
+        ENV PATH=/opt/python/{PY_TAG}/bin:$PATH
+        ENV PYTHON_EXE=/opt/python/{PY_TAG}/bin/python
         ENV HOME=/root
-        ENV PLAT=x86_64
-        ENV UNICODE_WIDTH=32
+        ENV PLAT={PLAT}
+        ENV UNICODE_WIDTH={UNICODE_WIDTH}
 
         # Update python environment
         RUN echo "$PYTHON_EXE"
@@ -74,12 +94,12 @@ def main():
                    -DENABLE_PRECOMPILED_HEADERS=OFF \
                 /root/code/opencv
 
-       # Note: there is no need to compile the above with python
-       # -DPYTHON3_EXECUTABLE=$PYTHON_EXE \
-       # -DBUILD_opencv_python3=ON \
-       # -DOPENCV_PYTHON3_INSTALL_PATH=python \
+        # Note: there is no need to compile the above with python
+        # -DPYTHON3_EXECUTABLE=$PYTHON_EXE \
+        # -DBUILD_opencv_python3=ON \
+        # -DOPENCV_PYTHON3_INSTALL_PATH=python \
 
-        RUN cd /root/code/opencv/build && make -j9 && make install
+        RUN cd /root/code/opencv/build && make -j{MAKE_CPUS} && make install
         '''.format(**locals()))
 
     try:
@@ -94,7 +114,7 @@ def main():
     docker_build_cli = ' '.join([
         'docker', 'build',
         # '--build-arg PY_VER={}'.format(PY_VER),
-        '--tag {}'.format(tag),
+        '--tag {}'.format(DOCKER_TAG),
         '-f {}'.format(dockerfile_fpath),
         '.'
     ])
@@ -111,7 +131,7 @@ def main():
     else:
         # write out what the tag is
         with open(join(dpath, 'opencv-docker-tag.txt'), 'w') as file:
-            file.write(tag)
+            file.write(DOCKER_TAG)
         print(ub.color_text('\n--- SUCCESS ---', 'green'))
 
 
