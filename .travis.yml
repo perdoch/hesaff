@@ -165,10 +165,9 @@ before_install: |
     # Check out and prepare the source
     pip install ubelt --user
     bash stage_multibuild.sh
-    echo "_STAGED_REPO = $_STAGED_REPO"
 
 install: |
-    bash run_multibuild.sh
+    source run_multibuild.sh
 
 script: |
     # Install and run tests
