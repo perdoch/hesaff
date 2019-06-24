@@ -22,21 +22,21 @@ pip install ubelt xdoctest
 
 # All the interesting stuff lives here
 source stage_multibuild.sh
-echo "MB_PYTHON_VERSION = $MB_PYTHON_VERSION"
-echo "PLAT = $PLAT"
-echo "DOCKER_IMAGE = $DOCKER_IMAGE"
-echo "REPO_DIR = $REPO_DIR"
-echo "_SOURCE_REPO = $_SOURCE_REPO"
-echo "_STAGED_REPO = $_STAGED_REPO"
+echo "MB_PYTHON_VERSION=$MB_PYTHON_VERSION"
+echo "DOCKER_IMAGE=$DOCKER_IMAGE"
+echo "PLAT=$PLAT"
+echo "REPO_DIR=$REPO_DIR"
+echo "_SOURCE_REPO=$_SOURCE_REPO"
+echo "_STAGED_REPO=$_STAGED_REPO"
 
 #### --- INSTALL --- ####
 
 echo "--- BEGIN EXEC BUILD WHEEL ---"
 cd $_STAGED_REPO
 build_wheel $REPO_DIR $PLAT
+mkdir -p $_SOURCE_REPO/dist
+cp $_STAGED_REPO/dist/*.whl $_SOURCE_REPO/dist
 echo "--- END EXEC BUILD WHEEL ---"
-echo "REPO_DIR = $REPO_DIR"
-cd $_SOURCE_REPO
 
 ## Build and package
 #set -x
@@ -50,5 +50,4 @@ cd $_SOURCE_REPO
 #echo "_SOURCE_REPO = $_SOURCE_REPO"
 #cd $_SOURCE_REPO
 #set +x
-
 #set +e

@@ -64,11 +64,11 @@ if __name__ == '__main__':
 
     soconfig = sysconfig.get_config_var('SO')
     print('soconfig = {!r}'.format(soconfig))
-    import ubelt as ub
-    ub.cmd('pwd', verbose=3)
-    ub.cmd('ls -al', verbose=3)
-    ub.cmd('ls -al pyhesaff', verbose=3)
-    ub.cmd('ls wheelhouse', verbose=3)
+    # import ubelt as ub
+    # ub.cmd('pwd', verbose=3)
+    # ub.cmd('ls -al', verbose=3)
+    # ub.cmd('ls dist', verbose=3)
+    # ub.cmd('ls -al pyhesaff', verbose=3)
 
     kwargs = dict(
         name='pyhesaff',
@@ -116,8 +116,12 @@ if __name__ == '__main__':
     )
     setup(**kwargs)
 
+    # ub.cmd('ls -al', verbose=3)
+    # ub.cmd('ls dist', verbose=3)
+
+    print("[setup.py] FINISHING UP")
+
     if True:
-        print("[setup.py] FINISHING UP")
         import sys
         if '--inplace' in sys.argv:
             def get_plat_specifier():
@@ -145,3 +149,5 @@ if __name__ == '__main__':
             import shutil
             print('copy {} -> {}'.format(src, dst))
             shutil.copy(src, dst)
+
+    print("[setup.py] FINISHED")

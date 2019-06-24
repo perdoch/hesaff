@@ -309,7 +309,7 @@ def build(DPATH, MAKE_CPUS, UNICODE_WIDTH, PLAT, PY_VER, EXEC=True):
     # print('push_cmd = {!r}'.format(push_cmd))
     # print(push_cmd)
 
-    if 1:
+    if EXEC:
         QUAY_REPO = 'quay.io/erotemic/manylinux-opencv'
         DOCKER_URI = '{QUAY_REPO}:{DOCKER_TAG}'.format(**locals())
         cmd1 = 'docker tag {DOCKER_TAG} {DOCKER_URI}'.format(**locals())

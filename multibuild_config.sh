@@ -13,6 +13,7 @@ function build_wheel {
 function bdist_wheel_cmd {
     # copied from multibuild's common_utils.sh
     # add osx deployment target so it doesnt default to 10.6
+    echo "-- !!!!!!!!!!!!!!!!!!!!!!!!! --"
     echo "-- IN CUSTOM BUILD WHEEL CMD --"
     local abs_wheelhouse=$1
 
@@ -25,13 +26,15 @@ function bdist_wheel_cmd {
     # HACK TO GET LIBS IN THE RIGHT PLACE  
     python setup.py build_ext --inplace $BDIST_PARAMS
 
-    echo "-- RUN SETUP BDIST_WHEEL --"
+    echo "-- <SETUP BDIST_WHEEL> --"
     python setup.py bdist_wheel $BDIST_PARAMS
+    echo "-- </SETUP BDIST_WHEEL> --"
 
     cp dist/*.whl $abs_wheelhouse
     if [ -n "$USE_CCACHE" -a -z "$BREW_BOOTSTRAP_MODE" ]; then ccache -s; fi
 
     echo "-- FINISH CUSTOM BUILD WHEEL CMD --"
+    echo "-- !!!!!!!!!!!!!!!!!!!!!!!!! --"
 }
 
 if [ -n "$IS_OSX" ]; then
