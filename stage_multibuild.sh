@@ -2,7 +2,7 @@
 # env global for travis.yml
 TEST_DEPENDS="numpy xdoctest ubelt"
 CONFIG_PATH="multibuild_config.sh"
-BDIST_PARAMS=${BDIST_PARAMS:""}
+#BDIST_PARAMS=${BDIST_PARAMS:""}
 
 USE_CCACHE=${USE_CCACHE:=1}
 PLAT=${PLAT:=$(arch)}
@@ -22,8 +22,8 @@ setup-staging(){
     _STAGEING_DPATH=$_SOURCE_REPO/_staging
     _STAGED_REPO=$_STAGEING_DPATH/$REPO_NAME
     mkdir -p $_STAGEING_DPATH
-    #rm -rf _staging/hesaff/wheelhouse
-    mkdir -p $_STAGEING_DPATH/wheelhouse
+    rm -rf $_STAGEING_DPATH/wheelhouse
+    #mkdir -p $_STAGEING_DPATH/wheelhouse
     #unlink wheelhouse
     #if [ ! -d $_SOURCE_REPO/wheelhouse ]; then
     #    ln -s $_STAGEING_DPATH/wheelhouse $_SOURCE_REPO/wheelhouse

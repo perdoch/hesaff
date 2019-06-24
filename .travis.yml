@@ -169,18 +169,6 @@ before_install: |
 
 install: |
     bash run_multibuild.sh
-    # Build and package
-    set -x
-    #source run_multibuild.sh
-    cd $_STAGED_REPO
-    echo "_STAGED_REPO = $_STAGED_REPO"
-    echo "REPO_DIR = $REPO_DIR"
-    build_wheel $REPO_DIR $PLAT
-    ls $_STAGED_REPO/wheelhouse
-    cp $_STAGED_REPO/wheelhouse $_SOURCE_REPO/wheelhouse
-    echo "_SOURCE_REPO = $_SOURCE_REPO"
-    cd $_SOURCE_REPO
-    set +x
 
 script: |
     # Install and run tests
