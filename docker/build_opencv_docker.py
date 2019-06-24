@@ -257,7 +257,7 @@ def build(DPATH, MAKE_CPUS, UNICODE_WIDTH, PLAT, PY_VER, EXEC=True):
             cd /root/code/opencv/build && \
             make -j{MAKE_CPUS} && \
             make install && \
-            rm /root/code/opencv
+            rm -rf /root/code/opencv
         '''.format(**locals()))
 
     if 1:
@@ -301,12 +301,20 @@ def build(DPATH, MAKE_CPUS, UNICODE_WIDTH, PLAT, PY_VER, EXEC=True):
     print('DOCKER_TAG = {!r}'.format(DOCKER_TAG))
     print('dockerfile_fpath = {!r}'.format(dockerfile_fpath))
 
-    push_cmd = 'docker push quay.io/erotemic/manylinux-opencv:manylinux1_x86_64-opencv4.1.0-py3.6'
-    print('push_cmd = {!r}'.format(push_cmd))
-    print(push_cmd)
+    # push_cmd = 'docker push quay.io/erotemic/manylinux-opencv:manylinux1_x86_64-opencv4.1.0-py3.6'
+    # print('push_cmd = {!r}'.format(push_cmd))
+    # print(push_cmd)
+
     if 0:
+        QUAY_REPO = 'quay.io/erotemic/manylinux-opencv'
+        cmd1 = 'docker tag {DOCKER_TAG} {QUAY_REPO}:{DOCKER_TAG'.format(**locals())
+        cmd2 = 'docker push {QUAY_REPO}:{DOCKER_TAG'.format(**locals())
+        print('cmd1 = {!r}'.format(cmd1))
+        print('cmd2 = {!r}'.format(cmd2))
+        ub.cmd(cmd1, verbose=3)
+        ub.cmd(cmd2, verbose=3)
         # ub.cmd('docker login quay.io')
-        ub.cmd(push_cmd)
+        # ub.cmd(push_cmd)
 
     """
     manylinux-opencv
