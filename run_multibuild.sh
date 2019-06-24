@@ -10,7 +10,6 @@ default.
 Note that this script uses the network to stage its dependencies.
 """
 
-set -x
 TEST_DEPENDS="numpy xdoctest ubelt"
 CONFIG_PATH="multibuild_config.sh"
 BDIST_PARAMS=""
@@ -19,13 +18,13 @@ PLAT=${PLAT:$(arch)}
 UNICODE_WIDTH=32
 MB_PYTHON_VERSION=$(python -c "import sys; print('{}.{}'.format(*sys.version_info[0:2]))")
 
-pip install xdoctest
+pip install ubelt xdoctest
 
+# All the interesting stuff lives here
 source stage_multibuild.sh
-set +x
-set +e
 echo "MB_PYTHON_VERSION = $MB_PYTHON_VERSION"
 echo "PLAT = $PLAT"
+echo "DOCKER_IMAGE = $DOCKER_IMAGE"
 echo "REPO_DIR = $REPO_DIR"
 echo "_SOURCE_REPO = $_SOURCE_REPO"
 echo "_STAGED_REPO = $_STAGED_REPO"
@@ -33,11 +32,23 @@ echo "_STAGED_REPO = $_STAGED_REPO"
 #### --- INSTALL --- ####
 
 echo "--- BEGIN EXEC BUILD WHEEL ---"
-set -e
-set -x
 cd $_STAGED_REPO
 build_wheel $REPO_DIR $PLAT
-set +x
 echo "--- END EXEC BUILD WHEEL ---"
 echo "REPO_DIR = $REPO_DIR"
 cd $_SOURCE_REPO
+
+## Build and package
+#set -x
+##source run_multibuild.sh
+#cd $_STAGED_REPO
+#echo "_STAGED_REPO = $_STAGED_REPO"
+#echo "REPO_DIR = $REPO_DIR"
+#build_wheel $REPO_DIR $PLAT
+#ls $_STAGED_REPO/wheelhouse
+#cp $_STAGED_REPO/wheelhouse $_SOURCE_REPO/wheelhouse
+#echo "_SOURCE_REPO = $_SOURCE_REPO"
+#cd $_SOURCE_REPO
+#set +x
+
+#set +e

@@ -168,6 +168,7 @@ function test_wheels {
     echo "Starting tests..."
 
     #Test package
+    $PYTHON -m xdoctest pyhesaff
     #$PYTHON -m unittest test
     #$PYTHON -m xdoctest pyhesaff
 }

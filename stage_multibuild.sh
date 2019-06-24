@@ -1,7 +1,5 @@
 #### --- GLOBAL --- ####
 # env global for travis.yml
-set -e
-set -x
 TEST_DEPENDS="numpy xdoctest ubelt"
 CONFIG_PATH="multibuild_config.sh"
 BDIST_PARAMS=${BDIST_PARAMS:""}
@@ -21,37 +19,47 @@ setup-staging(){
     REPO_NAME=hesaff
     _SOURCE_REPO=$(dirname "${BASH_SOURCE[0]}")
     _SOURCE_REPO=$(python -c "import os; print(os.path.realpath('$_SOURCE_REPO'))")
-    echo "_SOURCE_REPO = $_SOURCE_REPO"
     _STAGEING_DPATH=$_SOURCE_REPO/_staging
     _STAGED_REPO=$_STAGEING_DPATH/$REPO_NAME
     mkdir -p $_STAGEING_DPATH
-
     #rm -rf _staging/hesaff/wheelhouse
     mkdir -p $_STAGEING_DPATH/wheelhouse
-
     #unlink wheelhouse
-    if [ ! -d $_SOURCE_REPO/wheelhouse ]; then
-        ln -s $_STAGEING_DPATH/wheelhouse $_SOURCE_REPO/wheelhouse
-    fi
+    #if [ ! -d $_SOURCE_REPO/wheelhouse ]; then
+    #    ln -s $_STAGEING_DPATH/wheelhouse $_SOURCE_REPO/wheelhouse
+    #fi
 
     #echo "_SOURCE_REPO = $_SOURCE_REPO"
     #echo "_STAGED_REPO = $_STAGED_REPO"
 
     # Create a copy of this repo in the staging dir, but ignore build side effects
     _EXCLUDE="'_staging','*.so','*.dylib','*.dll','_skbuild','*.egg.*','_dist','__pycache__','.git','wheelhouse'"
-    bash -c "rsync -avrP --exclude={$_EXCLUDE} . $_STAGED_REPO"  # wrapped due to format issue in editor
+    bash -c "rsync -avrP --max-delete=0 --exclude={$_EXCLUDE} . $_STAGED_REPO"  # wrapped due to format issue in editor
 
     # Ensure multibuild exists in this copy of this repo
     if [ ! -d $_STAGED_REPO/multibuild ]; then
         git clone https://github.com/matthew-brett/multibuild.git $_STAGED_REPO/multibuild
     fi
-    # Patch multibuild so we can start from a local docker image  
-    find $_STAGED_REPO/multibuild -iname "*.sh" -type f -exec sed -i 's/ retry docker pull/ #retry docker pull/g' {} +
 
-    # Ensure that the manylinux1_x86_64-opencv4.1.0-py3.6 docker image exists
-    python docker/build_opencv_docker.py --dpath=$_STAGEING_DPATH --no-exec
+    _USE_QUAY="True"
+    if [ $_USE_QUAY = "True" ]; then
+        # Assume that the query.io/erotemic/manylinux-opencv:{DOCKER_TAG} image exists
+        echo "_STAGEING_DPATH = $_STAGEING_DPATH"
+        python docker/build_opencv_docker.py --dpath=$_STAGEING_DPATH --no-exec
+        DOCKER_TAG=$(cat $_STAGEING_DPATH/opencv-docker-tag.txt)
+        DOCKER_IMAGE="quay.io/erotemic/manylinux-opencv:${DOCKER_TAG}"
+        echo "DOCKER_TAG = $DOCKER_TAG"
+        echo "DOCKER_IMAGE = $DOCKER_IMAGE"
+        #docker pull $DOCKER_IMAGE
+    else
+        # Patch multibuild so we can start from a local docker image  
+        find $_STAGED_REPO/multibuild -iname "*.sh" -type f -exec sed -i 's/ retry docker pull/ #retry docker pull/g' {} +
+        # Ensure that the manylinux1_x86_64-opencv4.1.0-py3.6 docker image exists
+        python docker/build_opencv_docker.py --dpath=$_STAGEING_DPATH --no-exec
+        # Ensure that the manylinux1_x86_64-opencv4.1.0-py3.6 docker image exists
+        DOCKER_IMAGE=$(cat $_STAGEING_DPATH/opencv-docker-tag.txt)
+    fi
 
-    DOCKER_IMAGE=$(cat $_STAGEING_DPATH/opencv-docker-tag.txt)
     echo "DOCKER_IMAGE = $DOCKER_IMAGE"
 }
 
@@ -83,3 +91,6 @@ if [ -n "$IS_OSX" ]; then
 
     brew_cache_cleanup
 fi
+
+echo "_SOURCE_REPO = $_SOURCE_REPO"
+cd $_SOURCE_REPO

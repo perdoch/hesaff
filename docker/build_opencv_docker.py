@@ -260,13 +260,15 @@ def build(DPATH, MAKE_CPUS, UNICODE_WIDTH, PLAT, PY_VER, EXEC=True):
             rm -rf /root/code/opencv
         '''.format(**locals()))
 
-    if 1:
+    if EXEC:
         try:
             print(ub.color_text('\n--- DOCKER CODE ---', 'white'))
             print(ub.highlight_code(docker_code, 'docker'))
             print(ub.color_text('--- END DOCKER CODE ---\n', 'white'))
         except Exception:
             pass
+
+    print('...write to dockerfile_fpath = {!r}'.format(dockerfile_fpath))
     with open(dockerfile_fpath, 'w') as file:
         file.write(docker_code)
 
@@ -278,6 +280,11 @@ def build(DPATH, MAKE_CPUS, UNICODE_WIDTH, PLAT, PY_VER, EXEC=True):
         '.'
     ])
     print('docker_build_cli = {!r}'.format(docker_build_cli))
+
+    # write out what the tag is, there might be a better way to pass this
+    # information. fixme?
+    with open(join(dpath, 'opencv-docker-tag.txt'), 'w') as file:
+        file.write(DOCKER_TAG)
 
     if not EXEC:
         print('-- NO EXEC --')
@@ -293,9 +300,6 @@ def build(DPATH, MAKE_CPUS, UNICODE_WIDTH, PLAT, PY_VER, EXEC=True):
             print('NOTE: sometimes reruning the command manually works')
             raise Exception('Building docker failed with exit code {}'.format(info['ret']))
         else:
-            # write out what the tag is
-            with open(join(dpath, 'opencv-docker-tag.txt'), 'w') as file:
-                file.write(DOCKER_TAG)
             print(ub.color_text('\n--- SUCCESS ---', 'green'))
 
     print('DOCKER_TAG = {!r}'.format(DOCKER_TAG))
@@ -305,14 +309,19 @@ def build(DPATH, MAKE_CPUS, UNICODE_WIDTH, PLAT, PY_VER, EXEC=True):
     # print('push_cmd = {!r}'.format(push_cmd))
     # print(push_cmd)
 
-    if 0:
+    if 1:
         QUAY_REPO = 'quay.io/erotemic/manylinux-opencv'
-        cmd1 = 'docker tag {DOCKER_TAG} {QUAY_REPO}:{DOCKER_TAG'.format(**locals())
-        cmd2 = 'docker push {QUAY_REPO}:{DOCKER_TAG'.format(**locals())
-        print('cmd1 = {!r}'.format(cmd1))
-        print('cmd2 = {!r}'.format(cmd2))
-        ub.cmd(cmd1, verbose=3)
-        ub.cmd(cmd2, verbose=3)
+        DOCKER_URI = '{QUAY_REPO}:{DOCKER_TAG}'.format(**locals())
+        cmd1 = 'docker tag {DOCKER_TAG} {DOCKER_URI}'.format(**locals())
+        cmd2 = 'docker push {DOCKER_URI}'.format(**locals())
+        print('-- <push cmds> ---')
+        print(cmd1)
+        print(cmd2)
+        print('-- </push cmds> ---')
+        # print('cmd1 = {!r}'.format(cmd1))
+        # print('cmd2 = {!r}'.format(cmd2))
+        # ub.cmd(cmd1, verbose=3)
+        # ub.cmd(cmd2, verbose=3)
         # ub.cmd('docker login quay.io')
         # ub.cmd(push_cmd)
 

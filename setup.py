@@ -64,6 +64,12 @@ if __name__ == '__main__':
 
     soconfig = sysconfig.get_config_var('SO')
     print('soconfig = {!r}'.format(soconfig))
+    import ubelt as ub
+    ub.cmd('pwd', verbose=3)
+    ub.cmd('ls -al', verbose=3)
+    ub.cmd('ls -al pyhesaff', verbose=3)
+    ub.cmd('ls wheelhouse', verbose=3)
+
     kwargs = dict(
         name='pyhesaff',
         description='Routines for computation of hessian affine keypoints in images.',
