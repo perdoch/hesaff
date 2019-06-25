@@ -198,6 +198,7 @@ before_cache: |
 
 after_success: |
     # Upload wheels to pypi if requested
+    TRAVIS_TAG="TODO-whatdis?"
     if [ -n "$TRAVIS_TAG" ]; then
         set -x
 
@@ -213,7 +214,7 @@ after_success: |
 
         # TODO:
         echo "TRAVIS_BUILD_DIR $TRAVIS_BUILD_DIR"
-        # twine upload -u ${USER} -p ${PASS} --skip-existing ${TRAVIS_BUILD_DIR}/wheelhouse/opencv*
+        # twine upload -u ${USER} -p ${PASS} --skip-existing ${TRAVIS_BUILD_DIR}/wheelhouse/pyhesaff*
         set +x
     else
         echo "Tag not set, deployment skipped."

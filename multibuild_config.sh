@@ -152,7 +152,7 @@ function pre_build {
 function run_tests {
     # Runs tests on installed distribution from an empty directory
     echo "Run tests..."
-    echo $PWD
+    echo "PWD = $PWD"
 
     if [ -n "$IS_OSX" ]; then
       echo "Running for OS X"

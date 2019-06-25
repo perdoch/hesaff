@@ -35,7 +35,9 @@ echo "--- BEGIN EXEC BUILD WHEEL ---"
 cd $_STAGED_REPO
 build_wheel $REPO_DIR $PLAT
 mkdir -p $_SOURCE_REPO/dist
+mkdir -p $_SOURCE_REPO/wheelhouse
 cp $_STAGED_REPO/dist/*.whl $_SOURCE_REPO/dist
+cp $_STAGED_REPO/dist/*.whl $_SOURCE_REPO/wheelhouse
 echo "--- END EXEC BUILD WHEEL ---"
 
 ## Build and package
