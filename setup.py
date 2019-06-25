@@ -63,8 +63,21 @@ if __name__ == '__main__':
             return 1
 
     soconfig = sysconfig.get_config_var('SO')
+    if True:
+        # _os = 'linux'
+        # assert _os == 'linux'
+        # _arch = 'x86_64'
+        # _pyver = '3.6'
+        import sys
+        _pyver = '{}.{}'.format(sys.version_info.major, sys.version_info.minor)
+        hack_soconfig = '-{}.so'.format(_pyver)
+        # hack_soconfig = '.{}-{}-{}.so'.format(_os, _arch, _pyver)
+        # hack_soconfig = '.so'
+        print('hack_soconfig = {!r}'.format(hack_soconfig))
+
     print('soconfig = {!r}'.format(soconfig))
-    # import ubelt as ub
+
+    import ubelt as ub
     # ub.cmd('pwd', verbose=3)
     # ub.cmd('ls -al', verbose=3)
     # ub.cmd('ls dist', verbose=3)
@@ -95,6 +108,7 @@ if __name__ == '__main__':
         package_data={
             'pyhesaff':
                 ['*%s' % soconfig] +
+                ['*%s' % hack_soconfig] +
                 # ['*.so'] +
                 (['*.dll'] if os.name == 'nt' else []) +
                 ["LICENSE.txt", "LICENSE-3RD-PARTY.txt", "LICENSE.SIFT"],
@@ -117,7 +131,7 @@ if __name__ == '__main__':
     setup(**kwargs)
 
     # ub.cmd('ls -al', verbose=3)
-    # ub.cmd('ls dist', verbose=3)
+    ub.cmd('ls dist', verbose=3)
 
     print("[setup.py] FINISHING UP")
 
