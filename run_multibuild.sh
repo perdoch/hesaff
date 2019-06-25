@@ -10,18 +10,18 @@ default.
 Note that this script uses the network to stage its dependencies.
 """
 
-TEST_DEPENDS="numpy xdoctest ubelt"
-CONFIG_PATH="multibuild_config.sh"
-BDIST_PARAMS=""
-USE_CCACHE=1
-PLAT=${PLAT:$(arch)}
-UNICODE_WIDTH=32
-MB_PYTHON_VERSION=$(python -c "import sys; print('{}.{}'.format(*sys.version_info[0:2]))")
-
-pip install ubelt xdoctest
+#TEST_DEPENDS="numpy xdoctest ubelt"
+#CONFIG_PATH="multibuild_config.sh"
+#BDIST_PARAMS=""
+#USE_CCACHE=1
+#PLAT=${PLAT:$(arch)}
+#UNICODE_WIDTH=32
+#MB_PYTHON_VERSION=$(python -c "import sys; print('{}.{}'.format(*sys.version_info[0:2]))")
+#pip install ubelt xdoctest
 
 # All the interesting stuff lives here
 source stage_multibuild.sh
+
 echo "MB_PYTHON_VERSION=$MB_PYTHON_VERSION"
 echo "DOCKER_IMAGE=$DOCKER_IMAGE"
 echo "PLAT=$PLAT"
