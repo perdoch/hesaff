@@ -1,5 +1,7 @@
 # Library to cache downloaded and locally-built Homebrew bottles in Travis OSX build.
 
+# TODO: validate
+
 
 #Should be in Travis' cache
 BREW_LOCAL_BOTTLE_METADATA="$HOME/local_bottle_metadata"
