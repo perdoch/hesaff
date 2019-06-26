@@ -37,52 +37,52 @@ cache:
 # if brew builds start to take longer than one Travis time limit
 stages:
   - s1
-  #- final
+  - final
 
 matrix:
   fast_finish: true
   include:
 
     # builds for MacOS
-    #- &osx-70
-    #  os: osx
-    #  osx_image: xcode8.3
-    #  env:
-    #    - MB_PYTHON_VERSION=2.7
-    #  stage: final
-    #- <<: *osx-70
-    #  stage: s1
-    #- &osx-80
-    #  os: osx
-    #  osx_image: xcode8.3
-    #  env:
-    #    - MB_PYTHON_VERSION=3.4
-    #  stage: final
-    #- <<: *osx-80
-    #  stage: s1
-    #- &osx-90
-    #  os: osx
-    #  osx_image: xcode8.3
-    #  env:
-    #    - MB_PYTHON_VERSION=3.5
-    #  stage: final
-    #- <<: *osx-90
-    #  stage: s1
-    #- &osx-100
-    #  os: osx
-    #  osx_image: xcode8.3
-    #  env:
-    #    - MB_PYTHON_VERSION=3.6
-    #- <<: *osx-100
-    #  stage: s1
-    #- &osx-110
-    #  os: osx
-    #  osx_image: xcode8.3
-    #  env:
-    #    - MB_PYTHON_VERSION=3.7
-    #  stage: final
-    #- <<: *osx-110
-    #  stage: s1
+    - &osx-70
+      os: osx
+      osx_image: xcode8.3
+      env:
+        - MB_PYTHON_VERSION=2.7
+      stage: final
+    - <<: *osx-70
+      stage: s1
+    - &osx-80
+      os: osx
+      osx_image: xcode8.3
+      env:
+        - MB_PYTHON_VERSION=3.4
+      stage: final
+    - <<: *osx-80
+      stage: s1
+    - &osx-90
+      os: osx
+      osx_image: xcode8.3
+      env:
+        - MB_PYTHON_VERSION=3.5
+      stage: final
+    - <<: *osx-90
+      stage: s1
+    - &osx-100
+      os: osx
+      osx_image: xcode8.3
+      env:
+        - MB_PYTHON_VERSION=3.6
+    - <<: *osx-100
+      stage: s1
+    - &osx-110
+      os: osx
+      osx_image: xcode8.3
+      env:
+        - MB_PYTHON_VERSION=3.7
+      stage: final
+    - <<: *osx-110
+      stage: s1
 
     # headless builds for Linux
     - os: linux
