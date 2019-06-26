@@ -163,8 +163,8 @@ matrix:
 # The first line is printed in the folding header in Travis output
 before_install: |
     # Check out and prepare the source
-    pip install ubelt --user
-    bash stage_multibuild.sh
+    python -m pip install ubelt --user
+    source stage_multibuild.sh
 
 install: |
     source run_multibuild.sh
