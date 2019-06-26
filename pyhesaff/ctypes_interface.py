@@ -28,6 +28,35 @@ def get_plat_specifier():
     return plat_specifier
 
 
+def get_candidate_plat_specifiers():
+    import distutils
+    if sys.maxsize > 2 ** 32:
+        arch = 'x86_64'  # TODO: get correct arch spec
+    else:
+        arch = 'i686'  # TODO: get correct arch spec
+
+    py_ver = sys.version[0:3]
+
+    try:
+        plat_name = distutils.util.get_platform()
+    except AttributeError:
+        plat_name = distutils.sys.platform
+
+    plat_name_cands = [plat_name]
+    if plat_name.startswith('linux'):
+        plat_name_cands.append('manylinux1')
+        plat_name_cands.append('manylinux')
+
+    spec_list = []
+    for plat_name in plat_name_cands:
+        spec_list.extend([
+            '.{}-{}'.format(plat_name, sys.version[0:3]),
+            '.{}-{}-{}'.format(plat_name, arch, py_ver),
+        ])
+    spec_list.append('')
+    return spec_list
+
+
 def get_lib_fname_list(libname):
     """
     Args:
@@ -47,11 +76,12 @@ def get_lib_fname_list(libname):
         >>> print('libnames = {}'.format(ub.repr2(libnames)))
     """
 
-    if sys.platform.startswith('linux'):
-        # TODO: correct ABI tags
-        spec_list = [get_plat_specifier(), '-manylinux1_x86_64', '']
-    else:
-        spec_list = [get_plat_specifier(), '']
+    # if sys.platform.startswith('linux'):
+    #     # TODO: correct ABI tags
+    #     spec_list = [get_plat_specifier(), '-manylinux1_x86_64', '']
+    # else:
+    #     spec_list = [get_plat_specifier(), '']
+    spec_list = get_candidate_plat_specifiers()
 
     prefix_list = ['lib' + libname]
     if sys.platform.startswith('win32'):
