@@ -164,6 +164,7 @@ matrix:
 before_install: |
     # Check out and prepare the source
     set -e
+    set -x
 
     # Hack, why don't we have pip here?
     #git clone https://github.com/matthew-brett/multibuild.git 

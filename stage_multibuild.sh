@@ -78,7 +78,9 @@ source multibuild/travis_steps.sh
 
 # I have no idea what this does
 if [ -n "$IS_OSX" ]; then
+    echo "THIS IS OXS"
     TAPS="$(brew --repository)/Library/Taps"
+    echo "TAPS = $TAPS"
     if [ -e "$TAPS/caskroom/homebrew-cask" -a -e "$TAPS/homebrew/homebrew-cask" ]; then
         rm -rf "$TAPS/caskroom/homebrew-cask"
     fi
