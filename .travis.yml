@@ -166,13 +166,15 @@ before_install: |
     set -e
 
     # Hack, why don't we have pip here?
-    git clone https://github.com/matthew-brett/multibuild.git 
-    source multibuild/common_utils.sh
+    #git clone https://github.com/matthew-brett/multibuild.git 
+    #source multibuild/common_utils.sh
 
     if [[ "$(which python)" = "" ]]; then
         alias python='python3'
         alias pip='pip3'
-    fi 
+    fi
+    curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+    python get-pip.py
 
     python -m pip install ubelt --user
     source stage_multibuild.sh
