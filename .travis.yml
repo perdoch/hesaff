@@ -177,7 +177,8 @@ before_install: |
     python get-pip.py --user
 
     python -m pip install ubelt --user
-    source stage_multibuild.sh
+    #source stage_multibuild.sh
+    bash stage_multibuild.sh
 
 install: |
     source run_multibuild.sh
