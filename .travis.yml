@@ -178,11 +178,20 @@ before_install: |
     python get-pip.py --user
 
     python -m pip install ubelt --user
-    #source stage_multibuild.sh
-    bash stage_multibuild.sh
+    source stage_multibuild.sh
+    #bash stage_multibuild.sh
 
 install: |
-    source run_multibuild.sh
+    #source run_multibuild.sh
+    echo "--- BEGIN EXEC BUILD WHEEL ---"
+    cd $_STAGED_REPO
+    build_wheel $REPO_DIR $PLAT
+    mkdir -p $_SOURCE_REPO/dist
+    mkdir -p $_SOURCE_REPO/wheelhouse
+    cp $_STAGED_REPO/dist/*.whl $_SOURCE_REPO/dist
+    cp $_STAGED_REPO/dist/*.whl $_SOURCE_REPO/wheelhouse
+    echo "--- END EXEC BUILD WHEEL ---"
+    
 
 script: |
     # Install and run tests
