@@ -1,5 +1,7 @@
 #### --- GLOBAL --- ####
 # env global for travis.yml
+echo "=== START OF STAGE MULTIBUILD ==="
+
 TEST_DEPENDS="numpy xdoctest ubelt"
 CONFIG_PATH="multibuild_config.sh"
 #BDIST_PARAMS=${BDIST_PARAMS:""}
@@ -15,26 +17,19 @@ if [[ "$MB_PYTHON_VERSION" = auto ]]; then
     MB_PYTHON_VERSION=$(python -c "import sys; print('{}.{}'.format(*sys.version_info[0:2]))")
 fi
 
-setup-staging(){ 
+setup-staging(){
     REPO_NAME=hesaff
     _SOURCE_REPO=$(dirname "${BASH_SOURCE[0]}")
     _SOURCE_REPO=$(python -c "import os; print(os.path.realpath('$_SOURCE_REPO'))")
     _STAGEING_DPATH=$_SOURCE_REPO/_staging
     _STAGED_REPO=$_STAGEING_DPATH/$REPO_NAME
-    mkdir -p $_STAGEING_DPATH
-    rm -rf $_STAGEING_DPATH/wheelhouse
-    #mkdir -p $_STAGEING_DPATH/wheelhouse
-    #unlink wheelhouse
-    #if [ ! -d $_SOURCE_REPO/wheelhouse ]; then
-    #    ln -s $_STAGEING_DPATH/wheelhouse $_SOURCE_REPO/wheelhouse
-    #fi
 
-    #echo "_SOURCE_REPO = $_SOURCE_REPO"
-    #echo "_STAGED_REPO = $_STAGED_REPO"
+    mkdir -p $_STAGEING_DPATH
+    #rm -rf $_STAGEING_DPATH/wheelhouse
 
     # Create a copy of this repo in the staging dir, but ignore build side effects
     _EXCLUDE="'_staging','*.so','*.dylib','*.dll','_skbuild','*.egg-info','_dist','__pycache__','.git','dist*','build*','wheel*','dev','.git*','appveyor.yml','.travis.yml'"
-    bash -c "rsync -avrP --max-delete=0 --exclude={$_EXCLUDE} . $_STAGED_REPO"  # wrapped due to format issue in editor
+    rsync -avr --max-delete=0 --exclude={$_EXCLUDE} . $_STAGED_REPO 
 
     # Ensure multibuild exists in this copy of this repo
     if [ ! -d $_STAGED_REPO/multibuild ]; then
@@ -48,8 +43,6 @@ setup-staging(){
         python docker/build_opencv_docker.py --dpath=$_STAGEING_DPATH --no-exec
         DOCKER_TAG=$(cat $_STAGEING_DPATH/opencv-docker-tag.txt)
         DOCKER_IMAGE="quay.io/erotemic/manylinux-opencv:${DOCKER_TAG}"
-        echo "DOCKER_TAG = $DOCKER_TAG"
-        echo "DOCKER_IMAGE = $DOCKER_IMAGE"
         #docker pull $DOCKER_IMAGE
     else
         # Patch multibuild so we can start from a local docker image  
@@ -57,9 +50,10 @@ setup-staging(){
         # Ensure that the manylinux1_x86_64-opencv4.1.0-py3.6 docker image exists
         python docker/build_opencv_docker.py --dpath=$_STAGEING_DPATH --no-exec
         # Ensure that the manylinux1_x86_64-opencv4.1.0-py3.6 docker image exists
-        DOCKER_IMAGE=$(cat $_STAGEING_DPATH/opencv-docker-tag.txt)
+        DOCKER_TAG=$(cat $_STAGEING_DPATH/opencv-docker-tag.txt)
+        DOCKER_IMAGE=$DOCKER_TAG
     fi
-
+    echo "DOCKER_TAG = $DOCKER_TAG"
     echo "DOCKER_IMAGE = $DOCKER_IMAGE"
 }
 
@@ -71,9 +65,9 @@ echo "BASH_SOURCE = $BASH_SOURCE"
 cd $_STAGED_REPO
 REPO_DIR="."
 
-source multibuild/common_utils.sh
+source $_STAGED_REPO/multibuild/common_utils.sh
 if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export ARCH_FLAGS=" "; fi
-source multibuild/travis_steps.sh
+source $_STAGED_REPO/multibuild/travis_steps.sh
 
 
 # I have no idea what this does
@@ -96,3 +90,6 @@ fi
 
 echo "_SOURCE_REPO = $_SOURCE_REPO"
 cd $_SOURCE_REPO
+
+
+echo "=== END OF STAGE MULTIBUILD ==="

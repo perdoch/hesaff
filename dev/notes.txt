@@ -1,0 +1,8 @@
+skvark opencv-python travis CI log: 
+    https://travis-ci.org/skvark/opencv-python/jobs/545352661
+     
+appveyor: 
+    https://ci.appveyor.com/project/skvark/opencv-python/builds/25262827
+
+erotemic hesaff travis CI log:
+    https://travis-ci.com/Erotemic/hesaff/jobs/211365164
