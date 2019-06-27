@@ -3,7 +3,7 @@
 #Sourced by docker_build_wrap.sh and docker_test_wrap.sh .
 #Runs in Docker, so only the vars passed to `docker run' exist.
 #See multibuild/README.rst
-echo "===  Loading config.sh  === "
+echo "===  Loading MULTIBUILD config.sh  === "
 
 # To see build progress
 function build_wheel {
@@ -17,19 +17,17 @@ function bdist_wheel_cmd {
     echo "-- IN CUSTOM BUILD WHEEL CMD --"
     local abs_wheelhouse=$1
 
-    echo "-- RUN SETUP BUILD --"
 
     echo "BDIST_PARAMS = $BDIST_PARAMS"
-    rm -rf _skbuild
+    #rm -rf _skbuild
 
     #python setup.py build $BDIST_PARAMS
     # HACK TO GET LIBS IN THE RIGHT PLACE  
+    echo "-- RUN SETUP BUILD --"
     python setup.py build_ext --inplace $BDIST_PARAMS
-
     echo "-- <SETUP BDIST_WHEEL> --"
     python setup.py bdist_wheel $BDIST_PARAMS
     echo "-- </SETUP BDIST_WHEEL> --"
-
     cp dist/*.whl $abs_wheelhouse
     if [ -n "$USE_CCACHE" -a -z "$BREW_BOOTSTRAP_MODE" ]; then ccache -s; fi
 
@@ -142,7 +140,7 @@ function pre_build {
   else
     echo "Running for linux"
   fi
-  #qmake -query
+  qmake -query
 
   PYTHON=python$PYTHON_VERSION
   $PYTHON -m pip install pip  -U
@@ -154,13 +152,13 @@ function run_tests {
     echo "Run tests..."
     echo "PWD = $PWD"
 
-    if [ -n "$IS_OSX" ]; then
-      echo "Running for OS X"
-      cd ../tests/
-    else
-      echo "Running for linux"
-      cd /io/tests/
-    fi
+    #if [ -n "$IS_OSX" ]; then
+    #  echo "Running for OS X"
+    #  cd ../tests/
+    #else
+    #  echo "Running for linux"
+    #  cd /io/tests/
+    #fi
 
     test_wheels
 }
@@ -177,5 +175,5 @@ function test_wheels {
     #$PYTHON -m xdoctest pyhesaff
 }
 
-#export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
-#set -x
+export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+set -x
