@@ -9,7 +9,7 @@ env:
         - UNICODE_WIDTH=32
 
 
-# Host Python is never used
+# Host Python is only used in staging
 language: generic
 # Required to invoke docker ourselves as per https://docs.travis-ci.com/user/docker/
 sudo: required
