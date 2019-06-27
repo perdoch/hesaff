@@ -33,7 +33,7 @@ setup-staging(){
     #echo "_STAGED_REPO = $_STAGED_REPO"
 
     # Create a copy of this repo in the staging dir, but ignore build side effects
-    _EXCLUDE="'_staging','*.so','*.dylib','*.dll','_skbuild','*.egg-info','_dist','__pycache__','.git','dist*','build*','wheel*','dev','.git*','.travis.yml'"
+    _EXCLUDE="'_staging','*.so','*.dylib','*.dll','_skbuild','*.egg-info','_dist','__pycache__','.git','dist*','build*','wheel*','dev','.git*','appveyor.yml','.travis.yml'"
     bash -c "rsync -avrP --max-delete=0 --exclude={$_EXCLUDE} . $_STAGED_REPO"  # wrapped due to format issue in editor
 
     # Ensure multibuild exists in this copy of this repo
