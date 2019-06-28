@@ -62,7 +62,10 @@ setup-staging
 
 echo "BASH_SOURCE = $BASH_SOURCE"
 # Change directory into the staging copy and procede with the build
-cd $_STAGED_REPO
+cd "ATEMPTING TO CD"
+set +e
+cd "${_STAGED_REPO}"
+set -e
 REPO_DIR="."
 
 source multibuild/common_utils.sh
@@ -89,7 +92,7 @@ if [ -n "$IS_OSX" ]; then
 fi
 
 #echo "_SOURCE_REPO = $_SOURCE_REPO"
-#cd $_SOURCE_REPO
+#cd "${_SOURCE_REPO}"
 
 
 echo "=== END OF STAGE MULTIBUILD ==="
