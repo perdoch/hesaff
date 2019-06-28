@@ -65,9 +65,9 @@ echo "BASH_SOURCE = $BASH_SOURCE"
 cd $_STAGED_REPO
 REPO_DIR="."
 
-source $_STAGED_REPO/multibuild/common_utils.sh
+source multibuild/common_utils.sh
 if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export ARCH_FLAGS=" "; fi
-source $_STAGED_REPO/multibuild/travis_steps.sh
+source multibuild/travis_steps.sh
 
 
 # I have no idea what this does
@@ -88,8 +88,8 @@ if [ -n "$IS_OSX" ]; then
     brew_cache_cleanup
 fi
 
-echo "_SOURCE_REPO = $_SOURCE_REPO"
-cd $_SOURCE_REPO
+#echo "_SOURCE_REPO = $_SOURCE_REPO"
+#cd $_SOURCE_REPO
 
 
 echo "=== END OF STAGE MULTIBUILD ==="
