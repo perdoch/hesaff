@@ -1,6 +1,4 @@
-if ["$__STAGE_ONCE__" == "TRUE" ]; then
-echo "already staged, skipping..."
-else
+if [ "$__STAGE_ONCE__" == "" ]; then
 export __STAGE_ONCE__="TRUE"
 #### --- GLOBAL --- ####
 # env global for travis.yml
@@ -53,8 +51,11 @@ setup-staging(){
     if [ ! -d multibuild ]; then
         git clone https://github.com/matthew-brett/multibuild.git multibuild
     fi
-    find multibuild -type f -exec sed -i.bak "s/ cd /#cd /g" {} \;
-    sed -i "s/ cd /#cd /g" multibuild/common_utils.sh
+    #find multibuild -type f -exec sed -i.bak "s/ cd /#cd /g" {} \;
+    sed -i "s/cd .repo_dir && .cmd .wheelhouse/\$cmd \$wheelhouse/g" multibuild/common_utils.sh
+    #(cd multibuild && git diff common_utils.sh)
+    #(cd multibuild && git checkout common_utils.sh)
+    #cat multibuild/common_utils.sh | grep ".cmd.*wheel"
     
     #(cd $repo_dir && $cmd $wheelhouse)
     

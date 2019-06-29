@@ -22,22 +22,22 @@ Note that this script uses the network to stage its dependencies.
 # All the interesting stuff lives here
 source stage_multibuild.sh
 
-echo "MB_PYTHON_VERSION=$MB_PYTHON_VERSION"
-echo "DOCKER_IMAGE=$DOCKER_IMAGE"
-echo "PLAT=$PLAT"
-echo "REPO_DIR=$REPO_DIR"
-echo "_SOURCE_REPO=$_SOURCE_REPO"
-echo "_STAGED_REPO=$_STAGED_REPO"
+#echo "MB_PYTHON_VERSION=$MB_PYTHON_VERSION"
+#echo "DOCKER_IMAGE=$DOCKER_IMAGE"
+#echo "PLAT=$PLAT"
+#echo "REPO_DIR=$REPO_DIR"
+#echo "_SOURCE_REPO=$_SOURCE_REPO"
+#echo "_STAGED_REPO=$_STAGED_REPO"
 
 #### --- INSTALL --- ####
 
 echo "--- BEGIN EXEC BUILD WHEEL ---"
-cd $_STAGED_REPO
+#cd $_STAGED_REPO
 build_wheel $REPO_DIR $PLAT
-mkdir -p $_SOURCE_REPO/dist
-mkdir -p $_SOURCE_REPO/wheelhouse
-cp $_STAGED_REPO/dist/*.whl $_SOURCE_REPO/dist
-cp $_STAGED_REPO/dist/*.whl $_SOURCE_REPO/wheelhouse
+#mkdir -p $_SOURCE_REPO/dist
+#mkdir -p $_SOURCE_REPO/wheelhouse
+#cp $_STAGED_REPO/dist/*.whl $_SOURCE_REPO/dist
+#cp $_STAGED_REPO/dist/*.whl $_SOURCE_REPO/wheelhouse
 echo "--- END EXEC BUILD WHEEL ---"
 
 ## Build and package
