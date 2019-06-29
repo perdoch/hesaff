@@ -1,3 +1,7 @@
+if ["$__STAGE_ONCE__" == "TRUE" ]; then
+echo "already staged, skipping..."
+else
+export __STAGE_ONCE__="TRUE"
 #### --- GLOBAL --- ####
 # env global for travis.yml
 echo "=== START OF STAGE MULTIBUILD ==="
@@ -64,9 +68,11 @@ echo "BASH_SOURCE = $BASH_SOURCE"
 # Change directory into the staging copy and procede with the build
 echo "ATEMPTING TO CD"
 set +e
-cd "${_STAGED_REPO}"
+
+#cd "${_STAGED_REPO}"
 set -e
-REPO_DIR="."
+REPO_DIR="${_STAGED_REPO}"
+#REPO_DIR="."
 
 source multibuild/common_utils.sh
 if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export ARCH_FLAGS=" "; fi
@@ -96,3 +102,4 @@ fi
 
 
 echo "=== END OF STAGE MULTIBUILD ==="
+fi
