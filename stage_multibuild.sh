@@ -53,6 +53,11 @@ setup-staging(){
     if [ ! -d multibuild ]; then
         git clone https://github.com/matthew-brett/multibuild.git multibuild
     fi
+    find multibuild -type f -exec sed -i.bak "s/ cd /#cd /g" {} \;
+    sed -i "s/ cd /#cd /g" multibuild/common_utils.sh
+    
+    #(cd $repo_dir && $cmd $wheelhouse)
+    
 
     _USE_QUAY="True"
     if [ $_USE_QUAY = "True" ]; then
