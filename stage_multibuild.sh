@@ -52,7 +52,9 @@ setup-staging(){
         git clone https://github.com/matthew-brett/multibuild.git multibuild
     fi
     #find multibuild -type f -exec sed -i.bak "s/ cd /#cd /g" {} \;
+    if [ -n "$IS_OSX" ]; then
     sed -i "s/cd .repo_dir && .cmd .wheelhouse/\$cmd \$wheelhouse/g" multibuild/common_utils.sh
+    fi
     #(cd multibuild && git diff common_utils.sh)
     #(cd multibuild && git checkout common_utils.sh)
     #cat multibuild/common_utils.sh | grep ".cmd.*wheel"
