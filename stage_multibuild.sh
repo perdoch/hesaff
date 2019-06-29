@@ -86,8 +86,8 @@ setup-staging
 
 echo "BASH_SOURCE = $BASH_SOURCE"
 # Change directory into the staging copy and procede with the build
-echo "ATEMPTING TO CD"
-set +e
+#echo "ATEMPTING TO CD"
+#set +e
 
 #cd "${_STAGED_REPO}"
 set -e
