@@ -55,9 +55,9 @@ setup-staging(){
     #if [ -n "$IS_OSX" ]; then
 
     if [ "$TRAVIS_OS_NAME" = "osx" ]; then
-        NEED_SED = "True"
-    else
         NEED_SED="False"
+    else
+        NEED_SED="True"
     fi
 
     if [ "$NEED_SED" = "True" ]; then
