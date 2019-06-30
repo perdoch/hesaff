@@ -53,13 +53,15 @@ setup-staging(){
     fi
     #find multibuild -type f -exec sed -i.bak "s/ cd /#cd /g" {} \;
     #if [ -n "$IS_OSX" ]; then
-    NEED_SED = "True"
 
     if [ "$TRAVIS_OS_NAME" = "osx" ]; then
+        NEED_SED = "True"
+    else
         NEED_SED="False"
     fi
 
     if [ "$NEED_SED" = "True" ]; then
+        #(cd multibuild && git checkout common_utils.sh)
         sed -i "s/cd .repo_dir && .cmd .wheelhouse/\$cmd \$wheelhouse/g" multibuild/common_utils.sh
     fi
     #fi
