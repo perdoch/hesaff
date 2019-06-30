@@ -52,22 +52,22 @@ matrix:
       stage: final
     - <<: *osx-70
       stage: s1
-    - &osx-80
-      os: osx
-      osx_image: xcode8.3
-      env:
-        - MB_PYTHON_VERSION=3.4
-      stage: final
-    - <<: *osx-80
-      stage: s1
-    - &osx-90
-      os: osx
-      osx_image: xcode8.3
-      env:
-        - MB_PYTHON_VERSION=3.5
-      stage: final
-    - <<: *osx-90
-      stage: s1
+    #- &osx-80
+    #  os: osx
+    #  osx_image: xcode8.3
+    #  env:
+    #    - MB_PYTHON_VERSION=3.4
+    #  stage: final
+    #- <<: *osx-80
+    #  stage: s1
+    #- &osx-90
+    #  os: osx
+    #  osx_image: xcode8.3
+    #  env:
+    #    - MB_PYTHON_VERSION=3.5
+    #  stage: final
+    #- <<: *osx-90
+    #  stage: s1
     - &osx-100
       os: osx
       osx_image: xcode8.3
@@ -75,83 +75,83 @@ matrix:
         - MB_PYTHON_VERSION=3.6
     - <<: *osx-100
       stage: s1
-    - &osx-110
-      os: osx
-      osx_image: xcode8.3
-      env:
-        - MB_PYTHON_VERSION=3.7
-      stage: final
-    - <<: *osx-110
-      stage: s1
+    #- &osx-110
+    #  os: osx
+    #  osx_image: xcode8.3
+    #  env:
+    #    - MB_PYTHON_VERSION=3.7
+    #  stage: final
+    #- <<: *osx-110
+    #  stage: s1
 
     # headless builds for Linux
-    - os: linux
-      # the following jobs will use the same stage name by default
-      stage: s1
-      env:
-        - MB_PYTHON_VERSION=2.7
-      cache:
-        directories: $HOME/.ccache
-    - os: linux
-      env:
-        - MB_PYTHON_VERSION=2.7
-        - UNICODE_WIDTH=16
-      cache:
-        directories: $HOME/.ccache
-    - os: linux
-      env:
-        - MB_PYTHON_VERSION=2.7
-        - PLAT=i686
-      cache:
-        directories: $HOME/.ccache
-    - os: linux
-      env:
-        - MB_PYTHON_VERSION=2.7
-        - PLAT=i686
-        - UNICODE_WIDTH=16
-      cache:
-        directories: $HOME/.ccache
-    - os: linux
-      env:
-        - MB_PYTHON_VERSION=3.4
-      cache:
-        directories: $HOME/.ccache
-    - os: linux
-      env:
-        - MB_PYTHON_VERSION=3.4
-        - PLAT=i686
-      cache:
-        directories: $HOME/.ccache
-    - os: linux
-      env:
-        - MB_PYTHON_VERSION=3.5
-      cache:
-        directories: $HOME/.ccache
-    - os: linux
-      env:
-        - MB_PYTHON_VERSION=3.5
-        - PLAT=i686
-      cache:
-        directories: $HOME/.ccache
-    - os: linux
-      env:
-        - MB_PYTHON_VERSION=3.6
-        - TEST_DEPENDS=numpy==1.11.3
-      cache:
-        directories: $HOME/.ccache
-    - os: linux
-      env:
-        - MB_PYTHON_VERSION=3.6
-        - PLAT=i686
-        - TEST_DEPENDS=numpy==1.11.3
-      cache:
-        directories: $HOME/.ccache
-    - os: linux
-      env:
-        - MB_PYTHON_VERSION=3.7
-        - TEST_DEPENDS=numpy==1.14.5
-      cache:
-        directories: $HOME/.ccache
+    #- os: linux
+    #  # the following jobs will use the same stage name by default
+    #  stage: s1
+    #  env:
+    #    - MB_PYTHON_VERSION=2.7
+    #  cache:
+    #    directories: $HOME/.ccache
+    #- os: linux
+    #  env:
+    #    - MB_PYTHON_VERSION=2.7
+    #    - UNICODE_WIDTH=16
+    #  cache:
+    #    directories: $HOME/.ccache
+    #- os: linux
+    #  env:
+    #    - MB_PYTHON_VERSION=2.7
+    #    - PLAT=i686
+    #  cache:
+    #    directories: $HOME/.ccache
+    #- os: linux
+    #  env:
+    #    - MB_PYTHON_VERSION=2.7
+    #    - PLAT=i686
+    #    - UNICODE_WIDTH=16
+    #  cache:
+    #    directories: $HOME/.ccache
+    #- os: linux
+    #  env:
+    #    - MB_PYTHON_VERSION=3.4
+    #  cache:
+    #    directories: $HOME/.ccache
+    #- os: linux
+    #  env:
+    #    - MB_PYTHON_VERSION=3.4
+    #    - PLAT=i686
+    #  cache:
+    #    directories: $HOME/.ccache
+    #- os: linux
+    #  env:
+    #    - MB_PYTHON_VERSION=3.5
+    #  cache:
+    #    directories: $HOME/.ccache
+    #- os: linux
+    #  env:
+    #    - MB_PYTHON_VERSION=3.5
+    #    - PLAT=i686
+    #  cache:
+    #    directories: $HOME/.ccache
+    #- os: linux
+    #  env:
+    #    - MB_PYTHON_VERSION=3.6
+    #    - TEST_DEPENDS=numpy==1.11.3
+    #  cache:
+    #    directories: $HOME/.ccache
+    #- os: linux
+    #  env:
+    #    - MB_PYTHON_VERSION=3.6
+    #    - PLAT=i686
+    #    - TEST_DEPENDS=numpy==1.11.3
+    #  cache:
+    #    directories: $HOME/.ccache
+    #- os: linux
+    #  env:
+    #    - MB_PYTHON_VERSION=3.7
+    #    - TEST_DEPENDS=numpy==1.14.5
+    #  cache:
+    #    directories: $HOME/.ccache
     - os: linux
       env:
         - MB_PYTHON_VERSION=3.7
@@ -169,13 +169,32 @@ before_install: |
     # Hack, why don't we have pip here?
     #git clone https://github.com/matthew-brett/multibuild.git 
     #source multibuild/common_utils.sh
+    
+    if [ -n "$IS_OSX" ]; then
 
-    if [[ "$(which python)" = "" ]]; then
-        alias python='python3'
-        alias pip='pip3'
+        if [ ! -d multibuild ]; then
+            git clone https://github.com/matthew-brett/multibuild.git multibuild
+        fi
+
+        source multibuild/common_utils.sh
+        source multibuild/osx_utils.sh
+
+        # Uninstall oclint. See Travis-CI gh-8826
+        brew cask uninstall oclint || true    
+        export CC=clang
+        export CXX=clang++
+        get_macpython_environment $MB_PYTHON_VERSION venv
+        source venv/bin/activate
+        pip install --upgrade pip wheel
+        
+    else
+        if [[ "$(which python)" = "" ]]; then
+            alias python='python3'
+            alias pip='pip3'
+        fi
+        curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+        python get-pip.py --user
     fi
-    curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-    python get-pip.py --user
 
     python -m pip install ubelt --user
     source stage_multibuild.sh
