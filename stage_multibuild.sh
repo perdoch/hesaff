@@ -21,8 +21,10 @@ fi
 
 setup-staging(){
     REPO_NAME=hesaff
+
     _SOURCE_REPO=$(dirname "${BASH_SOURCE[0]}")
-    _SOURCE_REPO=$(python -c "import os; print(os.path.realpath('$_SOURCE_REPO'))")
+    #_SOURCE_REPO=$(python -c "import os; print(os.path.realpath('$_SOURCE_REPO'))")
+    
     echo "_SOURCE_REPO = $_SOURCE_REPO"
 
     # Hack for CI

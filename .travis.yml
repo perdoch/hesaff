@@ -68,13 +68,13 @@ matrix:
     #  stage: final
     #- <<: *osx-90
     #  stage: s1
-    - &osx-100
-      os: osx
-      osx_image: xcode8.3
-      env:
-        - MB_PYTHON_VERSION=3.6
-    - <<: *osx-100
-      stage: s1
+    #- &osx-100
+    #  os: osx
+    #  osx_image: xcode8.3
+    #  env:
+    #    - MB_PYTHON_VERSION=3.6
+    #- <<: *osx-100
+    #  stage: s1
     #- &osx-110
     #  os: osx
     #  osx_image: xcode8.3
@@ -142,6 +142,12 @@ matrix:
     #- os: linux
     #  env:
     #    - MB_PYTHON_VERSION=3.6
+    #    - TEST_DEPENDS=numpy==1.11.3
+    #  cache:
+    #    directories: $HOME/.ccache
+    #- os: linux
+    #  env:
+    #    - MB_PYTHON_VERSION=3.6
     #    - PLAT=i686
     #    - TEST_DEPENDS=numpy==1.11.3
     #  cache:
@@ -152,13 +158,6 @@ matrix:
     #    - TEST_DEPENDS=numpy==1.14.5
     #  cache:
     #    directories: $HOME/.ccache
-    - os: linux
-      env:
-        - MB_PYTHON_VERSION=3.7
-        - PLAT=i686
-        - TEST_DEPENDS=numpy==1.14.5
-      cache:
-        directories: $HOME/.ccache
 
 # The first line is printed in the folding header in Travis output
 before_install: |
