@@ -72,16 +72,19 @@ function run_tests {
     echo "Run tests..."
     echo "PWD = $PWD"
 
+    echo "PYTHON = $PYTHON"
+    echo "PYTHON_VERSION = $PYTHON_VERSION"
+    PYTHON=python$PYTHON_VERSION
     $PYTHON -m xdoctest pyhesaff list
     echo "TODO: actually run tests"
 
-    #if [ -n "$IS_OSX" ]; then
-    #  echo "Running for OS X"
-    #  cd ../tests/
-    #else
-    #  echo "Running for linux"
-    #  cd /io/tests/
-    #fi
+    if [ -n "$IS_OSX" ]; then
+      echo "Running for OS X"
+      cd ../tests/
+    else
+      echo "Running for linux"
+      cd /io/tests/
+    fi
 
     test_wheels
 }
