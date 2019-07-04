@@ -139,12 +139,12 @@ matrix:
     #    - TEST_DEPENDS=numpy==1.11.3
     #  cache:
     #    directories: $HOME/.ccache
-    #- os: linux
-    #  env:
-    #    - MB_PYTHON_VERSION=3.6
-    #    - TEST_DEPENDS=numpy==1.11.3
-    #  cache:
-    #    directories: $HOME/.ccache
+    - os: linux
+      env:
+        - MB_PYTHON_VERSION=3.6
+        - TEST_DEPENDS=numpy==1.11.3
+      cache:
+        directories: $HOME/.ccache
     #- os: linux
     #  env:
     #    - MB_PYTHON_VERSION=3.6
