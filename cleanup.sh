@@ -3,7 +3,7 @@
 # Artifacts of the build and testing process
 
 sudo rm -rf wheelhouse
-sudo rm -rf multibuild
+#sudo rm -rf multibuild
 sudo rm -rf dist
 sudo rm -rf __pycache__
 sudo rm -rf pyhesaff.egg-info

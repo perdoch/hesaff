@@ -64,12 +64,13 @@ setup_staging_helper(){
     #find multibuild -type f -exec sed -i.bak "s/ cd /#cd /g" {} \;
     #if [ -n "$IS_OSX" ]; then
 
-    if [ "$TRAVIS_OS_NAME" = "osx" ]; then
-        NEED_SED="False"
-        _IS_LINUX="False"
-    else
-        _IS_LINUX="True"
-    fi
+    #if [ "$TRAVIS_OS_NAME" = "osx" ]; then
+    #if [[ "$OSTYPE" = "darwin"* ]]; then
+    #    NEED_SED="False"
+    #    _IS_LINUX="False"
+    #else
+    #    _IS_LINUX="True"
+    #fi
 
     #if [ "$NEED_SED" = "True" ]; then
     #    #(cd multibuild && git checkout common_utils.sh)
@@ -83,7 +84,7 @@ setup_staging_helper(){
     (cd $repo_dir && $cmd $wheelhouse)
     """
 
-    if [ $_IS_LINUX = "True" ]; then
+    if [[ "$OSTYPE" == "linux"* ]]; then
         _USE_QUAY="True"
         if [ $_USE_QUAY = "True" ]; then
             # Assume that the query.io/erotemic/manylinux-opencv:{DOCKER_TAG} image exists
@@ -101,12 +102,12 @@ setup_staging_helper(){
             DOCKER_TAG=$(cat $_STAGEING_DPATH/opencv-docker-tag.txt)
             DOCKER_IMAGE=$DOCKER_TAG
         fi
-        echo "DOCKER_TAG = $DOCKER_TAG"
-        echo "DOCKER_IMAGE = $DOCKER_IMAGE"
     fi
+    echo "DOCKER_TAG = $DOCKER_TAG"
+    echo "DOCKER_IMAGE = $DOCKER_IMAGE"
 }
 
-if [[ "$OSTYPE" = "darwin"* ]]; then
+if [[ "$OSTYPE" == "darwin"* ]]; then
     __THIS_DIR=$(dirname "${BASH_SOURCE[0]}")
     source $__THIS_DIR/osx_utils.sh
 #elif [[ "$OSTYPE" = "darwin"* ]]; then
