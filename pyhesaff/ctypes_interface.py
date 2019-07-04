@@ -44,6 +44,7 @@ def get_candidate_plat_specifiers():
 
     plat_name_cands = [plat_name]
     if plat_name.startswith('linux'):
+        plat_name_cands.append('linux')
         plat_name_cands.append('manylinux1')
         plat_name_cands.append('manylinux')
 

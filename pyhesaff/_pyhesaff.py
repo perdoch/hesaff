@@ -416,6 +416,7 @@ def detect_feats(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kw
         python -m pyhesaff detect_feats --show --only_count=False
 
     Example0:
+        >>> # xdoctest: +REQUIRES(module:vtool)
         >>> # ENABLE_DOCTEST
         >>> # Test simple detect
         >>> from pyhesaff._pyhesaff import *  # NOQA
@@ -579,6 +580,7 @@ def detect_feats_in_image(img, **kwargs):
 
     Example:
         >>> # ENABLE_DOCTEST
+        >>> # xdoctest: +REQUIRES(module:vtool)
         >>> from pyhesaff._pyhesaff import *  # NOQA
         >>> import vtool as vt
         >>> img_fpath = grab_test_imgpath('astro.png')
@@ -625,6 +627,7 @@ def detect_num_feats_in_image(img, **kwargs):
 
     Example:
         >>> # ENABLE_DOCTEST
+        >>> # xdoctest: +REQUIRES(module:vtool)
         >>> from pyhesaff._pyhesaff import *  # NOQA
         >>> import vtool as vt
         >>> img_fpath = grab_test_imgpath('zebra.png')
@@ -636,6 +639,7 @@ def detect_num_feats_in_image(img, **kwargs):
         >>> print(result)
 
     Example1:
+        >>> # xdoctest: +REQUIRES(module:vtool)
         >>> # TIMEDOCTEST
         >>> from pyhesaff._pyhesaff import *  # NOQA
         >>> setup = ub.codeblock(
@@ -690,6 +694,7 @@ def extract_vecs(img_fpath, kpts, **kwargs):
 
     Example:
         >>> # ENABLE_DOCTEST
+        >>> # xdoctest: +REQUIRES(module:vtool)
         >>> from pyhesaff._pyhesaff import *  # NOQA
         >>> import vtool as vt
         >>> img_fpath = grab_test_imgpath('carl.jpg')
@@ -700,6 +705,7 @@ def extract_vecs(img_fpath, kpts, **kwargs):
 
     Example:
         >>> # ENABLE_DOCTEST
+        >>> # xdoctest: +REQUIRES(module:vtool)
         >>> from pyhesaff._pyhesaff import *  # NOQA
         >>> import vtool as vt
         >>> img_fpath = grab_test_imgpath(ub.argval('--fname', default='astro.png'))
@@ -758,6 +764,7 @@ def extract_patches(img_or_fpath, kpts, **kwargs):
 
     Example:
         >>> # ENABLE_DOCTEST
+        >>> # xdoctest: +REQUIRES(module:vtool)
         >>> from pyhesaff._pyhesaff import *  # NOQA
         >>> import vtool as vt
         >>> kwargs = {}
@@ -806,6 +813,7 @@ def extract_desc_from_patches(patch_list):
 
     Example:
         >>> # ENABLE_DOCTEST
+        >>> # xdoctest: +REQUIRES(module:vtool)
         >>> from pyhesaff._pyhesaff import *  # NOQA
         >>> import vtool as vt
         >>> img_fpath = grab_test_imgpath(ub.argval('--fname', default='astro.png'))
@@ -823,6 +831,7 @@ def extract_desc_from_patches(patch_list):
 
     Example:
         >>> # ENABLE_DOCTEST
+        >>> # xdoctest: +REQUIRES(module:vtool)
         >>> from pyhesaff._pyhesaff import *  # NOQA
         >>> import vtool as vt
         >>> img_fpath = grab_test_imgpath(ub.argval('--fname', default='astro.png'))
