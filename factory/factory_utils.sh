@@ -2,7 +2,8 @@
 # env global for travis.yml
 echo "=== START OF STAGE MULTIBUILD ==="
 
-TEST_DEPENDS="numpy xdoctest ubelt"
+TEST_DEPENDS="numpy ubelt"
+#$PYTHON -m pip install git+https://github.com/Erotemic/xdoctest.git@master
 CONFIG_PATH="multibuild_config.sh"
 #BDIST_PARAMS=${BDIST_PARAMS:""}
 
