@@ -16,21 +16,21 @@ osx_stating_helper(){
 }
 
 osx_before_install_helper(){
-    if [ ! -d multibuild ]; then
-        git clone https://github.com/matthew-brett/multibuild.git multibuild
-    fi
+    #if [ ! -d multibuild ]; then
+    #    git clone https://github.com/matthew-brett/multibuild.git multibuild
+    #fi
 
-    source multibuild/common_utils.sh
-    source multibuild/osx_utils.sh
+    #source multibuild/common_utils.sh
+    #source multibuild/osx_utils.sh
 
-    # Uninstall oclint. See Travis-CI gh-8826
-    brew cask uninstall oclint || true    
-    export CC=clang
-    export CXX=clang++
-    get_macpython_environment $MB_PYTHON_VERSION venv
-    source venv/bin/activate
-    pip install --upgrade pip wheel
-
+    ## Uninstall oclint. See Travis-CI gh-8826
+    #brew cask uninstall oclint || true    
+    #export CC=clang
+    #export CXX=clang++
+    #get_macpython_environment $MB_PYTHON_VERSION venv
+    #source venv/bin/activate
+    #pip install --upgrade pip wheel
+    echo "not doing anything for osx prebuild"
 }
 
 
