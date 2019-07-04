@@ -82,7 +82,12 @@ function run_tests {
     PYTHON=python$PYTHON_VERSION
 
     $PYTHON -m pip install pip  -U
-    $PYTHON -m pip install git+https://github.com/Erotemic/xdoctest.git@master
+    #if [[ "$OSTYPE" == "linux"* ]]; then
+    #  https://github.com/Erotemic/xdoctest/archive/master.zip
+    #fi
+    #  https://github.com/Erotemic/xdoctest/archive/master.zip
+    #$PYTHON -m pip install git+https://github.com/Erotemic/xdoctest.git@master
+    $PYTHON -m pip install https://github.com/Erotemic/xdoctest/archive/master.zip
     $PYTHON -m xdoctest pyhesaff list
     echo "TODO: actually run tests"
 
