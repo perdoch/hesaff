@@ -1,0 +1,211 @@
+# Set TEST_BUILDS=1 to run library_builders tests
+
+language: generic
+
+cache:
+  directories:
+   - $HOME/.ccache
+
+env:
+  global:
+    - PLAT=x86_64
+
+matrix:
+  include:
+    - os: linux
+      dist: precise
+    # 64-bit builds
+    - os: linux
+      dist: trusty
+      env:
+        - TEST_BUILDS=1
+    # 32-bit builds
+    - os: linux
+      dist: trusty
+      env:
+        - TEST_BUILDS=1
+        - PLAT=i686
+    # Builds with caching
+    - os: linux
+      dist: trusty
+      env:
+        - TEST_BUILDS=1
+        - USE_CCACHE=1
+    # OSX builds
+    - os: osx
+      osx_image: xcode6.4
+      env:
+        - PYTHON_VERSION=2.7
+        - VENV=venv
+    - os: osx
+      env:
+        - PYTHON_VERSION=2.7
+        - TEST_BUILDS=1
+    - os: osx
+      env:
+        - PYTHON_VERSION=2.7
+        - MB_PYTHON_OSX_VER=10.9
+        - TEST_BUILDS=1
+    - os: osx
+      language: objective-c
+      env:
+        - PYTHON_VERSION=2.7
+        - VENV=venv
+    - os: osx
+      env:
+        - PYTHON_VERSION=3.4
+    - os: osx
+      env:
+        - PYTHON_VERSION=3.4
+        - VENV=venv
+    - os: osx
+      env:
+        - PYTHON_VERSION=3.5
+    - os: osx
+      env:
+        - PYTHON_VERSION=3.5
+        - VENV=venv
+    - os: osx
+      env:
+        - PYTHON_VERSION=3.6
+        - VENV=venv
+    - os: osx
+      env:
+        - PYTHON_VERSION=3.6
+        - VENV=venv
+        - MB_PYTHON_OSX_VER=10.9
+    - os: osx
+      env:
+        - PYTHON_VERSION=3.7
+        - VENV=venv
+    - os: osx
+      env:
+        - PYTHON_VERSION=3.7
+        - VENV=venv
+        - MB_PYTHON_OSX_VER=10.9
+    - os: osx
+      env:
+        - PYTHON_VERSION=3.7
+        - VENV=venv
+        - USE_CCACHE=1
+    - os: osx
+      env:
+        - PYTHON_VERSION=pypy-4.0
+        - VENV=venv
+    - os: osx
+      env:
+        - PYTHON_VERSION=pypy-5.0
+        - VENV=venv
+    - os: osx
+      env:
+        - PYTHON_VERSION=pypy-5.1
+        - VENV=venv
+    - os: osx
+      env:
+        - PYTHON_VERSION=pypy-5.3
+        - VENV=venv
+    - os: osx
+      env:
+        - PYTHON_VERSION=pypy-5.4
+        - VENV=venv
+    - os: osx
+      env:
+        - PYTHON_VERSION=pypy-5.6
+        - VENV=venv
+    - os: osx
+      env:
+        - PYTHON_VERSION=pypy-5.7
+        - VENV=venv
+    - os: osx
+      env:
+        - PYTHON_VERSION=pypy-5.8
+        - VENV=venv
+    - os: osx
+      env:
+        - PYTHON_VERSION=pypy-5.9
+        - VENV=venv
+    - os: osx
+      env:
+        - PYTHON_VERSION=pypy-6.0
+        - VENV=venv
+    - os: osx
+      env:
+        - PYTHON_VERSION=pypy-7.0
+        - VENV=venv
+    - os: osx
+      env:
+        - PYTHON_VERSION=pypy-7.1
+        - VENV=venv
+    # Default OSX (xcode image) is 10.13 (xcode 9.4.1) as of 2018-08-03
+    # See: https://docs.travis-ci.com/user/reference/osx/
+    - os: osx
+      osx_image: xcode10.1
+      env:
+        - PYTHON_VERSION=3.7
+        - TEST_BUILDS=1
+    - os: osx
+      osx_image: xcode10.1
+      env:
+        - PYTHON_VERSION=3.7
+        - MB_PYTHON_OSX_VER=10.9
+        - TEST_BUILDS=1
+    - os: osx
+      osx_image: xcode10
+      env:
+        - PYTHON_VERSION=3.7
+    - os: osx
+      osx_image: xcode10.1
+      env:
+        - PYTHON_VERSION=3.5
+    - os: osx
+      osx_image: xcode10
+      env:
+        - PYTHON_VERSION=3.5
+    - os: osx
+      osx_image: xcode9.4
+      env:
+        - PYTHON_VERSION=3.5
+    - os: osx
+      osx_image: xcode9.3
+      env:
+        - PYTHON_VERSION=3.5
+    - os: osx
+      osx_image: xcode9.2
+      env:
+        - PYTHON_VERSION=3.5
+    - os: osx
+      osx_image: xcode9.1
+      env:
+        - PYTHON_VERSION=3.5
+    - os: osx
+      osx_image: xcode9
+      env:
+        - PYTHON_VERSION=3.5
+    - os: osx
+      osx_image: xcode8.3
+      env:
+        - PYTHON_VERSION=3.5
+    - os: osx
+      osx_image: xcode8.2
+      env:
+        - PYTHON_VERSION=3.5
+    - os: osx
+      osx_image: xcode8.1
+      env:
+        - PYTHON_VERSION=3.5
+    - os: osx
+      osx_image: xcode8
+      env:
+        - PYTHON_VERSION=3.5
+    - os: osx
+      osx_image: xcode7.3
+      env:
+        - PYTHON_VERSION=3.5
+    - os: osx
+      osx_image: xcode6.4
+      env:
+        - PYTHON_VERSION=3.5
+
+script:
+  - export ENV_VARS_PATH="tests/env_vars.sh"
+  - source tests/test_multibuild.sh

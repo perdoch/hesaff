@@ -143,9 +143,9 @@ def build_opencv_cmake_args(config):
 def main():
     """
     Usage:
-        cd ~/code/hesaff/docker
-        python ~/code/hesaff/docker/build_opencv_docker.py --publish --no-exec
-        python ~/code/hesaff/docker/build_opencv_docker.py --publish
+        cd ~/code/hesaff/factory
+        python ~/code/hesaff/factory/build_opencv_docker.py --publish --no-exec
+        python ~/code/hesaff/factory/build_opencv_docker.py --publish
     """
     import multiprocessing
 
@@ -246,6 +246,8 @@ def build(DPATH, MAKE_CPUS, UNICODE_WIDTH, PLAT, PY_VER, EXEC=True):
             $PYTHON_EXE -m pip install -q --no-cache-dir ubelt xdoctest cmake ninja scikit-build wheel numpy
 
         # Obtain opencv source and run platform-specific cmake command
+        # TODO: replace this with curl
+
         RUN $PYTHON_EXE -c "import ubelt; print(ubelt.grabdata('https://github.com/opencv/opencv/archive/{OPENCV_VERSION}.zip', fpath='opencv.zip', hash_prefix='1a00f2cdf2b1bd62e5a700a6f15026b2f2de9b1', hasher='sha512', verbose=0))" && \
             unzip opencv.zip && \
             rm opencv.zip && \
@@ -334,13 +336,9 @@ def build(DPATH, MAKE_CPUS, UNICODE_WIDTH, PLAT, PY_VER, EXEC=True):
 if __name__ == '__main__':
     """
     CommandLine:
-        python ~/code/hesaff/docker/build_opencv_docker.py --no-exec
+        python ~/code/hesaff/factory/build_opencv_docker.py --no-exec
 
         docker login quay.io
-
-
-        docker tag pyhesaff-1.2-py3 quay.io/erotemic/test-repo:pyhesaff-1.2-py3
-        docker push quay.io/erotemic/test-repo:pyhesaff-1.2-py3
 
         docker push quay.io/erotemic/manylinux-opencv:manylinux1_x86_64-opencv4.1.0-py3.6
     """

@@ -170,23 +170,11 @@ before_install: |
     #git clone https://github.com/matthew-brett/multibuild.git 
     #source multibuild/common_utils.sh
     
+    source factory/factory_utils.sh
+
+
     if [ -n "$IS_OSX" ]; then
-
-        if [ ! -d multibuild ]; then
-            git clone https://github.com/matthew-brett/multibuild.git multibuild
-        fi
-
-        source multibuild/common_utils.sh
-        source multibuild/osx_utils.sh
-
-        # Uninstall oclint. See Travis-CI gh-8826
-        brew cask uninstall oclint || true    
-        export CC=clang
-        export CXX=clang++
-        get_macpython_environment $MB_PYTHON_VERSION venv
-        source venv/bin/activate
-        pip install --upgrade pip wheel
-        
+        osx_before_install_helper
     else
         if [[ "$(which python)" = "" ]]; then
             alias python='python3'
@@ -197,8 +185,8 @@ before_install: |
     fi
 
     python -m pip install ubelt --user
-    source stage_multibuild.sh
-    #bash stage_multibuild.sh
+
+    setup_staging_helper
     
     # Not interested in travis internal scripts' output
     set +x
@@ -251,6 +239,7 @@ before_cache: |
 after_success: |
     # Upload wheels to pypi if requested
     TRAVIS_TAG="TODO-whatdis?"
+
     if [ -n "$TRAVIS_TAG" ]; then
         set -x
 

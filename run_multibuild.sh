@@ -20,7 +20,7 @@ Note that this script uses the network to stage its dependencies.
 #pip install ubelt xdoctest
 
 # All the interesting stuff lives here
-source stage_multibuild.sh
+source factory/stage_multibuild.sh
 
 #echo "MB_PYTHON_VERSION=$MB_PYTHON_VERSION"
 #echo "DOCKER_IMAGE=$DOCKER_IMAGE"
@@ -28,7 +28,6 @@ source stage_multibuild.sh
 #echo "REPO_DIR=$REPO_DIR"
 #echo "_SOURCE_REPO=$_SOURCE_REPO"
 #echo "_STAGED_REPO=$_STAGED_REPO"
-
 #### --- INSTALL --- ####
 
 echo "--- BEGIN EXEC BUILD WHEEL ---"
