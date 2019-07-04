@@ -64,7 +64,12 @@ function pre_build {
 
   PYTHON=python$PYTHON_VERSION
   $PYTHON -m pip install pip  -U
-  $PYTHON -m pip install numpy scikit-build ubelt cmake ninja -U
+  if [ -n "$IS_OSX" ]; then
+    echo "skip pip prebuild"
+  else
+    echo "Running for linux"
+    $PYTHON -m pip install numpy scikit-build ubelt cmake ninja -U
+  fi
 }
 
 function run_tests {
