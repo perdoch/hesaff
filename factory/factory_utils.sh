@@ -106,6 +106,8 @@ setup_staging_helper(){
     fi
 }
 
-if [ -n "$IS_OSX" ]; then
+if [[ "$OSTYPE" = "darwin"* ]]; then
+    __THIS_DIR=$(dirname "${BASH_SOURCE[0]}")
     source $__THIS_DIR/osx_utils.sh
+#elif [[ "$OSTYPE" = "darwin"* ]]; then
 fi
