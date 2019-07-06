@@ -421,15 +421,11 @@ def detect_feats(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kw
         python -m pyhesaff detect_feats --show --only_count=False
 
     Example0:
-        >>> # xdoctest: +REQUIRES(module:vtool)
         >>> # ENABLE_DOCTEST
         >>> # Test simple detect
         >>> from pyhesaff._pyhesaff import *  # NOQA
-        >>> import vtool as vt
         >>> TAU = 2 * np.pi
-        >>> fpath = grab_test_imgpath(ub.argval('--fname', default='astro.png'))
-        >>> theta = float(ub.argval('--theta', 0))  # TAU * 3 / 8)
-        >>> img_fpath = vt.rotate_image_ondisk(fpath, theta)
+        >>> img_fpath = grab_test_imgpath(ub.argval('--fname', default='astro.png'))
         >>> kwargs = argparse_hesaff_params()
         >>> print('kwargs = %r' % (kwargs,))
         >>> (kpts, vecs) = detect_feats(img_fpath, **kwargs)
