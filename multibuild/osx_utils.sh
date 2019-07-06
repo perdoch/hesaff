@@ -275,6 +275,10 @@ function install_mac_cpython {
     sudo installer -pkg $inst_path -target /
     local py_mm=${py_version:0:3}
     PYTHON_EXE=$MACPYTHON_PY_PREFIX/$py_mm/bin/python$py_mm
+    
+    # Hack: try and install pip before installing certificates
+    install_pip
+
     # Install certificates for Python 3.6
     local inst_cmd="/Applications/Python ${py_mm}/Install Certificates.command"
     if [ -e "$inst_cmd" ]; then
