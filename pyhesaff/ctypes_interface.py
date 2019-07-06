@@ -123,11 +123,13 @@ def find_lib_fpath(libname, root_dir, recurse_down=True, verbose=False):
         pass
 
     FINAL_LIB_FPATH = None
+
     try:
         for lib_fname in lib_fname_list:
             if verbose:
                 print('--')
             curr_dpath = root_dir
+            max_depth = 3
             while curr_dpath is not None:
 
                 for lib_dpath in get_lib_dpath_list(curr_dpath):
@@ -141,6 +143,11 @@ def find_lib_fpath(libname, root_dir, recurse_down=True, verbose=False):
                             print('using: {}'.format(lib_fpath))
                         FINAL_LIB_FPATH = lib_fpath
                         raise FoundLib
+
+                max_depth -= 1
+                if max_depth < 0:
+                    curr_dpath = None
+                    break
 
                 _new_dpath = dirname(curr_dpath)
                 if _new_dpath == curr_dpath:
