@@ -67,7 +67,7 @@ function pre_build {
   if [ -n "$IS_OSX" ]; then
     echo "skip pip prebuild"
 
-    $PYTHON -m pip install numpy scikit-build ubelt cmake ninja -U
+    $PYTHON -m pip install scikit-build ubelt cmake ninja -U
 
     # https://medium.com/@nuwanprabhath/installing-opencv-in-macos-high-sierra-for-python-3-89c79f0a246a
     # Probably need to install opencv before running install
