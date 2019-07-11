@@ -173,7 +173,10 @@ before_install: |
 
 
     if [ -n "$IS_OSX" ]; then
-        osx_before_install_helper
+        echo "do nothing"
+        #brew update
+        #brew install opencv
+        #osx_staging_helper
     else
         if [[ "$(which python)" = "" ]]; then
             alias python='python3'
@@ -182,15 +185,25 @@ before_install: |
         curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
         python get-pip.py --user
         python -m pip install ubelt --user
+        setup_staging_helper
     fi
 
-    setup_staging_helper
+    REPO_DIR=${_STAGED_REPO}
+
+    source multibuild/common_utils.sh
+    #if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export ARCH_FLAGS=" "; fi
+    source multibuild/travis_steps.sh
     
     # Not interested in travis internal scripts' output
     set +x
 
 install: |
-    source run_multibuild.sh
+    #set +e
+    echo "REPO_DIR = $REPO_DIR"
+    echo "PLAT = $PLAT"
+    build_wheel $REPO_DIR $PLAT
+
+    #source run_multibuild.sh
     #set -x
     #echo "--- BEGIN EXEC BUILD WHEEL ---"
     #if [ -n "$IS_OSX" ]; then

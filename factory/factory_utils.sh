@@ -13,6 +13,11 @@ UNICODE_WIDTH=${UNICODE_WIDTH:=32}  # TODO introspect
 #python -c "import sysconfig, ubelt; print(ubelt.repr2(sysconfig.get_config_vars(), nl=1))" | grep -i width
 #python -c "import sysconfig, ubelt; print(sysconfig.get_config_vars().get('Py_UNICODE_SIZE', 4) * 8)"
 MB_PYTHON_VERSION=${MB_PYTHON_VERSION:=auto}
+REPO_NAME=hesaff
+
+_SOURCE_REPO=$(pwd)
+_STAGED_REPO="."
+_STAGEING_DPATH="."
 
 echo "MB_PYTHON_VERSION = $MB_PYTHON_VERSION"
 
@@ -24,10 +29,8 @@ setup_staging_helper(){
         echo "AUTOSET MB_PYTHON_VERSION = $MB_PYTHON_VERSION"
     fi
 
-    REPO_NAME=hesaff
     #_SOURCE_REPO=$(dirname "${BASH_SOURCE[0]}")
     #_SOURCE_REPO=$(dirname $(dirname "${BASH_SOURCE[0]}"))
-    _SOURCE_REPO=$(pwd)
     #_SOURCE_REPO=$(python -c "import os; print(os.path.realpath('$_SOURCE_REPO'))")
     echo "_SOURCE_REPO = $_SOURCE_REPO"
 
@@ -38,8 +41,10 @@ setup_staging_helper(){
     #_STAGED_REPO=$_SOURCE_REPO
 
     # NOTE: this path needs to be valid in docker and locally
-    _STAGED_REPO="."
-    _STAGEING_DPATH="."
+    echo "
+    _STAGED_REPO = $_STAGED_REPO
+    _STAGEING_DPATH = $_STAGEING_DPATH
+    "
 
     # else
     #_STAGEING_DPATH=$_SOURCE_REPO/_staging
@@ -78,12 +83,12 @@ setup_staging_helper(){
     #    sed -i "s/cd .repo_dir && .cmd .wheelhouse/\$cmd \$wheelhouse/g" multibuild/common_utils.sh
     #fi
     #fi
-    __comment__="""
+    __comment__='''
     (cd multibuild && git diff common_utils.sh)
     (cd multibuild && git checkout common_utils.sh)
     cat multibuild/common_utils.sh | grep ".cmd.*wheel"
     (cd $repo_dir && $cmd $wheelhouse)
-    """
+    '''
 
     if [[ "$OSTYPE" == "linux"* ]]; then
         _USE_QUAY="True"
@@ -108,8 +113,21 @@ setup_staging_helper(){
     echo "DOCKER_IMAGE = $DOCKER_IMAGE"
 }
 
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    __THIS_DIR=$(dirname "${BASH_SOURCE[0]}")
-    source $__THIS_DIR/osx_utils.sh
-#elif [[ "$OSTYPE" = "darwin"* ]]; then
-fi
+
+osx_staging_helper(){
+    echo "THIS IS OXS"
+    TAPS="$(brew --repository)/Library/Taps"
+    echo "TAPS = $TAPS"
+    # Note: The tap command allows Homebrew to tap into another repository of formulae
+    if [ -e "$TAPS/caskroom/homebrew-cask" -a -e "$TAPS/homebrew/homebrew-cask" ]; then
+        rm -rf "$TAPS/caskroom/homebrew-cask"
+    fi
+    find "$TAPS" -type d -name .git -exec \
+            bash -xec '
+                cd $(dirname '\''{}'\'') || echo "status: $?"
+                git clean -fxd || echo "status: $?"
+                sleep 1 || echo "status: $?"
+                git status || echo "status: $?"' \; || echo "status: $?"
+
+    brew_cache_cleanup
+}

@@ -21,8 +21,8 @@ source multibuild/travis_steps.sh
 
 
 # I have no idea what this does
-if [ -n "$IS_OSX" ]; then
-    osx_stating_helper
-fi
+#if [ -n "$IS_OSX" ]; then
+#    osx_staging_helper
+#fi
 
 echo "=== END OF STAGE MULTIBUILD ==="

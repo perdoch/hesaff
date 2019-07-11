@@ -8,6 +8,10 @@ BREW_LOCAL_BOTTLE_METADATA="$HOME/local_bottle_metadata"
 
 # Starting reference point for elapsed build time; seconds since the epoch.
 #TRAVIS_TIMER_START_TIME is set at the start of a log fold, in nanoseconds since the epoch
+if [ "$TRAVIS_TIMER_START_TIME" = "" ]; then 
+    # Hack for local builds
+    TRAVIS_TIMER_START_TIME=10000000000
+fi
 BREW_TIME_START=$(($TRAVIS_TIMER_START_TIME/10**9))
 
 # If after a package is built, elapsed time is more than this many seconds, fail the build but save Travis cache
@@ -447,4 +451,47 @@ function _brew_check_slow_building_ahead {
         return 1
     fi
     return 0
+}
+
+
+generate_ffmpeg_formula(){
+    local FF="ffmpeg"
+    local LFF="ffmpeg_opencv"
+    local FF_FORMULA; FF_FORMULA=$(brew formula "$FF")
+    local LFF_FORMULA; LFF_FORMULA="$(dirname "$FF_FORMULA")/${LFF}.rb"
+
+    local REGENERATE
+    if [ -f "$LFF_FORMULA" ]; then
+        local UPSTREAM_VERSION VERSION
+        _brew_parse_package_info "$FF" " " UPSTREAM_VERSION _ _
+        _brew_parse_package_info "$LFF" " " VERSION _ _   || REGENERATE=1
+        #`rebuild` clause is ignored on `brew bottle` and deleted
+        # from newly-generated formula on `brew bottle --merge` for some reason
+        # so can't compare rebuild numbers
+        if [ "$UPSTREAM_VERSION" != "$VERSION" ]; then
+            REGENERATE=1
+        fi
+    else
+        REGENERATE=1
+    fi
+    if [ -n "$REGENERATE" ]; then
+        echo "Regenerating custom ffmpeg formula"
+        # Bottle block syntax: https://docs.brew.sh/Bottles#bottle-dsl-domain-specific-language
+        perl -wpe 'BEGIN {our ($found_blank, $bottle_block);}
+            if (/(^class )(Ffmpeg)(\s.*)/) {$_=$1.$2."Opencv".$3."\n"; next;}
+            if (!$found_blank && /^$/) {$_.="conflicts_with \"ffmpeg\"\n\n"; $found_blank=1; next;}
+            if (!$bottle_block && /^\s*bottle do$/) { $bottle_block=1; next; }
+            if ($bottle_block) { if (/^\s*end\s*$/) { $bottle_block=0} elsif (/^\s*sha256\s/) {$_=""} next; }
+if (/^\s*depends_on "(x264|x265|xvid|frei0r|rubberband)"$/) {$_=""; next;}
+            if (/^\s*--enable-(gpl|libx264|libx265|libxvid|frei0r|librubberband)$/) {$_=""; next;}
+            ' <"$FF_FORMULA" >"$LFF_FORMULA"
+        diff -u "$FF_FORMULA" "$LFF_FORMULA" || test $? -le 1
+
+        (   cd "$(dirname "$LFF_FORMULA")"
+            # This is the official way to add a formula
+            # https://docs.brew.sh/Formula-Cookbook#commit
+            git add "$(basename "$LFF_FORMULA")"
+            git commit -m "add/update custom ffmpeg ${VERSION}"
+        )
+    fi
 }
