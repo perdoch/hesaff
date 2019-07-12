@@ -15,8 +15,11 @@ set -e
 REPO_DIR="${_STAGED_REPO}"
 #REPO_DIR="."
 
+if [[ "$TRAVIS_OS_NAME" == "osx" ]]; 
+    then export ARCH_FLAGS=" "; 
+fi
+
 source multibuild/common_utils.sh
-if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export ARCH_FLAGS=" "; fi
 source multibuild/travis_steps.sh
 
 

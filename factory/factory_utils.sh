@@ -7,6 +7,11 @@ TEST_DEPENDS="numpy ubelt"
 CONFIG_PATH="multibuild_config.sh"
 #BDIST_PARAMS=${BDIST_PARAMS:""}
 
+# Useful vars for travis
+# TRAVIS_OS_NAME
+# if [[ "$OSTYPE" = "darwin"* ]]; 
+
+
 USE_CCACHE=${USE_CCACHE:=1}
 PLAT=${PLAT:=$(arch)}
 UNICODE_WIDTH=${UNICODE_WIDTH:=32}  # TODO introspect

@@ -13,9 +13,9 @@ if [ -n "$IS_OSX" ]; then
   source factory/travis_osx_brew_cache.sh
   BREW_SLOW_BUILIDING_PACKAGES=$(printf '%s\n' \
       "cmake 15" \
-      "ffmpeg_opencv 10" \
       "opencv 10" \
   )
+  # Junk: "ffmpeg_opencv 10" \
 else
   echo "    > Linux environment "
   export MAKEFLAGS="-j$(grep -E '^processor[[:space:]]*:' /proc/cpuinfo | wc -l)"
