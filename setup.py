@@ -147,19 +147,31 @@ if __name__ == '__main__':
                     plat_name = distutils.util.get_platform()
                 except AttributeError:
                     plat_name = distutils.sys.platform
-                plat_specifier = ".%s-%s" % (plat_name, sys.version[0:3])
+                plat_spec = ".%s-%s" % (plat_name, sys.version[0:3])
                 if hasattr(sys, 'gettotalrefcount'):
-                    plat_specifier += '-pydebug'
-                return plat_specifier
+                    plat_spec += '-pydebug'
+                return plat_spec
             print("DOING INPLACE HACK")
             # HACK: I THINK A NEW SCIKIT-BUILD WILL FIX THIS
             import os
             from os.path import join
             spec = get_plat_specifier()
             dspec = spec.lstrip('.')
-            src = join(os.getcwd(), '_skbuild/{}/cmake-build/libhesaff.so'.format(dspec))
-            # src = join(os.getcwd(), '_skbuild/linux-x86_64-3.6/cmake-build/libhesaff.so')
-            dst = join(os.getcwd(), 'pyhesaff/libhesaff{}.so'.format(spec))
+
+            def get_lib_ext():
+                if sys.platform.startswith('win32'):
+                    ext = '.dll'
+                elif sys.platform.startswith('darwin'):
+                    ext = '.dylib'
+                elif sys.platform.startswith('linux'):
+                    ext = '.so'
+                else:
+                    raise Exception('Unknown operating system: %s' % sys.platform)
+                return ext
+
+            libext = get_lib_ext()
+            src = join(os.getcwd(), '_skbuild/{}/cmake-build/libhesaff.{}'.format(dspec, libext))
+            dst = join(os.getcwd(), 'pyhesaff/libhesaff{}.{}'.format(spec, libext))
             import shutil
             print('copy {} -> {}'.format(src, dst))
             shutil.copy(src, dst)

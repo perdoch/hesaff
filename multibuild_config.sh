@@ -106,7 +106,9 @@ function pre_build {
     if [ -n "$CACHE_STAGE" ]; then
         brew_install_and_cache_within_time_limit opencv || { [ $? -gt 1 ] && return 2 || return 0; }
     else
-        brew install opencv
+        #brew install opencv 
+        # Numpy causes install opencv to partially fail, catch this and fix numpy once its done
+        brew install opencv || brew link --overwrite numpy
     fi
     echo "FINISH openv install in TRAVIS_BUILD_STAGE_NAME='$TRAVIS_BUILD_STAGE_NAME'"
 
@@ -125,15 +127,16 @@ function pre_build {
     export CC=clang
     export CXX=clang++
     get_macpython_environment $MB_PYTHON_VERSION venv
+    echo $?
     source venv/bin/activate
     pip install --upgrade pip wheel
     # ----------
   else
     echo "Running for linux"
+    pip install pip  -U
   fi
   #qmake -query
 
-  pip install pip  -U
   if [ -n "$IS_OSX" ]; then
     echo "skip pip prebuild"
 
@@ -143,7 +146,8 @@ function pre_build {
     pip install scikit-build
     pip install ninja
     pip install cmake
-    pip install scikit-build
+    pip install ubelt
+    pip install numpy
   else
     echo "Running for linux"
     pip install numpy scikit-build ubelt cmake ninja 

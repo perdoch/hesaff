@@ -1,5 +1,7 @@
 skvark opencv-python travis CI log: 
     https://travis-ci.org/skvark/opencv-python/jobs/545352661
+    https://travis-ci.org/skvark/opencv-python/jobs/215935512
+
      
 appveyor: 
     https://ci.appveyor.com/project/skvark/opencv-python/builds/25262827
