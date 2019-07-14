@@ -168,9 +168,16 @@ function run_tests {
     #fi
     #  https://github.com/Erotemic/xdoctest/archive/master.zip
     #$PYTHON -m pip install git+https://github.com/Erotemic/xdoctest.git@master
-    pip install https://github.com/Erotemic/xdoctest/archive/master.zip
+    #pip install https://github.com/Erotemic/xdoctest/archive/master.zip
+    pip install xdoctest
+
+    # Install opencv-python for a working cv2 module. 
+    pip install opencv-python
     python -m xdoctest pyhesaff list
-    echo "TODO: actually run tests"
+
+    # TODO: more tests
+    echo "Execute real doctests"
+    python -m xdoctest pyhesaff 
 
     if [ -n "$IS_OSX" ]; then
       echo "Running for OS X"
@@ -179,20 +186,6 @@ function run_tests {
       echo "Running for linux"
       cd /io/tests/
     fi
-
-    test_wheels
-}
-
-function test_wheels {
-    PYTHON=python$PYTHON_VERSION
-
-    echo "Starting tests..."
-
-    #Test package
-    echo "TODO: looks like multibuild doesnt like xdoctest"
-    #$PYTHON -m xdoctest pyhesaff
-    #$PYTHON -m unittest test
-    #$PYTHON -m xdoctest pyhesaff
 }
 
 export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
