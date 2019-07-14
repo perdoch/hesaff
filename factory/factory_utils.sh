@@ -3,14 +3,10 @@
 echo "=== START OF STAGE MULTIBUILD ==="
 
 TEST_DEPENDS="numpy ubelt"
+BUILD_DEPENDS="numpy ubelt scikit-build ninja cmake"
 #$PYTHON -m pip install git+https://github.com/Erotemic/xdoctest.git@master
 CONFIG_PATH="multibuild_config.sh"
 #BDIST_PARAMS=${BDIST_PARAMS:""}
-
-# Useful vars for travis
-# TRAVIS_OS_NAME
-# if [[ "$OSTYPE" = "darwin"* ]]; 
-
 
 USE_CCACHE=${USE_CCACHE:=1}
 PLAT=${PLAT:=$(arch)}
@@ -24,7 +20,46 @@ _SOURCE_REPO=$(pwd)
 _STAGED_REPO="."
 _STAGEING_DPATH="."
 
-echo "MB_PYTHON_VERSION = $MB_PYTHON_VERSION"
+# Hack in specific travis variables for local builds
+if [ "$TRAVIS_OS_NAME" = "" ]; then 
+    if [[ "$OSTYPE" == "darwin"* ]]; then 
+        TRAVIS_OS_NAME="osx"
+        echo "TRAVIS_OS_NAME = $TRAVIS_OS_NAME"
+    elif [[ "$OSTYPE" == "linux"* ]]; then 
+        TRAVIS_OS_NAME="linux"
+        echo "TRAVIS_OS_NAME = $TRAVIS_OS_NAME"
+    else
+        TRAVIS_OS_NAME="UNKNOWN"
+        echo "TRAVIS_OS_NAME = $TRAVIS_OS_NAME"
+    fi
+    if [ "$TRAVIS_BUILD_STAGE_NAME" = "" ]; then
+        TRAVIS_BUILD_STAGE_NAME="final"
+    fi
+    if [ "$TRAVIS_TIMER_START_TIME" = "" ]; then 
+        TRAVIS_TIMER_START_TIME=10000000000
+    fi
+fi
+
+
+if [[ "$OSTYPE" == "darwin*" ]]; then 
+    export ARCH_FLAGS=" "
+fi
+
+echo "
+TRAVIS_OS_NAME = $TRAVIS_OS_NAME
+TRAVIS_TIMER_START_TIME = $TRAVIS_TIMER_START_TIME
+TRAVIS_BUILD_STAGE_NAME = $TRAVIS_BUILD_STAGE_NAME
+
+ARCH_FLAGS = $ARCH_FLAGS
+
+MB_PYTHON_VERSION = $MB_PYTHON_VERSION
+REPO_NAME = $REPO_NAME
+_SOURCE_REPO = $_SOURCE_REPO
+_STAGED_REPO = $_STAGED_REPO
+_STAGEING_DPATH = $_STAGEING_DPATH
+"
+
+
 
 
 setup_staging_helper(){
@@ -34,60 +69,15 @@ setup_staging_helper(){
         echo "AUTOSET MB_PYTHON_VERSION = $MB_PYTHON_VERSION"
     fi
 
-    #_SOURCE_REPO=$(dirname "${BASH_SOURCE[0]}")
-    #_SOURCE_REPO=$(dirname $(dirname "${BASH_SOURCE[0]}"))
-    #_SOURCE_REPO=$(python -c "import os; print(os.path.realpath('$_SOURCE_REPO'))")
-    echo "_SOURCE_REPO = $_SOURCE_REPO"
-
     # Hack for CI
-
-    # if CI
-    #_STAGEING_DPATH=$_SOURCE_REPO
-    #_STAGED_REPO=$_SOURCE_REPO
-
     # NOTE: this path needs to be valid in docker and locally
     echo "
+    MB_PYTHON_VERSION = $MB_PYTHON_VERSION
+    _SOURCE_REPO = $_SOURCE_REPO
     _STAGED_REPO = $_STAGED_REPO
     _STAGEING_DPATH = $_STAGEING_DPATH
     "
 
-    # else
-    #_STAGEING_DPATH=$_SOURCE_REPO/_staging
-    #_STAGED_REPO=$_STAGEING_DPATH/$REPO_NAME
-
-    #mkdir -p $_STAGEING_DPATH
-    #rm -rf $_STAGEING_DPATH/wheelhouse
-
-    # Create a copy of this repo in the staging dir, but ignore build side effects
-    # if CI
-    #_EXCLUDE="'_staging','*.so','*.dylib','*.dll','_skbuild','*.egg-info','_dist','__pycache__','.git','dist*','build*','wheel*','dev','.git*','appveyor.yml','.travis.yml'"
-    #rsync -avr --max-delete=0 --exclude={$_EXCLUDE} . $_STAGED_REPO 
-
-    # Ensure multibuild exists in this copy of this repo
-    #if [ ! -d $_STAGED_REPO/multibuild ]; then
-    #    git clone https://github.com/matthew-brett/multibuild.git $_STAGED_REPO/multibuild
-    #fi
-
-    # HACK: clone to the local directory
-    #if [ ! -d multibuild ]; then
-    #    git clone https://github.com/matthew-brett/multibuild.git multibuild
-    #fi
-    #find multibuild -type f -exec sed -i.bak "s/ cd /#cd /g" {} \;
-    #if [ -n "$IS_OSX" ]; then
-
-    #if [ "$TRAVIS_OS_NAME" = "osx" ]; then
-    #if [[ "$OSTYPE" = "darwin"* ]]; then
-    #    NEED_SED="False"
-    #    _IS_LINUX="False"
-    #else
-    #    _IS_LINUX="True"
-    #fi
-
-    #if [ "$NEED_SED" = "True" ]; then
-    #    #(cd multibuild && git checkout common_utils.sh)
-    #    sed -i "s/cd .repo_dir && .cmd .wheelhouse/\$cmd \$wheelhouse/g" multibuild/common_utils.sh
-    #fi
-    #fi
     __comment__='''
     (cd multibuild && git diff common_utils.sh)
     (cd multibuild && git checkout common_utils.sh)
@@ -99,7 +89,6 @@ setup_staging_helper(){
         _USE_QUAY="True"
         if [ $_USE_QUAY = "True" ]; then
             # Assume that the query.io/erotemic/manylinux-opencv:{DOCKER_TAG} image exists
-            echo "_STAGEING_DPATH = $_STAGEING_DPATH"
             python factory/build_opencv_docker.py --dpath=$_STAGEING_DPATH --no-exec
             DOCKER_TAG=$(cat $_STAGEING_DPATH/opencv-docker-tag.txt)
             DOCKER_IMAGE="quay.io/erotemic/manylinux-opencv:${DOCKER_TAG}"
@@ -113,14 +102,14 @@ setup_staging_helper(){
             DOCKER_TAG=$(cat $_STAGEING_DPATH/opencv-docker-tag.txt)
             DOCKER_IMAGE=$DOCKER_TAG
         fi
+        echo "DOCKER_TAG = $DOCKER_TAG"
+        echo "DOCKER_IMAGE = $DOCKER_IMAGE"
     fi
-    echo "DOCKER_TAG = $DOCKER_TAG"
-    echo "DOCKER_IMAGE = $DOCKER_IMAGE"
 }
 
 
-osx_staging_helper(){
-    echo "THIS IS OXS"
+osx_staging_helper_clean_brew_cache(){
+    echo "Executing OSX staging helper"
     TAPS="$(brew --repository)/Library/Taps"
     echo "TAPS = $TAPS"
     # Note: The tap command allows Homebrew to tap into another repository of formulae
@@ -135,4 +124,5 @@ osx_staging_helper(){
                 git status || echo "status: $?"' \; || echo "status: $?"
 
     brew_cache_cleanup
+    echo "Finished OSX staging helper"
 }

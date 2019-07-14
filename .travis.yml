@@ -3,7 +3,7 @@ env:
         - "PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'"
         - TEST_DEPENDS="numpy==1.11.1"
         - BDIST_PARAMS=""
-        - CONFIG_PATH="travis_config.sh"
+        - CONFIG_PATH="multibuild_config.sh"
         - USE_CCACHE=1
         - PLAT=x86_64
         - UNICODE_WIDTH=32
@@ -171,13 +171,12 @@ before_install: |
     
     source factory/factory_utils.sh
 
-
-    if [ -n "$IS_OSX" ]; then
+    if [[ "$TRAVIS_OS_NAME" = "osx" ]]; then 
         echo "do nothing"
         #brew update
         #brew install opencv
         #osx_staging_helper
-    else
+    elif [[ "$TRAVIS_OS_NAME" = "linux" ]]; then 
         if [[ "$(which python)" = "" ]]; then
             alias python='python3'
             alias pip='pip3'
@@ -188,11 +187,15 @@ before_install: |
         setup_staging_helper
     fi
 
-    REPO_DIR=${_STAGED_REPO}
+    #REPO_DIR=${_STAGED_REPO}
+    #source multibuild/common_utils.sh
+    #source multibuild/travis_steps.sh
+    #
+    source factory/stage_multibuild.sh
 
-    source multibuild/common_utils.sh
-    #if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export ARCH_FLAGS=" "; fi
-    source multibuild/travis_steps.sh
+    if [[ "$TRAVIS_OS_NAME" = "osx" ]]; then 
+        osx_staging_helper_clean_brew_cache
+    fi
     
     # Not interested in travis internal scripts' output
     set +x
@@ -201,7 +204,13 @@ install: |
     #set +e
     echo "REPO_DIR = $REPO_DIR"
     echo "PLAT = $PLAT"
+
+    # Effectively calls (build_bdist_wheel) -> (build_wheel_cmd "bdist_wheel_cmd" $@), 
+    # which is in multibuild/common_utils.sh ->
+    # This calls pre_build and build_wheel_cmd, which both live in multibuild_config.sh
+    set -x
     build_wheel $REPO_DIR $PLAT
+    set +x
 
     #source run_multibuild.sh
     #set -x
@@ -215,7 +224,6 @@ install: |
     #cp ${_STAGED_REPO}/dist/*.whl $_SOURCE_REPO/dist
     #cp ${_STAGED_REPO}/dist/*.whl $_SOURCE_REPO/wheelhouse
     echo "--- END EXEC BUILD WHEEL ---"
-    set +x
     
 
 script: |

@@ -8,10 +8,6 @@ BREW_LOCAL_BOTTLE_METADATA="$HOME/local_bottle_metadata"
 
 # Starting reference point for elapsed build time; seconds since the epoch.
 #TRAVIS_TIMER_START_TIME is set at the start of a log fold, in nanoseconds since the epoch
-if [ "$TRAVIS_TIMER_START_TIME" = "" ]; then 
-    # Hack for local builds
-    TRAVIS_TIMER_START_TIME=10000000000
-fi
 BREW_TIME_START=$(($TRAVIS_TIMER_START_TIME/10**9))
 
 # If after a package is built, elapsed time is more than this many seconds, fail the build but save Travis cache

@@ -52,20 +52,38 @@ function bdist_wheel_cmd {
     echo "-- !!!!!!!!!!!!!!!!!!!!!!!!! --"
 }
 
+
+#function before_install {
+#    # Uninstall oclint. See Travis-CI gh-8826
+#    brew cask uninstall oclint || true    
+#    export CC=clang
+#    export CXX=clang++
+#    get_macpython_environment $MB_PYTHON_VERSION venv
+#    source venv/bin/activate
+#    pip install --upgrade pip wheel
+#}
+
+
 function pre_build {
   echo "Starting pre-build"
+  # The set -e option will cause a bash script to exit immediately when a command fails
+  # The -o pipefail option relaxes this, and allows pipes to catch exceptions.
+  # IE. only fail if the rightmost command in a piped expression fails.
   set -e -o pipefail
 
   if [ -n "$IS_OSX" ]; then
     echo "Running for OSX"
     
     local CACHE_STAGE; (echo "$TRAVIS_BUILD_STAGE_NAME" | grep -qiF "final") || CACHE_STAGE=1
+    echo "CACHE_STAGE = $CACHE_STAGE"
+
+    echo "START pre_build install in TRAVIS_BUILD_STAGE_NAME=$TRAVIS_BUILD_STAGE_NAME with CACHE_STAGE=$CACHE_STAGE"
 
     #after the cache stage, all bottles and Homebrew metadata should be already cached locally
     if [ -n "$CACHE_STAGE" ]; then
         brew update
         #generate_ffmpeg_formula
-        #brew_add_local_bottles
+        brew_add_local_bottles  # NOQA
     fi
 
     #echo 'Installing QT4'
@@ -77,13 +95,6 @@ function pre_build {
     #    brew install qt@4
     #fi
 
-    echo 'Installing OpenCV'
-    if [ -n "$CACHE_STAGE" ]; then
-        brew_install_and_cache_within_time_limit opencv || { [ $? -gt 1 ] && return 2 || return 0; }
-    else
-        brew install opencv
-    fi
-
     #echo 'Installing FFmpeg'
     #if [ -n "$CACHE_STAGE" ]; then
     #    brew_install_and_cache_within_time_limit ffmpeg_opencv || { [ $? -gt 1 ] && return 2 || return 0; }
@@ -91,13 +102,32 @@ function pre_build {
     #    brew install ffmpeg_opencv
     #fi
 
+    echo "START openv install in TRAVIS_BUILD_STAGE_NAME='$TRAVIS_BUILD_STAGE_NAME'"
     if [ -n "$CACHE_STAGE" ]; then
+        brew_install_and_cache_within_time_limit opencv || { [ $? -gt 1 ] && return 2 || return 0; }
+    else
+        brew install opencv
+    fi
+    echo "FINISH openv install in TRAVIS_BUILD_STAGE_NAME='$TRAVIS_BUILD_STAGE_NAME'"
+
+    if [ -n "$CACHE_STAGE" ]; then
+        echo "START BREW_GO_BOOTSTRAP_MODE 0 TRAVIS_BUILD_STAGE_NAME='$TRAVIS_BUILD_STAGE_NAME'"
         brew_go_bootstrap_mode 0
         return 0
     fi
     
     # Have to install macpython late to avoid conflict with Homebrew Python update
-    before_install
+    # THIS IS AN INLINE VERSION OF OSX before_install
+    # before_install
+    # ----------
+    # Uninstall oclint. See Travis-CI gh-8826
+    brew cask uninstall oclint || true    
+    export CC=clang
+    export CXX=clang++
+    get_macpython_environment $MB_PYTHON_VERSION venv
+    source venv/bin/activate
+    pip install --upgrade pip wheel
+    # ----------
   else
     echo "Running for linux"
   fi
@@ -116,7 +146,7 @@ function pre_build {
     pip install scikit-build
   else
     echo "Running for linux"
-    pip install numpy scikit-build ubelt cmake ninja -U
+    pip install numpy scikit-build ubelt cmake ninja 
   fi
 }
 
