@@ -58,19 +58,33 @@ INSTALL_REQUIRES = [
 if __name__ == '__main__':
     import sysconfig
     import os
+    import sys
     class EmptyListWithLength(list):
         def __len__(self):
             return 1
 
     soconfig = sysconfig.get_config_var('SO')
+
+    def get_lib_ext():
+        if sys.platform.startswith('win32'):
+            ext = '.dll'
+        elif sys.platform.startswith('darwin'):
+            ext = '.dylib'
+        elif sys.platform.startswith('linux'):
+            ext = '.so'
+        else:
+            raise Exception('Unknown operating system: %s' % sys.platform)
+        return ext
+
+    libext = get_lib_ext()
+
     if True:
         # _os = 'linux'
         # assert _os == 'linux'
         # _arch = 'x86_64'
         # _pyver = '3.6'
-        import sys
         _pyver = '{}.{}'.format(sys.version_info.major, sys.version_info.minor)
-        hack_soconfig = '-{}.so'.format(_pyver)
+        hack_soconfig = '-{}{}'.format(_pyver, libext)
         # hack_soconfig = '.{}-{}-{}.so'.format(_os, _arch, _pyver)
         # hack_soconfig = '.so'
         print('hack_soconfig = {!r}'.format(hack_soconfig))
@@ -158,20 +172,8 @@ if __name__ == '__main__':
             spec = get_plat_specifier()
             dspec = spec.lstrip('.')
 
-            def get_lib_ext():
-                if sys.platform.startswith('win32'):
-                    ext = '.dll'
-                elif sys.platform.startswith('darwin'):
-                    ext = '.dylib'
-                elif sys.platform.startswith('linux'):
-                    ext = '.so'
-                else:
-                    raise Exception('Unknown operating system: %s' % sys.platform)
-                return ext
-
-            libext = get_lib_ext()
-            src = join(os.getcwd(), '_skbuild/{}/cmake-build/libhesaff.{}'.format(dspec, libext))
-            dst = join(os.getcwd(), 'pyhesaff/libhesaff{}.{}'.format(spec, libext))
+            src = join(os.getcwd(), '_skbuild/{}/cmake-build/libhesaff{}'.format(dspec, libext))
+            dst = join(os.getcwd(), 'pyhesaff/libhesaff{}{}'.format(spec, libext))
             import shutil
             print('copy {} -> {}'.format(src, dst))
             shutil.copy(src, dst)

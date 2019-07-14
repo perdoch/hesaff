@@ -435,7 +435,7 @@ def detect_feats(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kw
         >>> # take a random stample
         >>> frac = ub.argval('--frac', default=1.0)
         >>> print('frac = %r' % (frac,))
-        >>> idxs = vecs[0:int(len(vecs) * frac]
+        >>> idxs = vecs[0:int(len(vecs) * frac)]
         >>> vecs, kpts = vecs[idxs], kpts[idxs]
         >>> default_showkw = dict(ori=False, ell=True, ell_linewidth=2,
         >>>                       ell_alpha=.4, ell_color='distinct')
