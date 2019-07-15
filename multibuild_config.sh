@@ -176,9 +176,9 @@ function run_tests {
     echo "Execute real doctests"
     python -m xdoctest pyhesaff 
 
-    ls
-    ls wheelhouse
-    ls /Users/travis/build/Erotemic/hesaff/venv/lib/python2.7/site-packages/pyhesaff/
+    #ls
+    #ls wheelhouse
+    #ls /Users/travis/build/Erotemic/hesaff/venv/lib/python2.7/site-packages/pyhesaff/
 
     if [ -n "$IS_OSX" ]; then
       echo "Running for OS X"
