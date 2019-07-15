@@ -47,6 +47,14 @@ def get_candidate_plat_specifiers():
         plat_name_cands.append('linux')
         plat_name_cands.append('manylinux1')
         plat_name_cands.append('manylinux')
+    elif plat_name.startswith('darwin'):
+        # HACK:
+        # on travis, wheel builds as libhesaff.macosx-10.12-x86_64-2.7.dylib,
+        # but we seem to want libhesaff.macosx-10.6-intel-2.7.dylib
+        plat_name_cands.append('macosx-10.6-intel')
+        plat_name_cands.append('macosx-10.7-intel')
+        plat_name_cands.append('macosx-10.9-intel')
+        plat_name_cands.append('macosx-10.12-intel')
 
     spec_list = []
     for plat_name in plat_name_cands:
@@ -76,12 +84,6 @@ def get_lib_fname_list(libname):
         >>> import ubelt as ub
         >>> print('libnames = {}'.format(ub.repr2(libnames)))
     """
-
-    # if sys.platform.startswith('linux'):
-    #     # TODO: correct ABI tags
-    #     spec_list = [get_plat_specifier(), '-manylinux1_x86_64', '']
-    # else:
-    #     spec_list = [get_plat_specifier(), '']
     spec_list = get_candidate_plat_specifiers()
 
     prefix_list = ['lib' + libname]
