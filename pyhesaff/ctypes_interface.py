@@ -43,11 +43,11 @@ def get_candidate_plat_specifiers():
         plat_name = distutils.sys.platform
 
     plat_name_cands = [plat_name]
-    if plat_name.startswith('linux'):
+    if sys.platform.startswith('linux'):
         plat_name_cands.append('linux')
         plat_name_cands.append('manylinux1')
         plat_name_cands.append('manylinux')
-    elif plat_name.startswith('darwin'):
+    elif sys.platform.startswith('darwin'):
         # HACK:
         # on travis, wheel builds as libhesaff.macosx-10.12-x86_64-2.7.dylib,
         # but we seem to want libhesaff.macosx-10.6-intel-2.7.dylib
