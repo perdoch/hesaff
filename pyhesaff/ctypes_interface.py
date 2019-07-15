@@ -107,14 +107,16 @@ def get_lib_dpath_list(root_dir):
     returns <libnames>: list of plausible directories to look.
     """
     'returns possible lib locations'
-    get_lib_dpath_list = [root_dir,
-                          join(root_dir, 'lib'),
-                          join(root_dir, 'build'),
-                          join(root_dir, 'build', 'lib')]
+    get_lib_dpath_list = [
+        root_dir,
+        # join(root_dir, 'lib'),
+        # join(root_dir, 'build'),
+        # join(root_dir, 'build', 'lib'),
+    ]
     return get_lib_dpath_list
 
 
-def find_lib_fpath(libname, root_dir, recurse_down=True, verbose=False):
+def find_lib_fpath(libname, root_dir, recurse_down=False, verbose=False):
     """ Search for the library """
     lib_fname_list = get_lib_fname_list(libname)
     tried_fpaths = []
@@ -129,7 +131,7 @@ def find_lib_fpath(libname, root_dir, recurse_down=True, verbose=False):
             if verbose:
                 print('--')
             curr_dpath = root_dir
-            max_depth = 3
+            max_depth = 0
             while curr_dpath is not None:
 
                 for lib_dpath in get_lib_dpath_list(curr_dpath):
@@ -155,8 +157,8 @@ def find_lib_fpath(libname, root_dir, recurse_down=True, verbose=False):
                     break
                 else:
                     curr_dpath = _new_dpath
-            if not recurse_down:
-                break
+                if not recurse_down:
+                    break
     except FoundLib:
         pass
         return FINAL_LIB_FPATH

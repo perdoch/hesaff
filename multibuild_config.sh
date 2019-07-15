@@ -164,14 +164,15 @@ function run_tests {
     #fi
     #  https://github.com/Erotemic/xdoctest/archive/master.zip
     #$PYTHON -m pip install git+https://github.com/Erotemic/xdoctest.git@master
-    pip install https://github.com/Erotemic/xdoctest/archive/master.zip
-    #pip install xdoctest
+    #pip install https://github.com/Erotemic/xdoctest/archive/master.zip
+    pip install xdoctest
 
     # Install opencv-python for a working cv2 module. 
     pip install opencv-python
     python -m xdoctest pyhesaff list
 
     # TODO: more tests
+    set -e
     echo "Execute real doctests"
     python -m xdoctest pyhesaff 
 
