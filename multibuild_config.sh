@@ -143,11 +143,7 @@ function pre_build {
     # https://medium.com/@nuwanprabhath/installing-opencv-in-macos-high-sierra-for-python-3-89c79f0a246a
     # Probably need to install opencv before running install
     #brew install opencv 
-    pip install scikit-build
-    pip install ninja
-    pip install cmake
-    pip install ubelt
-    pip install numpy
+    pip install scikit-build ninja cmake ubelt numpy
   else
     echo "Running for linux"
     pip install numpy scikit-build ubelt cmake ninja 

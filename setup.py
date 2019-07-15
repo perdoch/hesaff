@@ -64,7 +64,6 @@ if __name__ == '__main__':
             return 1
 
     soconfig = sysconfig.get_config_var('SO')
-
     def get_lib_ext():
         if sys.platform.startswith('win32'):
             ext = '.dll'
@@ -84,12 +83,10 @@ if __name__ == '__main__':
         # _arch = 'x86_64'
         # _pyver = '3.6'
         _pyver = '{}.{}'.format(sys.version_info.major, sys.version_info.minor)
-        hack_soconfig = '-{}{}'.format(_pyver, libext)
-        # hack_soconfig = '.{}-{}-{}.so'.format(_os, _arch, _pyver)
-        # hack_soconfig = '.so'
-        print('hack_soconfig = {!r}'.format(hack_soconfig))
-
-    print('soconfig = {!r}'.format(soconfig))
+        hack_libconfig = '-{}{}'.format(_pyver, libext)
+        # hack_libconfig = '.{}-{}-{}.so'.format(_os, _arch, _pyver)
+        # hack_libconfig = '.so'
+        print('hack_libconfig = {!r}'.format(hack_libconfig))
 
     import ubelt as ub
     # ub.cmd('pwd', verbose=3)
@@ -122,7 +119,8 @@ if __name__ == '__main__':
         package_data={
             'pyhesaff':
                 ['*%s' % soconfig] +
-                ['*%s' % hack_soconfig] +
+                ['*%s' % hack_libconfig] +
+                ['*%s' % libext] +
                 # ['*.so'] +
                 (['*.dll'] if os.name == 'nt' else []) +
                 ["LICENSE.txt", "LICENSE-3RD-PARTY.txt", "LICENSE.SIFT"],
