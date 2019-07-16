@@ -108,7 +108,9 @@ function pre_build {
     else
         #brew install opencv 
         # Numpy causes install opencv to partially fail, catch this and fix numpy once its done
-        brew install opencv || brew link --overwrite numpy
+        #start_spinner
+        brew install opencv || brew link --overwrite numpy 
+        #stop_spinner
     fi
     echo "FINISH openv install in TRAVIS_BUILD_STAGE_NAME='$TRAVIS_BUILD_STAGE_NAME'"
 
@@ -129,7 +131,7 @@ function pre_build {
     get_macpython_environment $MB_PYTHON_VERSION venv
     echo $?
     source venv/bin/activate
-    pip install --upgrade pip wheel
+    pip install --quiet --upgrade pip wheel
     # ----------
   else
     echo "Running for linux"
@@ -143,10 +145,10 @@ function pre_build {
     # https://medium.com/@nuwanprabhath/installing-opencv-in-macos-high-sierra-for-python-3-89c79f0a246a
     # Probably need to install opencv before running install
     #brew install opencv 
-    pip install scikit-build ninja cmake ubelt numpy
+    pip install --quiet scikit-build ninja cmake ubelt numpy
   else
     echo "Running for linux"
-    pip install numpy scikit-build ubelt cmake ninja 
+    pip install --quiet numpy scikit-build ubelt cmake ninja 
   fi
 }
 
@@ -165,8 +167,8 @@ function run_tests {
     #  https://github.com/Erotemic/xdoctest/archive/master.zip
     #$PYTHON -m pip install git+https://github.com/Erotemic/xdoctest.git@master
     #pip install https://github.com/Erotemic/xdoctest/archive/master.zip
-    pip install opencv-python 
-    pip install xdoctest
+    pip install --quiet opencv-python 
+    pip install --quiet xdoctest
 
     # Install opencv-python for a working cv2 module. 
     python -m xdoctest pyhesaff list
@@ -179,6 +181,7 @@ function run_tests {
     #ls
     #ls wheelhouse
     #ls /Users/travis/build/Erotemic/hesaff/venv/lib/python2.7/site-packages/pyhesaff/
+    # contains libhesaff.macosx-10.12-x86_64-2.7.dylib
 
     if [ -n "$IS_OSX" ]; then
       echo "Running for OS X"

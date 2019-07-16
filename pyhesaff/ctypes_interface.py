@@ -51,6 +51,11 @@ def get_candidate_plat_specifiers():
         # HACK:
         # on travis, wheel builds as libhesaff.macosx-10.12-x86_64-2.7.dylib,
         # but we seem to want libhesaff.macosx-10.6-intel-2.7.dylib
+        # TODO: what is the proper way to determine the ABI tag?
+        plat_name_cands.append('macosx-10.6')
+        plat_name_cands.append('macosx-10.7')
+        plat_name_cands.append('macosx-10.9')
+        plat_name_cands.append('macosx-10.12')
         plat_name_cands.append('macosx-10.6-intel')
         plat_name_cands.append('macosx-10.7-intel')
         plat_name_cands.append('macosx-10.9-intel')
