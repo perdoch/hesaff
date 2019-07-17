@@ -251,7 +251,7 @@ after_success: |
     echo "TRAVIS_TAG = ${TRAVIS_TAG}"
     echo "TRAVIS_BRANCH = ${TRAVIS_BRANCH}"
     if [ -n "$TRAVIS_BRANCH" ]; then
-        set -x
+        set +x
         if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
           pip install --user twine
           pip install --user --upgrade six
@@ -262,10 +262,8 @@ after_success: |
           pip install --upgrade pyOpenSSL
         fi
 
-        # TODO:
         echo "TRAVIS_BUILD_DIR $TRAVIS_BUILD_DIR"
         twine upload -u ${GITHUB_USERNAME} -p ${TWINE_PASSWORD} --skip-existing ${TRAVIS_BUILD_DIR}/wheelhouse/pyhesaff*
-        set +x
     else
         echo "Tag not set, deployment skipped."
     fi
