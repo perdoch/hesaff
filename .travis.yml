@@ -53,27 +53,27 @@ matrix:
       stage: final
     - <<: *osx-70
       stage: s1
-    #- &osx-80
-    #  os: osx
-    #  osx_image: xcode8.3
-    #  env:
-    #    - MB_PYTHON_VERSION=3.4
-    #  stage: final
-    #- <<: *osx-80
-    #  stage: s1
-    #- &osx-90
-    #  os: osx
-    #  osx_image: xcode8.3
-    #  env:
-    #    - MB_PYTHON_VERSION=3.5
-    #  stage: final
-    #- <<: *osx-90
-    #  stage: s1
-    #- &osx-100
-    #  os: osx
-    #  osx_image: xcode8.3
-    #  env:
-    #    - MB_PYTHON_VERSION=3.6
+    - &osx-80
+      os: osx
+      osx_image: xcode8.3
+      env:
+        - MB_PYTHON_VERSION=3.4
+      stage: final
+    - <<: *osx-80
+      stage: s1
+    - &osx-90
+      os: osx
+      osx_image: xcode8.3
+      env:
+        - MB_PYTHON_VERSION=3.5
+      stage: final
+    - <<: *osx-90
+      stage: s1
+    - &osx-100
+      os: osx
+      osx_image: xcode8.3
+      env:
+        - MB_PYTHON_VERSION=3.6
     - <<: *osx-100
       stage: s1
     - &osx-110
@@ -93,47 +93,47 @@ matrix:
         - MB_PYTHON_VERSION=2.7
       cache:
         directories: $HOME/.ccache
-    #- os: linux
-    #  env:
-    #    - MB_PYTHON_VERSION=2.7
-    #    - UNICODE_WIDTH=16
-    #  cache:
-    #    directories: $HOME/.ccache
-    #- os: linux
-    #  env:
-    #    - MB_PYTHON_VERSION=2.7
-    #    - PLAT=i686
-    #  cache:
-    #    directories: $HOME/.ccache
-    #- os: linux
-    #  env:
-    #    - MB_PYTHON_VERSION=2.7
-    #    - PLAT=i686
-    #    - UNICODE_WIDTH=16
-    #  cache:
-    #    directories: $HOME/.ccache
-    #- os: linux
-    #  env:
-    #    - MB_PYTHON_VERSION=3.4
-    #  cache:
-    #    directories: $HOME/.ccache
-    #- os: linux
-    #  env:
-    #    - MB_PYTHON_VERSION=3.4
-    #    - PLAT=i686
-    #  cache:
-    #    directories: $HOME/.ccache
-    #- os: linux
-    #  env:
-    #    - MB_PYTHON_VERSION=3.5
-    #  cache:
-    #    directories: $HOME/.ccache
-    #- os: linux
-    #  env:
-    #    - MB_PYTHON_VERSION=3.5
-    #    - PLAT=i686
-    #  cache:
-    #    directories: $HOME/.ccache
+    - os: linux
+      env:
+        - MB_PYTHON_VERSION=2.7
+        - UNICODE_WIDTH=16
+      cache:
+        directories: $HOME/.ccache
+    - os: linux
+      env:
+        - MB_PYTHON_VERSION=2.7
+        - PLAT=i686
+      cache:
+        directories: $HOME/.ccache
+    - os: linux
+      env:
+        - MB_PYTHON_VERSION=2.7
+        - PLAT=i686
+        - UNICODE_WIDTH=16
+      cache:
+        directories: $HOME/.ccache
+    - os: linux
+      env:
+        - MB_PYTHON_VERSION=3.4
+      cache:
+        directories: $HOME/.ccache
+    - os: linux
+      env:
+        - MB_PYTHON_VERSION=3.4
+        - PLAT=i686
+      cache:
+        directories: $HOME/.ccache
+    - os: linux
+      env:
+        - MB_PYTHON_VERSION=3.5
+      cache:
+        directories: $HOME/.ccache
+    - os: linux
+      env:
+        - MB_PYTHON_VERSION=3.5
+        - PLAT=i686
+      cache:
+        directories: $HOME/.ccache
     - os: linux
       env:
         - MB_PYTHON_VERSION=3.6
@@ -247,25 +247,25 @@ before_cache: |
     fi
     set +x; set +e
 
-#after_success: |
-#    echo "TRAVIS_TAG = ${TRAVIS_TAG}"
-#    echo "TRAVIS_BRANCH = ${TRAVIS_BRANCH}"
-#    ##if [ -n "$TRAVIS_BRANCH" ]; then
-#    ##    set -x
-#    ##    if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-#    ##      pip install --user twine
-#    ##      pip install --user --upgrade six
-#    ##    fi
+after_success: |
+    echo "TRAVIS_TAG = ${TRAVIS_TAG}"
+    echo "TRAVIS_BRANCH = ${TRAVIS_BRANCH}"
+    if [ -n "$TRAVIS_BRANCH" ]; then
+        set -x
+        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+          pip install --user twine
+          pip install --user --upgrade six
+        fi
 
-#    ##    if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-#    ##      pip install twine
-#    ##      pip install --upgrade pyOpenSSL
-#    ##    fi
+        if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+          pip install twine
+          pip install --upgrade pyOpenSSL
+        fi
 
-#    ##    # TODO:
-#    ##    #echo "TRAVIS_BUILD_DIR $TRAVIS_BUILD_DIR"
-#    ##    #twine upload -u ${GITHUB_USERNAME} -p ${TWINE_PASSWORD} --skip-existing ${TRAVIS_BUILD_DIR}/wheelhouse/pyhesaff*
-#    ##    set +x
-#    ##else
-#    ##    echo "Tag not set, deployment skipped."
-#    ##fi
+        # TODO:
+        echo "TRAVIS_BUILD_DIR $TRAVIS_BUILD_DIR"
+        twine upload -u ${GITHUB_USERNAME} -p ${TWINE_PASSWORD} --skip-existing ${TRAVIS_BUILD_DIR}/wheelhouse/pyhesaff*
+        set +x
+    else
+        echo "Tag not set, deployment skipped."
+    fi
