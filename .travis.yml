@@ -256,8 +256,9 @@ after_success:
         if [ -n "$TRAVIS_BRANCH" ]; then
             set +x
             if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-              pip install --user twine
-              pip install --user --upgrade six
+              pip install requests[security]
+              pip install twine
+              pip install six -U
             fi
 
             if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
@@ -266,7 +267,7 @@ after_success:
             fi
 
             echo "TRAVIS_BUILD_DIR $TRAVIS_BUILD_DIR"
-            twine upload -u "${GITHUB_USERNAME}" -p "${TWINE_PASSWORD}" --skip-existing ${TRAVIS_BUILD_DIR}/wheelhouse/pyhesaff*
+            twine upload --verbose -u "${GITHUB_USERNAME}" -p "${TWINE_PASSWORD}" --skip-existing ${TRAVIS_BUILD_DIR}/wheelhouse/pyhesaff*
             #twine upload -u "${GITHUB_USERNAME}" -p "${TWINE_PASSWORD}" --skip-existing wheelhouse/pyhesaff*
         else
             echo "Tag not set, deployment skipped."
