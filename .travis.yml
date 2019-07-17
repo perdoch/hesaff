@@ -45,6 +45,7 @@ stages:
 matrix:
   fast_finish: true
   include:
+
     # builds for MacOS
     - &osx-70
       os: osx
@@ -249,25 +250,24 @@ before_cache: |
     set +x; set +e
 
 after_success: |
-    # Upload wheels to pypi if requested
-    echo "TRAVIS_TAG = $TRAVIS_TAG"
-    echo "TRAVIS_BRANCH = $TRAVIS_BRANCH"
-    if [ -n "$TRAVIS_BRANCH" ]; then
-        set -x
-        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-          pip install --user twine
-          pip install --user --upgrade six
-        fi
+    echo "TRAVIS_TAG = ${TRAVIS_TAG}"
+    echo "TRAVIS_BRANCH = ${TRAVIS_BRANCH}"
+    ##if [ -n "$TRAVIS_BRANCH" ]; then
+    ##    set -x
+    ##    if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+    ##      pip install --user twine
+    ##      pip install --user --upgrade six
+    ##    fi
 
-        if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-          pip install twine
-          pip install --upgrade pyOpenSSL
-        fi
+    ##    if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+    ##      pip install twine
+    ##      pip install --upgrade pyOpenSSL
+    ##    fi
 
-        # TODO:
-        #echo "TRAVIS_BUILD_DIR $TRAVIS_BUILD_DIR"
-        #twine upload -u ${GITHUB_USERNAME} -p ${TWINE_PASSWORD} --skip-existing ${TRAVIS_BUILD_DIR}/wheelhouse/pyhesaff*
-        set +x
-    else
-        echo "Tag not set, deployment skipped."
-    fi
+    ##    # TODO:
+    ##    #echo "TRAVIS_BUILD_DIR $TRAVIS_BUILD_DIR"
+    ##    #twine upload -u ${GITHUB_USERNAME} -p ${TWINE_PASSWORD} --skip-existing ${TRAVIS_BUILD_DIR}/wheelhouse/pyhesaff*
+    ##    set +x
+    ##else
+    ##    echo "Tag not set, deployment skipped."
+    ##fi
