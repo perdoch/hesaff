@@ -1,5 +1,9 @@
 env:
     global:
+        # travis encrypt GITHUB_USERNAME=$GITHUB_USERNAME
+        - secure: "W86iwY9rCzhQuaxk6ZaX7q/5xefs6Z3EXED1tlNLNcjBiW7Ya8wMsbuk4QiHQ5idqk95cbeNr6jP20bnKE+J2mxn61oFCSdZruJV5UVF1BVqRQlEGj9qmddh51QbXRxY1MWA2dT+fB8aME4AjZH6sn4Gs7Cph3Y/lHZImj7ZzlNhH8Erz3DWyO+9CWJVowxHJL8ydyZ2jYx3BeNscahvWTOtiixCeJwz/7T80slyVGB/Bh/y18ZmJ+c4biBPQKqv6iIv0akFKQy5sfBl0WEEWaodb1vI9clu0WS6ucPI/TJoUOqOcVKe/LwFxFlFk44GimzwszEBnBkcqyjMKWaPQYh+IE5x5JVoIwZJb0TfAb10cL6+WRVWDVxiP5Vx4taD4vAafYLI3S+WPT+Vu2NF2tEGPxVdpXguz+N3cR290Y7knFle/H8pxCJ/sit2uAz/14F6QAJr1bd26yQApW8kipyZty2jrhduZrkGhaRRqIn7r4RFKPzkOCILsX8RDyxXBwBJVuXbLJDBPStVdDyVQlqkpXTPEZV2Pz8sC/uQavQLsOLaZys1rheddZyDXfRPfVQqSQrrnYQZKcIMuNaUBVlF5ebdeGP0NEnye2XOhOPPrkrPB/5UO582qiOCJnXGW/IxCmPmP1TAU19xPK1t8L70wYndkz3OofJeuH4/Ieo="
+        # travis encrypt TWINE_PASSWORD=$TWINE_PASSWORD
+        - secure: "QPxLV4kUPRXRWRRy18HW4kaDaz1Aq5q6Z8j+R7j7yRKCnCV99luDuG+am2p0UkBjUDr5toMxYO7JP9rVpJsw33IarNP+INUowr1cMTU8ExkTgGRVkD8Q9m31UMmdMsViXnKdptpVG8Y8AssxkoZlxGVUzmfO6zu8icmsjwS5FZbJJt1wmPocAUuG6lSb52p/SlxxTkaSZdfsp1kWiuXALPF8ivuS71a/S10YRb1iUVIrsf6W0WWwmwUloEij90lpG1lrH8yD5fcZ8KpQWYvZUOPQCaDUgWmP6MN1pYWpQGo+JMV7HteSMpYhPgubLiPEmEiNRAxbn8Hen8W2a5yjxtDVs1nZzuVaHuSYnzedyiI3cC/OplEJglA/94mBgpeUdAGYVNXWecAkrHPq8dG06ypo/Dw1DF8YIpqtpthP1stH32JFFz2lutm+EtbcZxIXratz8AnKYdsba11i2OgtTgLpvJ0yJBCZTp2VsYbyp4dgy2fqzbrOEPI8D7tyBQajlYIgkLrQWElnlPZYxiaY/glkVVyGJjPmkp5iYUza8hxXr5v62k3mwNJfq8McJn5JRLsr1Y7XxGTGNnGE5O5TnyqlxMYIliGeT7ltx7HagA5gsRx15Rw8uGWzxkdtVIkOu/wLLJ5Oq01u/MQsqm+fguU06lZymh7ZyJSNK3LQBxM="
         - "PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'"
         - TEST_DEPENDS="numpy==1.11.1"
         - BDIST_PARAMS=""
@@ -7,7 +11,6 @@ env:
         - USE_CCACHE=1
         - PLAT=x86_64
         - UNICODE_WIDTH=32
-
 
 # Host Python is only used in staging
 language: generic
@@ -42,7 +45,6 @@ stages:
 matrix:
   fast_finish: true
   include:
-
     # builds for MacOS
     - &osx-70
       os: osx
@@ -73,16 +75,16 @@ matrix:
     #  osx_image: xcode8.3
     #  env:
     #    - MB_PYTHON_VERSION=3.6
-    #- <<: *osx-100
-    #  stage: s1
-    #- &osx-110
-    #  os: osx
-    #  osx_image: xcode8.3
-    #  env:
-    #    - MB_PYTHON_VERSION=3.7
-    #  stage: final
-    #- <<: *osx-110
-    #  stage: s1
+    - <<: *osx-100
+      stage: s1
+    - &osx-110
+      os: osx
+      osx_image: xcode8.3
+      env:
+        - MB_PYTHON_VERSION=3.7
+      stage: final
+    - <<: *osx-110
+      stage: s1
 
     # headless builds for Linux
     - os: linux
@@ -133,31 +135,22 @@ matrix:
     #    - PLAT=i686
     #  cache:
     #    directories: $HOME/.ccache
-    #- os: linux
-    #  env:
-    #    - MB_PYTHON_VERSION=3.6
-    #    - TEST_DEPENDS=numpy==1.11.3
-    #  cache:
-    #    directories: $HOME/.ccache
-    #- os: linux
-    #  env:
-    #    - MB_PYTHON_VERSION=3.6
-    #    - TEST_DEPENDS=numpy==1.11.3
-    #  cache:
-    #    directories: $HOME/.ccache
-    #- os: linux
-    #  env:
-    #    - MB_PYTHON_VERSION=3.6
-    #    - PLAT=i686
-    #    - TEST_DEPENDS=numpy==1.11.3
-    #  cache:
-    #    directories: $HOME/.ccache
-    #- os: linux
-    #  env:
-    #    - MB_PYTHON_VERSION=3.7
-    #    - TEST_DEPENDS=numpy==1.14.5
-    #  cache:
-    #    directories: $HOME/.ccache
+    - os: linux
+      env:
+        - MB_PYTHON_VERSION=3.6
+      cache:
+        directories: $HOME/.ccache
+    - os: linux
+      env:
+        - MB_PYTHON_VERSION=3.6
+        - PLAT=i686
+      cache:
+        directories: $HOME/.ccache
+    - os: linux
+      env:
+        - MB_PYTHON_VERSION=3.7
+      cache:
+        directories: $HOME/.ccache
 
 # The first line is printed in the folding header in Travis output
 before_install: |
@@ -257,11 +250,10 @@ before_cache: |
 
 after_success: |
     # Upload wheels to pypi if requested
-    TRAVIS_TAG="TODO-whatdis?"
-
-    if [ -n "$TRAVIS_TAG" ]; then
+    echo "TRAVIS_TAG = $TRAVIS_TAG"
+    echo "TRAVIS_BRANCH = $TRAVIS_BRANCH"
+    if [ -n "$TRAVIS_BRANCH" ]; then
         set -x
-
         if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
           pip install --user twine
           pip install --user --upgrade six
@@ -273,22 +265,9 @@ after_success: |
         fi
 
         # TODO:
-        echo "TRAVIS_BUILD_DIR $TRAVIS_BUILD_DIR"
-        # twine upload -u ${USER} -p ${PASS} --skip-existing ${TRAVIS_BUILD_DIR}/wheelhouse/pyhesaff*
+        #echo "TRAVIS_BUILD_DIR $TRAVIS_BUILD_DIR"
+        #twine upload -u ${GITHUB_USERNAME} -p ${TWINE_PASSWORD} --skip-existing ${TRAVIS_BUILD_DIR}/wheelhouse/pyhesaff*
         set +x
     else
         echo "Tag not set, deployment skipped."
     fi
-
-
-deploy:
-  provider: pypi
-  user:
-      secure: TODO
-  password:
-    secure: A98+JWLisaKx8j+ZIil/HVvfdj0I0GKwWM2mEgGJmE8y7Se2vkEgesdTbROxKT+2M0qqIFYIva7r4+HYzzNNA9+viebb5pOb0XNe+HNy2NQ778Dp2Cx7iOYfOCfIJ33YHpP9hu+vpIfdCLcs2OF0ExwHWtiSwmpl0sS7G4dDJGxLjJh3eAomhdZWwhQZVtEfppS1SEnkGMa0a4yxJLY5x0TjHN2y9IV6EQlaAQ+LrzwPxn0d6I/bSDtNfHYvbiuakPzCvFhuAZIkdeH9ptkNiJPsOw3KCEniStDw0aQ86xQDGh/2yjJU5tsiZC0NL14j6jaCnuVFXv4/I8gcjPEapUkb1jnfcJ77XCfw0nbTvUv5VhQyPT7Z3iT83TEogZl8UTSfwGgSbdZR5/+e8zcliEq5amoCBrxfXcOrun832BiWYohh4jgv1XCgp3tTGNAr0w0UP2uwlXKnTNdOHOaRSG1LoDBLB24zLtcFl+kUXE+igLX+8JRhzhSO5dEx9edIVD9quqp6FPerfyAdPXoDm35vdjwD2njMnUtuJyoBzMpMjf1CbGfcLstY9PXtB4ukZ1rxzkHkww4Ki3Uz+ibN0SzsJpKm576NEPbkyPcQw3nZn21+4HZJyONWUcQNpEEPQNtxPEY3gpoIyiVNNkW8eDCySWpGi3+2O/wtzbgvqRo=
-    branch: release
-  #USER:
-  #  secure: fXgF9uyy6sT0JoVOR7BoqA==
-  #PASS:
-  #  secure: 0bXSOVjf9x8L7nErTivu92TF1FwNosTjFJQPmxp8Dys=
