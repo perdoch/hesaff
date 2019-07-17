@@ -256,9 +256,10 @@ after_success:
         if [ -n "$TRAVIS_BRANCH" ]; then
             set +x
             if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-              pip install requests[security]
-              pip install twine
-              pip install six -U
+              pip install pyopenssl ndg-httpsclient pyasn1 -U --user
+              pip install requests[security] --user
+              pip install twine --user
+              pip install six -U --user
             fi
 
             if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
