@@ -170,6 +170,7 @@ matrix:
 
 build_script:
 - cmd: |
+    choco install opencv
     "%PYTHON%/python.exe" -m pip install --upgrade pip
     "%PYTHON%/python.exe" -m pip install --upgrade setuptools
     "%PYTHON%/python.exe" setup.py bdist_wheel
@@ -185,8 +186,8 @@ before_test:
 test_script:
 - cmd: |
 
-    cd %APPVEYOR_BUILD_FOLDER%\tests
-    "%PYTHON%/python.exe" -m unittest test
+    "%PYTHON%/python.exe" -m pip install xdoctest
+    "%PYTHON%/python.exe" -m xdoctest -m pyhesaff
 
 artifacts:
 - path: dist\*.whl
