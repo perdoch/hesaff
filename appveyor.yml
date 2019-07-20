@@ -173,6 +173,7 @@ build_script:
     choco install opencv
     "%PYTHON%/python.exe" -m pip install --upgrade pip
     "%PYTHON%/python.exe" -m pip install --upgrade setuptools
+    "%PYTHON%/python.exe" -m pip install -r requirements.txt
     "%PYTHON%/python.exe" setup.py bdist_wheel
 
 before_test:
