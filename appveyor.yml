@@ -170,7 +170,6 @@ matrix:
 
 build_script:
 - cmd: |
-    #$env:OPENCV_DIR = "opencv_choco"
     choco install opencv
     refreshenv
     "%PYTHON%/python.exe" -m pip install --upgrade pip
