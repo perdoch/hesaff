@@ -1,5 +1,5 @@
 image:
-- Visual Studio 2017
+- Visual Studio 2015
 
 environment:
   OpenCV_DIR: "C:/tools/opencv/build"
