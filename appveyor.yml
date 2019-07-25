@@ -18,9 +18,11 @@ environment:
   matrix:
     - PYTHON: "C:/Python27"
       GENERATOR: "Visual Studio 15 2017"
+      VCVARS_FPATH: "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Auxiliary/Build/vcvars32.bat"
 
     - PYTHON: "C:/Python27-x64"
       GENERATOR: "Visual Studio 15 2017 Win64"
+      VCVARS_FPATH: "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Auxiliary/Build/vcvars64.bat"
 
     - PYTHON: "C:/Python34"
       GENERATOR: "Visual Studio 15 2017"
@@ -55,6 +57,7 @@ matrix:
 # https://stackoverflow.com/questions/31262342/cmake-g-ninja-on-windows-specify-x64
 build_script:
 - cmd: |
+    call "%VCVARS_FPATH%"
     choco install opencv
     refreshenv
     "%PYTHON%/python.exe" -m pip install --upgrade pip
