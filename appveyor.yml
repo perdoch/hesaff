@@ -1,7 +1,7 @@
 image:
     # https://www.appveyor.com/docs/build-environment/#build-worker-images
-- Visual Studio 2017
-#- Visual Studio 2015
+#- Visual Studio 2017
+- Visual Studio 2015
 
 environment:
   OpenCV_DIR: "C:/tools/opencv/build"
@@ -17,48 +17,27 @@ environment:
 
   matrix:
     #- PYTHON: "C:/Python27"
-    #  GENERATOR: "Visual Studio 15 2017"
-    #  VCVARS_FPATH: "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Auxiliary/Build/vcvars32.bat"
-
     #- PYTHON: "C:/Python27-x64"
-    #  GENERATOR: "Visual Studio 15 2017 Win64"
-    #  VCVARS_FPATH: "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Auxiliary/Build/vcvars64.bat"
-
     #- PYTHON: "C:/Python34"
-    #  GENERATOR: "Visual Studio 15 2017"
-
     #- PYTHON: "C:/Python34-x64"
-    #  GENERATOR: "Visual Studio 15 2017 Win64"
 
     - PYTHON: "C:/Python35"
-      GENERATOR: "Visual Studio 15 2017"
-      VCVARS_FPATH: "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/vcvars32.bat"
-      #VCVARS_FPATH: "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Auxiliary/Build/vcvars32.bat"
+      ARCH_BITS: "32"
 
     - PYTHON: "C:/Python35-x64"
-      GENERATOR: "Visual Studio 15 2017 Win64"
-      VCVARS_FPATH: "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/vcvars64.bat"
-      #VCVARS_FPATH: "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Auxiliary/Build/vcvars64.bat"
+      ARCH_BITS: "64"
 
     - PYTHON: "C:/Python36"
-      GENERATOR: "Visual Studio 15 2017"
-      VCVARS_FPATH: "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/vcvars32.bat"
-      #VCVARS_FPATH: "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Auxiliary/Build/vcvars32.bat"
+      ARCH_BITS: "32"
 
     - PYTHON: "C:/Python36-x64"
-      GENERATOR: "Visual Studio 15 2017 Win64"
-      VCVARS_FPATH: "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/vcvars64.bat"
-      #VCVARS_FPATH: "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Auxiliary/Build/vcvars64.bat"
+      ARCH_BITS: "64"
 
     - PYTHON: "C:/Python37"
-      GENERATOR: "Visual Studio 15 2017"
-      VCVARS_FPATH: "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/vcvars32.bat"
-      #VCVARS_FPATH: "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Auxiliary/Build/vcvars32.bat"
+      ARCH_BITS: "32"
 
     - PYTHON: "C:/Python37-x64"
-      GENERATOR: "Visual Studio 15 2017 Win64"
-      VCVARS_FPATH: "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/vcvars64.bat"
-      #VCVARS_FPATH: "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Auxiliary/Build/vcvars64.bat"
+      ARCH_BITS: "64"
 
 matrix:
     fast_finish: true
@@ -69,9 +48,17 @@ matrix:
 # https://stackoverflow.com/questions/31262342/cmake-g-ninja-on-windows-specify-x64
 # https://github.com/opencv/opencv/issues/6132
 #"%PYTHON%/python.exe" setup.py bdist_wheel -- -G "%GENERATOR%" -DOpenCV_DIR="C:/tools/opencv/build"
+## https://www.appveyor.com/docs/lang/cpp/
 build_script:
 - cmd: |
-    call "%VCVARS_FPATH%"
+    IF "%ARCH_BITS%"=="32" (
+        SET GENERATOR="Visual Studio 14 2015"
+        call "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/vcvarsall.bat" x86
+    ) ELSE (
+        SET GENERATOR="Visual Studio 14 2015 Win64"
+        call "C:/Program Files/Microsoft SDKs/Windows/v7.1/Bin/SetEnv.cmd" /x64
+        call "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/vcvarsall.bat" x86_amd64
+    )
     choco install opencv
     refreshenv
     "%PYTHON%/python.exe" -m pip install --upgrade pip
