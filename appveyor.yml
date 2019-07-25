@@ -9,164 +9,24 @@ environment:
 
   matrix:
     - PYTHON: "C:/Python27"
-      ENABLE_CONTRIB: 0
-      ENABLE_HEADLESS: 0
 
     - PYTHON: "C:/Python27-x64"
-      ENABLE_CONTRIB: 0
-      ENABLE_HEADLESS: 0
 
     - PYTHON: "C:/Python34"
-      ENABLE_CONTRIB: 0
-      ENABLE_HEADLESS: 0
 
     - PYTHON: "C:/Python34-x64"
-      ENABLE_CONTRIB: 0
-      ENABLE_HEADLESS: 0
 
     - PYTHON: "C:/Python35"
-      ENABLE_CONTRIB: 0
-      ENABLE_HEADLESS: 0
 
     - PYTHON: "C:/Python35-x64"
-      ENABLE_CONTRIB: 0
-      ENABLE_HEADLESS: 0
 
     - PYTHON: "C:/Python36"
-      ENABLE_CONTRIB: 0
-      ENABLE_HEADLESS: 0
 
     - PYTHON: "C:/Python36-x64"
-      ENABLE_CONTRIB: 0
-      ENABLE_HEADLESS: 0
 
     - PYTHON: "C:/Python37"
-      ENABLE_CONTRIB: 0
-      ENABLE_HEADLESS: 0
 
     - PYTHON: "C:/Python37-x64"
-      ENABLE_CONTRIB: 0
-      ENABLE_HEADLESS: 0
-
-    - PYTHON: "C:/Python27"
-      ENABLE_CONTRIB: 1
-      ENABLE_HEADLESS: 0
-
-    - PYTHON: "C:/Python27-x64"
-      ENABLE_CONTRIB: 1
-      ENABLE_HEADLESS: 0
-
-    - PYTHON: "C:/Python34"
-      ENABLE_CONTRIB: 1
-      ENABLE_HEADLESS: 0
-
-    - PYTHON: "C:/Python34-x64"
-      ENABLE_CONTRIB: 1
-      ENABLE_HEADLESS: 0
-
-    - PYTHON: "C:/Python35"
-      ENABLE_CONTRIB: 1
-      ENABLE_HEADLESS: 0
-
-    - PYTHON: "C:/Python35-x64"
-      ENABLE_CONTRIB: 1
-      ENABLE_HEADLESS: 0
-
-    - PYTHON: "C:/Python36"
-      ENABLE_CONTRIB: 1
-      ENABLE_HEADLESS: 0
-
-    - PYTHON: "C:/Python36-x64"
-      ENABLE_CONTRIB: 1
-      ENABLE_HEADLESS: 0
-
-    - PYTHON: "C:/Python37"
-      ENABLE_CONTRIB: 1
-      ENABLE_HEADLESS: 0
-
-    - PYTHON: "C:/Python37-x64"
-      ENABLE_CONTRIB: 1
-      ENABLE_HEADLESS: 0
-
-    - PYTHON: "C:/Python27"
-      ENABLE_CONTRIB: 0
-      ENABLE_HEADLESS: 1
-
-    - PYTHON: "C:/Python27-x64"
-      ENABLE_CONTRIB: 0
-      ENABLE_HEADLESS: 1
-
-    - PYTHON: "C:/Python34"
-      ENABLE_CONTRIB: 0
-      ENABLE_HEADLESS: 1
-
-    - PYTHON: "C:/Python34-x64"
-      ENABLE_CONTRIB: 0
-      ENABLE_HEADLESS: 1
-
-    - PYTHON: "C:/Python35"
-      ENABLE_CONTRIB: 0
-      ENABLE_HEADLESS: 1
-
-    - PYTHON: "C:/Python35-x64"
-      ENABLE_CONTRIB: 0
-      ENABLE_HEADLESS: 1
-
-    - PYTHON: "C:/Python36"
-      ENABLE_CONTRIB: 0
-      ENABLE_HEADLESS: 1
-
-    - PYTHON: "C:/Python36-x64"
-      ENABLE_CONTRIB: 0
-      ENABLE_HEADLESS: 1
-
-    - PYTHON: "C:/Python37"
-      ENABLE_CONTRIB: 0
-      ENABLE_HEADLESS: 1
-
-    - PYTHON: "C:/Python37-x64"
-      ENABLE_CONTRIB: 0
-      ENABLE_HEADLESS: 1
-
-    - PYTHON: "C:/Python27"
-      ENABLE_CONTRIB: 1
-      ENABLE_HEADLESS: 1
-
-    - PYTHON: "C:/Python27-x64"
-      ENABLE_CONTRIB: 1
-      ENABLE_HEADLESS: 1
-
-    - PYTHON: "C:/Python34"
-      ENABLE_CONTRIB: 1
-      ENABLE_HEADLESS: 1
-
-    - PYTHON: "C:/Python34-x64"
-      ENABLE_CONTRIB: 1
-      ENABLE_HEADLESS: 1
-
-    - PYTHON: "C:/Python35"
-      ENABLE_CONTRIB: 1
-      ENABLE_HEADLESS: 1
-
-    - PYTHON: "C:/Python35-x64"
-      ENABLE_CONTRIB: 1
-      ENABLE_HEADLESS: 1
-
-    - PYTHON: "C:/Python36"
-      ENABLE_CONTRIB: 1
-      ENABLE_HEADLESS: 1
-
-    - PYTHON: "C:/Python36-x64"
-      ENABLE_CONTRIB: 1
-      ENABLE_HEADLESS: 1
-
-    - PYTHON: "C:/Python37"
-      ENABLE_CONTRIB: 1
-      ENABLE_HEADLESS: 1
-
-    - PYTHON: "C:/Python37-x64"
-      ENABLE_CONTRIB: 1
-      ENABLE_HEADLESS: 1
 
 matrix:
     fast_finish: true
@@ -179,7 +39,7 @@ build_script:
     "%PYTHON%/python.exe" -m pip install --upgrade setuptools
     "%PYTHON%/python.exe" -m pip install ninja
     "%PYTHON%/python.exe" -m pip install -r requirements.txt
-    "%PYTHON%/python.exe" setup.py bdist_wheel
+    "%PYTHON%/python.exe" setup.py bdist_wheel -- -DOPENCV_DIR="C:/tools/opencv/build"
 
 before_test:
 - ps: |
