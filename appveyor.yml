@@ -1,4 +1,7 @@
 environment:
+  OPENCV_DIR: "C:/tools/opencv/build"
+  CMAKE_MODULE_PATH: "C:/tools/opencv/build"
+  #CMAKE_PREFIX_PATH: "C:/tools/opencv/build/OpenCVConfig.cmake"
   #USER:
   #  secure: fXgF9uyy6sT0JoVOR7BoqA==
   #PASS:
@@ -174,6 +177,7 @@ build_script:
     refreshenv
     "%PYTHON%/python.exe" -m pip install --upgrade pip
     "%PYTHON%/python.exe" -m pip install --upgrade setuptools
+    "%PYTHON%/python.exe" -m pip install ninja
     "%PYTHON%/python.exe" -m pip install -r requirements.txt
     "%PYTHON%/python.exe" setup.py bdist_wheel
 
