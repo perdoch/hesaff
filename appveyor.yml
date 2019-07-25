@@ -1,9 +1,14 @@
 image:
-- Visual Studio 2015
+    # https://www.appveyor.com/docs/build-environment/#build-worker-images
+- Visual Studio 2017
+#- Visual Studio 2015
 
 environment:
   OpenCV_DIR: "C:/tools/opencv/build"
   CMAKE_MODULE_PATH: "C:/tools/opencv/build"
+  # https://cmake.org/cmake/help/v3.11/generator/Visual%20Studio%2015%202017.html
+  #GENERATOR: "Visual Studio 15 2017 Win64"
+
   #CMAKE_PREFIX_PATH: "C:/tools/opencv/build/OpenCVConfig.cmake"
   #USER:
   #  secure: fXgF9uyy6sT0JoVOR7BoqA==
@@ -12,24 +17,34 @@ environment:
 
   matrix:
     - PYTHON: "C:/Python27"
+      GENERATOR: "Visual Studio 15 2017"
 
     - PYTHON: "C:/Python27-x64"
+      GENERATOR: "Visual Studio 15 2017 Win64"
 
     - PYTHON: "C:/Python34"
+      GENERATOR: "Visual Studio 15 2017"
 
     - PYTHON: "C:/Python34-x64"
+      GENERATOR: "Visual Studio 15 2017 Win64"
 
     - PYTHON: "C:/Python35"
+      GENERATOR: "Visual Studio 15 2017"
 
     - PYTHON: "C:/Python35-x64"
+      GENERATOR: "Visual Studio 15 2017 Win64"
 
     - PYTHON: "C:/Python36"
+      GENERATOR: "Visual Studio 15 2017"
 
     - PYTHON: "C:/Python36-x64"
+      GENERATOR: "Visual Studio 15 2017 Win64"
 
     - PYTHON: "C:/Python37"
+      GENERATOR: "Visual Studio 15 2017"
 
     - PYTHON: "C:/Python37-x64"
+      GENERATOR: "Visual Studio 15 2017 Win64"
 
 matrix:
     fast_finish: true
@@ -38,11 +53,12 @@ build_script:
 - cmd: |
     choco install opencv
     refreshenv
+    # Reference: https://github.com/votchallenge/trax/blob/master/appveyor.yml
     "%PYTHON%/python.exe" -m pip install --upgrade pip
     "%PYTHON%/python.exe" -m pip install --upgrade setuptools
-    "%PYTHON%/python.exe" -m pip install ninja
+    #"%PYTHON%/python.exe" -m pip install ninja
     "%PYTHON%/python.exe" -m pip install -r requirements.txt
-    "%PYTHON%/python.exe" setup.py bdist_wheel -- -DOpenCV_DIR="C:/tools/opencv/build"
+    "%PYTHON%/python.exe" setup.py bdist_wheel -- -G "%GENERATOR%" -DOpenCV_DIR="C:/tools/opencv/build"
 
 before_test:
 - ps: |
