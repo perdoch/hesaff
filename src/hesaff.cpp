@@ -70,11 +70,11 @@ CommandLine:
 };
 
 #ifndef M_PI
-#define M_PI 3.14159
+#define M_PI 3.14159f
 #endif
 
 #ifndef M_TAU
-#define M_TAU 6.28318
+#define M_TAU 6.28318f
 #endif
 
 // Gravity points downward = tau / 4 = pi / 2
@@ -478,7 +478,7 @@ public:
         }
         //printDBG("[onAffShapeFound] Found " << submaxima_oris.size() << " orientations")
         global_c1++;
-        global_nmulti_ori += submaxima_oris.size() - 1;
+        global_nmulti_ori += static_cast<int>(submaxima_oris.size()) - 1;
         // push a keypoint for every orientation found
         for (int i = 0; i < submaxima_oris.size(); i++)
         {
@@ -631,8 +631,8 @@ public:
         // gaussian weight magnitudes
         //float sigma0 = (magnitudes.rows / 2) * .95;
         //float sigma1 = (magnitudes.cols / 2) * .95;
-        const float sigma0 = (magnitudes.rows / 2) * .4;
-        const float sigma1 = (magnitudes.cols / 2) * .4;
+        const float sigma0 = (static_cast<float>(magnitudes.rows) / 2.0f) * .4f;
+        const float sigma1 = (static_cast<float>(magnitudes.cols) / 2.0f) * .4f;
         cv::Mat gauss_weights;
         make_2d_gauss_patch_01(magnitudes.rows, magnitudes.cols, sigma0,
                 sigma1, gauss_weights);
@@ -678,7 +678,7 @@ public:
         Histogram<float> hist = computeInterpolatedHistogram<float>(
                 orientations.begin<float>(), orientations.end<float>(),
                 weights.begin<float>(), weights.end<float>(),
-                nbins, M_TAU, 0.0);
+                nbins, M_TAU, 0.0f);
 
         Histogram<float> wrapped_hist = htool::wrap_histogram(hist);
         std::vector<float> submaxima_xs, submaxima_ys;
@@ -1061,7 +1061,7 @@ affine_invariance, only_count, use_dense, dense_stride, siftPower
     const int   maxPyramidLevels = -1;          \
     __MACRO_COMMENT__( Affine Params Shape)     \
     const int   maxIterations = 16;             \
-    const float convergenceThreshold = 0.05;    \
+    const float convergenceThreshold = 0.05f;   \
     const int   smmWindowSize = 19;             \
     const float mrSize = 3.0f * sqrt(3.0f);     \
     __MACRO_COMMENT__( SIFT params)             \
@@ -1073,16 +1073,16 @@ affine_invariance, only_count, use_dense, dense_stride, siftPower
     __MACRO_COMMENT__( Shared SIFT + Affine)    \
     const int patchSize = 41;                   \
     __MACRO_COMMENT__( My params)               \
-    const float scale_min = -1;                 \
-    const float scale_max = -1;                 \
+    const float scale_min = -1.0f;              \
+    const float scale_max = -1.0f;              \
     const bool rotation_invariance = false;     \
     const bool augment_orientation = false;     \
-    const float ori_maxima_thresh = .8;         \
+    const float ori_maxima_thresh = .8f;        \
     const bool affine_invariance = true;        \
     __MACRO_COMMENT__()                         \
     const bool use_dense = false;               \
     const int  dense_stride = 32;               \
-    const float siftPower = 1.0;                \
+    const float siftPower = 1.0f;               \
     const bool only_count = false;
 
 
@@ -1192,13 +1192,13 @@ PYHESAFF void writeFeatures(AffineHessianDetector* detector,
 {
     // Dump keypoints to disk in text format
     char suffix[] = ".hesaff.sift";
-    const int len = strlen(img_fpath) + strlen(suffix) + 1;
+    const int len = static_cast<int>(strlen(img_fpath) + strlen(suffix)) + 1;
     #ifdef WIN32
     char* out_fpath = new char[len];
     #else
     char out_fpath[len];
     #endif
-    snprintf(out_fpath, len, "%s%s", img_fpath, suffix);
+    snprintf(out_fpath, len, "%s%s", img_fpath, suffix);  // FIXME: unsafe
     out_fpath[len - 1] = 0;
     printDBG("detector->writing_features: " << out_fpath);
     std::ofstream out(out_fpath);

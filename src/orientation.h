@@ -198,8 +198,9 @@ template <class T> void show_hist_submaxima(const Histogram<T>& hist, float maxi
 
 template <class T> T ensure_0toTau(T x)
 {
-    if(x < 0)return ensure_0toTau(x+M_TAU);
-    else if(x >= M_TAU)return ensure_0toTau(x-M_TAU);
+    T _tau = static_cast<T>(M_TAU);
+    if(x < 0)return ensure_0toTau(x+_tau);
+    else if(x >= _tau)return ensure_0toTau(x-_tau);
     else return x;
 }
 
@@ -287,7 +288,7 @@ template <class T, class Iterator> Histogram<T> computeInterpolatedHistogram(
     const T start = range_min;
     const T stop = range_max;
     const T step = (stop - start) / T(nbins + interpolation_wrap);
-    const T half_step = step / 2.0;
+    const T half_step = step / static_cast<T>(2.0);
     const T data_offset = start + half_step;
     // debug info
     printDBG_ORI("nbins = " << nbins)
@@ -422,7 +423,7 @@ template <class T> void hist_edges_to_centers(Histogram<T>& hist)
 
 template <class T> void hist_argmaxima(Histogram<T> hist, std::vector<int>& argmaxima_list, float maxima_thresh=.8)
 {
-    int size = hist.data.size() - 2; // the edge points aren't to be counted, due to being only there to make interpolation simpler
+    int size = static_cast<int>(hist.data.size()) - 2; // the edge points aren't to be counted, due to being only there to make interpolation simpler
     // The first and last bins are duplicates so we dont need to look at those
     int argmax = 1;
     T maxval = hist.data[1]; // initialize

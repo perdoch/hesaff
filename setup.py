@@ -63,7 +63,12 @@ if __name__ == '__main__':
         def __len__(self):
             return 1
 
-    soconfig = sysconfig.get_config_var('SO')
+    try:
+        soconfig = sysconfig.get_config_var('EXT_SUFFIX')
+    except Exception:
+        soconfig = sysconfig.get_config_var('SO')
+
+
     def get_lib_ext():
         if sys.platform.startswith('win32'):
             ext = '.dll'
@@ -86,7 +91,7 @@ if __name__ == '__main__':
         hack_libconfig = '-{}{}'.format(_pyver, libext)
         # hack_libconfig = '.{}-{}-{}.so'.format(_os, _arch, _pyver)
         # hack_libconfig = '.so'
-        print('hack_libconfig = {!r}'.format(hack_libconfig))
+        # print('hack_libconfig = {!r}'.format(hack_libconfig))
 
     import ubelt as ub
     # ub.cmd('pwd', verbose=3)
