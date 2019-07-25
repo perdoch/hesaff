@@ -49,6 +49,8 @@ matrix:
 # https://github.com/opencv/opencv/issues/6132
 #"%PYTHON%/python.exe" setup.py bdist_wheel -- -G "%GENERATOR%" -DOpenCV_DIR="C:/tools/opencv/build"
 ## https://www.appveyor.com/docs/lang/cpp/
+# TODO: move specific visual studio configs into scripts that we just call here rather than
+# dealing with appveyor and yaml multiline cmd parsing.
 build_script:
 - cmd: |
     IF "%ARCH_BITS%"=="32" ( SET GENERATOR="Visual Studio 14 2015" && call "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/vcvarsall.bat" x86 )
@@ -58,7 +60,7 @@ build_script:
     "%PYTHON%/python.exe" -m pip install --upgrade pip
     "%PYTHON%/python.exe" -m pip install --upgrade setuptools
     "%PYTHON%/python.exe" -m pip install -r requirements.txt
-    "%PYTHON%/python.exe" setup.py bdist_wheel -- -DOpenCV_DIR="C:/tools/opencv/build"
+    "%PYTHON%/python.exe" setup.py bdist_wheel -- -G "%GENERATOR%" -DOpenCV_DIR="C:/tools/opencv/build"
 
 before_test:
 - ps: |
