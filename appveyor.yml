@@ -51,14 +51,8 @@ matrix:
 ## https://www.appveyor.com/docs/lang/cpp/
 build_script:
 - cmd: |
-    IF "%ARCH_BITS%"=="32" (
-        SET GENERATOR="Visual Studio 14 2015"
-        call "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/vcvarsall.bat" x86
-    ) ELSE (
-        SET GENERATOR="Visual Studio 14 2015 Win64"
-        call "C:/Program Files/Microsoft SDKs/Windows/v7.1/Bin/SetEnv.cmd" /x64
-        call "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/vcvarsall.bat" x86_amd64
-    )
+    IF "%ARCH_BITS%"=="32" ( SET GENERATOR="Visual Studio 14 2015" && call "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/vcvarsall.bat" x86 )
+    IF "%ARCH_BITS%"=="64" ( SET GENERATOR="Visual Studio 14 2015 Win64" && call "C:/Program Files/Microsoft SDKs/Windows/v7.1/Bin/SetEnv.cmd" /x64 && call "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/vcvarsall.bat" x86_amd64 )
     choco install opencv
     refreshenv
     "%PYTHON%/python.exe" -m pip install --upgrade pip
