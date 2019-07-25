@@ -16,43 +16,45 @@ environment:
   #  secure: 0bXSOVjf9x8L7nErTivu92TF1FwNosTjFJQPmxp8Dys=
 
   matrix:
+
+    # It looks like 2.7 requires vs9, which is a pain, so lets drop it.
     #- PYTHON: "C:/Python27"
-    #  GENERATOR: "Visual Studio 15 2017"
-    #  VCVARS_FPATH: "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Auxiliary/Build/vcvars32.bat"
+    #  GENERATOR: "Visual Studio 14 2015"
+    #  VCVARS_FPATH: "C:/Program Files (x86)/Microsoft Visual Studio/2015/Community/VC/Auxiliary/Build/vcvars32.bat"
 
     #- PYTHON: "C:/Python27-x64"
-    #  GENERATOR: "Visual Studio 15 2017 Win64"
-    #  VCVARS_FPATH: "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Auxiliary/Build/vcvars64.bat"
+    #  GENERATOR: "Visual Studio 14 2015 Win64"
+    #  VCVARS_FPATH: "C:/Program Files (x86)/Microsoft Visual Studio/2015/Community/VC/Auxiliary/Build/vcvars64.bat"
 
     #- PYTHON: "C:/Python34"
-    #  GENERATOR: "Visual Studio 15 2017"
+    #  GENERATOR: "Visual Studio 14 2015"
 
     #- PYTHON: "C:/Python34-x64"
-    #  GENERATOR: "Visual Studio 15 2017 Win64"
+    #  GENERATOR: "Visual Studio 14 2015 Win64"
 
     - PYTHON: "C:/Python35"
-      GENERATOR: "Visual Studio 15 2017"
-      VCVARS_FPATH: "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Auxiliary/Build/vcvars32.bat"
+      GENERATOR: "Visual Studio 14 2015"
+      VCVARS_FPATH: "C:/Program Files (x86)/Microsoft Visual Studio/2015/Community/VC/Auxiliary/Build/vcvars32.bat"
 
     - PYTHON: "C:/Python35-x64"
-      GENERATOR: "Visual Studio 15 2017 Win64"
-      VCVARS_FPATH: "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Auxiliary/Build/vcvars64.bat"
+      GENERATOR: "Visual Studio 14 2015 Win64"
+      VCVARS_FPATH: "C:/Program Files (x86)/Microsoft Visual Studio/2015/Community/VC/Auxiliary/Build/vcvars64.bat"
 
     - PYTHON: "C:/Python36"
-      GENERATOR: "Visual Studio 15 2017"
-      VCVARS_FPATH: "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Auxiliary/Build/vcvars32.bat"
+      GENERATOR: "Visual Studio 14 2015"
+      VCVARS_FPATH: "C:/Program Files (x86)/Microsoft Visual Studio/2015/Community/VC/Auxiliary/Build/vcvars32.bat"
 
     - PYTHON: "C:/Python36-x64"
-      GENERATOR: "Visual Studio 15 2017 Win64"
-      VCVARS_FPATH: "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Auxiliary/Build/vcvars64.bat"
+      GENERATOR: "Visual Studio 14 2015 Win64"
+      VCVARS_FPATH: "C:/Program Files (x86)/Microsoft Visual Studio/2015/Community/VC/Auxiliary/Build/vcvars64.bat"
 
     - PYTHON: "C:/Python37"
-      GENERATOR: "Visual Studio 15 2017"
-      VCVARS_FPATH: "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Auxiliary/Build/vcvars32.bat"
+      GENERATOR: "Visual Studio 14 2015"
+      VCVARS_FPATH: "C:/Program Files (x86)/Microsoft Visual Studio/2015/Community/VC/Auxiliary/Build/vcvars32.bat"
 
     - PYTHON: "C:/Python37-x64"
-      GENERATOR: "Visual Studio 15 2017 Win64"
-      VCVARS_FPATH: "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Auxiliary/Build/vcvars64.bat"
+      GENERATOR: "Visual Studio 14 2015 Win64"
+      VCVARS_FPATH: "C:/Program Files (x86)/Microsoft Visual Studio/2015/Community/VC/Auxiliary/Build/vcvars64.bat"
 
 matrix:
     fast_finish: true
