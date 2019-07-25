@@ -16,19 +16,19 @@ environment:
   #  secure: 0bXSOVjf9x8L7nErTivu92TF1FwNosTjFJQPmxp8Dys=
 
   matrix:
-    - PYTHON: "C:/Python27"
-      GENERATOR: "Visual Studio 15 2017"
-      VCVARS_FPATH: "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Auxiliary/Build/vcvars32.bat"
+    #- PYTHON: "C:/Python27"
+    #  GENERATOR: "Visual Studio 15 2017"
+    #  VCVARS_FPATH: "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Auxiliary/Build/vcvars32.bat"
 
-    - PYTHON: "C:/Python27-x64"
-      GENERATOR: "Visual Studio 15 2017 Win64"
-      VCVARS_FPATH: "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Auxiliary/Build/vcvars64.bat"
+    #- PYTHON: "C:/Python27-x64"
+    #  GENERATOR: "Visual Studio 15 2017 Win64"
+    #  VCVARS_FPATH: "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Auxiliary/Build/vcvars64.bat"
 
-    - PYTHON: "C:/Python34"
-      GENERATOR: "Visual Studio 15 2017"
+    #- PYTHON: "C:/Python34"
+    #  GENERATOR: "Visual Studio 15 2017"
 
-    - PYTHON: "C:/Python34-x64"
-      GENERATOR: "Visual Studio 15 2017 Win64"
+    #- PYTHON: "C:/Python34-x64"
+    #  GENERATOR: "Visual Studio 15 2017 Win64"
 
     - PYTHON: "C:/Python35"
       GENERATOR: "Visual Studio 15 2017"
@@ -55,6 +55,8 @@ matrix:
 #"%PYTHON%/python.exe" -m pip install ninja
 # TODO: try vs15 with ninja
 # https://stackoverflow.com/questions/31262342/cmake-g-ninja-on-windows-specify-x64
+# https://github.com/opencv/opencv/issues/6132
+#"%PYTHON%/python.exe" setup.py bdist_wheel -- -G "%GENERATOR%" -DOpenCV_DIR="C:/tools/opencv/build"
 build_script:
 - cmd: |
     call "%VCVARS_FPATH%"
@@ -63,7 +65,7 @@ build_script:
     "%PYTHON%/python.exe" -m pip install --upgrade pip
     "%PYTHON%/python.exe" -m pip install --upgrade setuptools
     "%PYTHON%/python.exe" -m pip install -r requirements.txt
-    "%PYTHON%/python.exe" setup.py bdist_wheel -- -G "%GENERATOR%" -DOpenCV_DIR="C:/tools/opencv/build"
+    "%PYTHON%/python.exe" setup.py bdist_wheel -- -DOpenCV_DIR="C:/tools/opencv/build"
 
 before_test:
 - ps: |
