@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+This helps find the shared library that contains the compiled subroutines.
+Its a bit hacky and could use a cleanup by someone who really understands
+how python c-extension libraries are named and placed depending on system.
+"""
 from __future__ import absolute_import, division, print_function, unicode_literals
 from os.path import join, exists, dirname, normpath
 import sys
@@ -93,6 +98,7 @@ def get_lib_fname_list(libname):
 
     prefix_list = ['lib' + libname]
     if sys.platform.startswith('win32'):
+        # windows doesnt start names with lib
         prefix_list.append(libname)
         ext = '.dll'
     elif sys.platform.startswith('darwin'):

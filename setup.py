@@ -68,7 +68,6 @@ if __name__ == '__main__':
     except Exception:
         soconfig = sysconfig.get_config_var('SO')
 
-
     def get_lib_ext():
         if sys.platform.startswith('win32'):
             ext = '.dll'
@@ -99,6 +98,16 @@ if __name__ == '__main__':
     # ub.cmd('ls dist', verbose=3)
     # ub.cmd('ls -al pyhesaff', verbose=3)
 
+    pyhesaff_package_data = (
+            ['*%s' % soconfig] +
+            ['*%s' % hack_libconfig] +
+            ['*%s' % libext] +
+            # ['*.so'] +
+            (['*.dll'] if os.name == 'nt' else []) +
+            ["LICENSE.txt", "LICENSE-3RD-PARTY.txt", "LICENSE.SIFT"]
+    )
+    print('pyhesaff_package_data = {!r}'.format(pyhesaff_package_data))
+
     kwargs = dict(
         name='pyhesaff',
         description='Routines for computation of hessian affine keypoints in images.',
@@ -122,13 +131,7 @@ if __name__ == '__main__':
         # packages=find_packages(include='pyhesaff.*'),
         packages=['pyhesaff'],
         package_data={
-            'pyhesaff':
-                ['*%s' % soconfig] +
-                ['*%s' % hack_libconfig] +
-                ['*%s' % libext] +
-                # ['*.so'] +
-                (['*.dll'] if os.name == 'nt' else []) +
-                ["LICENSE.txt", "LICENSE-3RD-PARTY.txt", "LICENSE.SIFT"],
+            'pyhesaff': pyhesaff_package_data,
         },
         # package_data={'build': util_cplat.get_dynamic_lib_globstrs()},
         # build_command=lambda: ut.std_build_command(dirname(__file__)),
@@ -175,8 +178,12 @@ if __name__ == '__main__':
             spec = get_plat_specifier()
             dspec = spec.lstrip('.')
 
-            src = join(os.getcwd(), '_skbuild/{}/cmake-build/libhesaff{}'.format(dspec, libext))
-            dst = join(os.getcwd(), 'pyhesaff/libhesaff{}{}'.format(spec, libext))
+            if sys.platform.startswith('win32'):
+                src = join(os.getcwd(), '_skbuild/{}/cmake-build/Release/hesaff{}'.format(dspec, libext))
+                dst = join(os.getcwd(), 'pyhesaff/libhesaff{}{}'.format(spec, libext))
+            else:
+                src = join(os.getcwd(), '_skbuild/{}/cmake-build/libhesaff{}'.format(dspec, libext))
+                dst = join(os.getcwd(), 'pyhesaff/libhesaff{}{}'.format(spec, libext))
             import shutil
             print('copy {} -> {}'.format(src, dst))
             shutil.copy(src, dst)
