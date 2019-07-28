@@ -65,6 +65,10 @@ def get_candidate_plat_specifiers():
         plat_name_cands.append('macosx-10.7-intel')
         plat_name_cands.append('macosx-10.9-intel')
         plat_name_cands.append('macosx-10.12-intel')
+    elif sys.platform.startswith('win32'):
+        # hack for win32
+        plat_name_cands.append('win-amd64')
+        pass
 
     spec_list = []
     for plat_name in plat_name_cands:
