@@ -76,7 +76,7 @@ def get_candidate_plat_specifiers():
     return spec_list
 
 
-def get_lib_fname_list(libname):
+def get_lib_fname_candidates(libname):
     """
     Args:
         libname (str): library name (e.g. 'hesaff', not 'libhesaff')
@@ -85,12 +85,12 @@ def get_lib_fname_list(libname):
         list: libnames - list of plausible library file names
 
     CommandLine:
-        python -m pyhesaff.ctypes_interface get_lib_fname_list
+        python -m pyhesaff.ctypes_interface get_lib_fname_candidates
 
     Example:
         >>> from pyhesaff.ctypes_interface import *  # NOQA
         >>> libname = 'hesaff'
-        >>> libnames = get_lib_fname_list(libname)
+        >>> libnames = get_lib_fname_candidates(libname)
         >>> import ubelt as ub
         >>> print('libnames = {}'.format(ub.repr2(libnames)))
     """
@@ -129,59 +129,42 @@ def get_lib_dpath_list(root_dir):
     return get_lib_dpath_list
 
 
-def find_lib_fpath(libname, root_dir, recurse_down=False, verbose=False):
+def find_lib_fpath(libname, root_dir, verbose=False):
     """ Search for the library """
-    lib_fname_list = get_lib_fname_list(libname)
+    lib_fname_list = get_lib_fname_candidates(libname)
     tried_fpaths = []
-
-    class FoundLib(Exception):
-        pass
 
     FINAL_LIB_FPATH = None
 
-    try:
-        for lib_fname in lib_fname_list:
+    for lib_fname in lib_fname_list:
+        if verbose:
+            print('--')
+        curr_dpath = root_dir
+        max_depth = 0
+
+        for lib_dpath in get_lib_dpath_list(curr_dpath):
+            lib_fpath = normpath(join(lib_dpath, lib_fname))
+            tried_fpaths.append(lib_fpath)
+            flag = exists(lib_fpath)
             if verbose:
-                print('--')
-            curr_dpath = root_dir
-            max_depth = 0
-            while curr_dpath is not None:
+                print('[c] Check: {}, exists={}'.format(lib_fpath, int(flag)))
+            if flag:
+                if verbose:
+                    print('using: {}'.format(lib_fpath))
+                FINAL_LIB_FPATH = lib_fpath
+                return lib_fpath
 
-                for lib_dpath in get_lib_dpath_list(curr_dpath):
-                    lib_fpath = normpath(join(lib_dpath, lib_fname))
-                    tried_fpaths.append(lib_fpath)
-                    flag = exists(lib_fpath)
-                    if verbose:
-                        print('[c] Check: {}, exists={}'.format(lib_fpath, int(flag)))
-                    if flag:
-                        if verbose:
-                            print('using: {}'.format(lib_fpath))
-                        FINAL_LIB_FPATH = lib_fpath
-                        raise FoundLib
-
-                max_depth -= 1
-                if max_depth < 0:
-                    curr_dpath = None
-                    break
-
-                _new_dpath = dirname(curr_dpath)
-                if _new_dpath == curr_dpath:
-                    curr_dpath = None
-                    break
-                else:
-                    curr_dpath = _new_dpath
-                if not recurse_down:
-                    break
-    except FoundLib:
-        pass
+    if FINAL_LIB_FPATH is not None:
         return FINAL_LIB_FPATH
-
-    msg = ('\n[C!] find_lib_fpath(libname=%r root_dir=%r, recurse_down=%r, verbose=%r)' %
-           (libname, root_dir, recurse_down, verbose) +
-           '\n[c!] Cannot FIND dynamic library')
-    print(msg)
-    print('\n[c!] Checked: '.join(tried_fpaths))
-    raise ImportError(msg)
+    else:
+        contents = os.listdir(root_dir)
+        msg = ('\n[C!] find_lib_fpath(libname={!r}, root_dir={!r})'.format(
+               libname, root_dir) +
+               '\n[c!] Cannot FIND dynamic library')
+        print(msg)
+        print('\n[c!] Checked: '.join(tried_fpaths))
+        print('UNABLE TO FIND LIB IN DPATH contents = {!r}'.format(contents))
+        raise ImportError(msg)
 
 
 def load_clib(libname, root_dir):
@@ -191,7 +174,7 @@ def load_clib(libname, root_dir):
     Args:
         libname:  library name (e.g. 'hesaff', not 'libhesaff')
 
-        root_dir: the deepest directory searched for the
+        root_dir: the directory that should contain the
                   library file (dll, dylib, or so).
     Returns:
         clib: a ctypes object used to interface with the library

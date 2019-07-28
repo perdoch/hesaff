@@ -1,0 +1,2 @@
+xdoctest
+opencv-python

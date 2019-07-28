@@ -1,4 +1,4 @@
 numpy
-ubelt
-scikit-build
-cmake
+-r requirements/build.txt
+-r requirements/runtime.txt
+-r requirements/tests.txt
