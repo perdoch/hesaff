@@ -104,6 +104,7 @@ if __name__ == '__main__':
             ['*%s' % libext] +
             # ['*.so'] +
             (['*.dll'] if os.name == 'nt' else []) +
+            (['Release\\*.dll'] if os.name == 'nt' else []) +
             ["LICENSE.txt", "LICENSE-3RD-PARTY.txt", "LICENSE.SIFT"]
     )
     print('pyhesaff_package_data = {!r}'.format(pyhesaff_package_data))
