@@ -35,3 +35,14 @@ ninja install
 cd ../..
 #python setup.py build_ext --inplace -- -G "Ninja" -DOpenCV_DIR="opencv-4.1.0/build_%ARCH%/install" -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=TRUE -DBUILD_SHARED_LIBS=TRUE
 python setup.py build_ext --inplace -- -G "Visual Studio 15 2017 %ARCH%" -DOpenCV_DIR="opencv-4.1.0/build_%ARCH%/install" -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=TRUE -DBUILD_SHARED_LIBS=TRUE
+
+
+dumpbin /dependents pyhesaff/libhesaff.win-amd64-3.6.dll
+
+
+set PATH=C:\tools\opencv\build\x64\vc15\bin;%PATH%
+python -c "import ctypes; print(ctypes.cdll['pyhesaff/libhesaff.win-amd64-3.6.dll'])"
+
+python -c "import ctypes, os; print(ctypes.windll[os.path.abspath(os.path.normpath('_skbuild/win-amd64-3.6/cmake-build/Release/hesaff.dll'))])"
+python -c "import ctypes, os; print(os.path.abspath(os.path.normpath('_skbuild/win-amd64-3.6/cmake-build/Release/hesaff.dll')))"
+python -c "import ctypes; print(ctypes.cdll['_skbuild/win-amd64-3.6/cmake-build/Release/hesaff.dll'])"

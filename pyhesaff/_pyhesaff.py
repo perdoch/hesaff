@@ -135,8 +135,6 @@ hesaff_kwargs_docstr_block = _build_typed_params_kwargs_docstr_block(HESAFF_TYPE
 
 
 HESAFF_CLIB = None
-REBUILD_ONCE = 0
-
 
 def argparse_hesaff_params():
     alias_dict = {'affine_invariance': 'ai'}
@@ -151,11 +149,10 @@ def argparse_hesaff_params():
     return hesskw
 
 
-def _load_hesaff_clib(rebuild=None):
+def _load_hesaff_clib():
     """
     Specificially loads the hesaff lib and defines its functions
     """
-    global REBUILD_ONCE
     # Get the root directory which should have the dynamic library in it
     #root_dir = realpath(dirname(__file__)) if '__file__' in vars() else realpath(os.getcwd())
 
@@ -167,12 +164,6 @@ def _load_hesaff_clib(rebuild=None):
     #    # we are running in a normal Python environment
     #    root_dir = realpath(dirname(__file__))
     root_dir = realpath(dirname(__file__))
-    if rebuild is not False and REBUILD_ONCE == 0 and __name__ != '__main__':
-        REBUILD_ONCE += 1
-        rebuild = ub.argflag('--rebuild-hesaff')
-        if rebuild:
-            raise Exception('need to rebuild')
-            print('REBUILDING HESAFF')
 
     libname = 'hesaff'
     (clib, def_cfunc, lib_fpath) = ctypes_interface.load_clib(libname, root_dir)
@@ -391,7 +382,7 @@ def detect_feats(img_fpath, use_adaptive_scale=False, nogravity_hack=False, **kw
         python -m vtool.tests.dummy testdata_ratio_matches --show
 
         python -m pyhesaff detect_feats --show --fname easy1.png --ai \
-            --verbose --rebuild-hesaff --scale-min=35 --scale-max=40 --no-rmbuild
+            --verbose --scale-min=35 --scale-max=40
 
         python -m pyhesaff detect_feats --show --fname easy1.png --ai \
             --verbose --scale-min=35 --scale-max=40&
@@ -577,7 +568,7 @@ def detect_feats_in_image(img, **kwargs):
 
     CommandLine:
         python -m pyhesaff detect_feats_in_image --show
-        python -m pyhesaff detect_feats_in_image --rebuild-hesaff --show --no-rmbuild
+        python -m pyhesaff detect_feats_in_image --show
 
     Example:
         >>> # ENABLE_DOCTEST
@@ -800,8 +791,8 @@ def extract_desc_from_patches(patch_list):
         patch_list (ndarray[ndims=3]):
 
     CommandLine:
-        python -m pyhesaff extract_desc_from_patches  --rebuild-hesaff --no-rmbuild
-        python -m pyhesaff extract_desc_from_patches  --rebuild-hesaff --no-rmbuild --show
+        python -m pyhesaff extract_desc_from_patches
+        python -m pyhesaff extract_desc_from_patches  --show
         python -m pyhesaff extract_desc_from_patches:1 --show
 
     Example:
@@ -900,11 +891,11 @@ def extract_desc_from_patches(patch_list):
 def test_rot_invar():
     r"""
     CommandLine:
-        python -m pyhesaff test_rot_invar --show --rebuild-hesaff --no-rmbuild
+        python -m pyhesaff test_rot_invar --show
         python -m pyhesaff test_rot_invar --show --nocpp
 
-        python -m vtool.tests.dummy testdata_ratio_matches --show --ratio_thresh=1.0 --rotation_invariance --rebuild-hesaff
-        python -m vtool.tests.dummy testdata_ratio_matches --show --ratio_thresh=1.1 --rotation_invariance --rebuild-hesaff
+        python -m vtool.tests.dummy testdata_ratio_matches --show --ratio_thresh=1.0 --rotation_invariance
+        python -m vtool.tests.dummy testdata_ratio_matches --show --ratio_thresh=1.1 --rotation_invariance
 
     Example:
         >>> # DISABLE_DODCTEST
