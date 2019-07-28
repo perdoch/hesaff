@@ -184,7 +184,6 @@ def load_clib(libname, root_dir):
         clib: a ctypes object used to interface with the library
     """
     lib_fpath = find_lib_fpath(libname, root_dir)
-    ex = None
     try:
         if sys.platform.startswith('win32'):
             clib = C.windll[lib_fpath]
