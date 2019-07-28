@@ -183,16 +183,19 @@ def load_clib(libname, root_dir):
     Returns:
         clib: a ctypes object used to interface with the library
     """
+    ex = None
     lib_fpath = find_lib_fpath(libname, root_dir)
     try:
         if sys.platform.startswith('win32'):
             clib = C.windll[lib_fpath]
         else:
             clib = C.cdll[lib_fpath]
-    except OSError as ex:
+    except OSError as ex_:
+        ex = ex_
         print('[C!] Caught OSError:\n{!r}'.format(ex))
         errsuffix = 'Is there a missing dependency?'
-    except Exception as ex:
+    except Exception as ex_:
+        ex = ex_
         print('[C!] Caught Exception:\n{!r}'.format(ex))
         errsuffix = 'Was the library correctly compiled?'
     else:
