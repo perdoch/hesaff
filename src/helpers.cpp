@@ -160,8 +160,8 @@ void solveLinear3x3(float *A, float *b)
 
 void rotateAffineTransformation(float &a11, float &a12, float &a21, float &a22, float &theta)
 {
-    double a = static_cast<float>(a11), b = static_cast<float>(a12),
-           c = static_cast<float>(a21), d = static_cast<float>(a22);
+    double a = static_cast<double>(a11), b = static_cast<double>(a12),
+           c = static_cast<double>(a21), d = static_cast<double>(a22);
     double sin_ = sin(theta);
     double cos_ = cos(theta);
     a11 = (cos_ * a) + (-sin_ * c);
@@ -178,7 +178,8 @@ void rotateAffineTransformation(float &a11, float &a12, float &a21, float &a22, 
 void rectifyAffineTransformationUpIsUp(float &a11, float &a12, float &a21, float &a22)
 {
     // Rotates a matrix into its lower triangular form
-    double a = static_cast<float>(a11), b = static_cast<float>(a12), c = static_cast<float>(a21), d = static_cast<float>(a22);
+    double a = static_cast<double>(a11), b = static_cast<double>(a12),
+           c = static_cast<double>(a21), d = static_cast<double>(a22);
     double det = sqrt(abs(a * d - b * c));
     double b2a2 = sqrt(b * b + a * a);
     a11 = b2a2 / det;

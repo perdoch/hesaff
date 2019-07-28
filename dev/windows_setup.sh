@@ -22,7 +22,9 @@ call "C:/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/VC/Auxiliar
 cd %HOME%/code/hesaff
 #set CMAKE_C_COMPILER=C:/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/VC/Tools/MSVC/14.16.27023/bin/HostX86/x86/cl.exe
 python setup.py bdist_wheel -- -G "Visual Studio 15 2017 Win64" -DOpenCV_DIR="C:/tools/opencv/build" python setup.py bdist_wheel -- -G "Ninja"
-python setup.py build_ext --inplace -- -G "Visual Studio 15 2017 Win64" -DOpenCV_DIR="C:/tools/opencv/build"
+
+python setup.py build_ext --inplace -- -G "Visual Studio 15 2017 Win64" -DOpenCV_DIR="C:/tools/opencv/build"  -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=TRUE -DBUILD_SHARED_LIBS=TRUE
+
 python setup.py bdist_wheel -- -G "Visual Studio 15 2017 Win64" -DOpenCV_DIR="C:/tools/opencv/build"
 
 
@@ -30,7 +32,6 @@ choco install opencv -y --forcex86 --force
 call "C:/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/VC/Auxiliary/Build/vcvars32.bat"
 cd %HOME%/code/hesaff
 python setup.py build_ext --inplace -- -G "Visual Studio 15 2017" -DOpenCV_DIR="C:/tools/opencv/build"
-
 
 
 C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\Tools

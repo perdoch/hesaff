@@ -156,6 +156,11 @@ if __name__ == '__main__':
     print("[setup.py] FINISHING UP")
 
     if True:
+        """
+        python -c "import distutils; print(distutils.sys.platform)"
+        python -c "import ctypes; print(ctypes.cdll['pyhesaff/libhesaff.win-amd64-3.6.dll'])"
+        python -c "import sys, math; print(math.log2(sys.maxsize))"
+        """
         import sys
         if '--inplace' in sys.argv:
             def get_plat_specifier():
