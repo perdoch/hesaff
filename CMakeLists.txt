@@ -115,7 +115,10 @@ target_include_directories(hesaff PRIVATE ${OpenCV_INCLUDE_DIR})
 target_link_libraries(hesaff PRIVATE ${OpenCV_LIBRARIES})
 
 file(RELATIVE_PATH _install_dest "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
-install(TARGETS ${module_name} LIBRARY DESTINATION "${_install_dest}")
+
+# I think: An install target is required so scikit-build knows where the binaries are
+install(TARGETS hesaff LIBRARY DESTINATION "${_install_dest}")
+
 #message(STATUS CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE})
 
 
