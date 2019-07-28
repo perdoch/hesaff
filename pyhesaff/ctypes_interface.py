@@ -27,7 +27,7 @@ def get_plat_specifier():
         plat_name = distutils.util.get_platform()
     except AttributeError:
         plat_name = distutils.sys.platform
-    plat_specifier = ".%s-%s" % (plat_name, sys.version[0:3])
+    plat_specifier = '.{}-{}'.format(plat_name, sys.version[0:3])
     if hasattr(sys, 'gettotalrefcount'):
         plat_specifier += '-pydebug'
     return plat_specifier
@@ -184,9 +184,19 @@ def load_clib(libname, root_dir):
         clib: a ctypes object used to interface with the library
     """
     lib_fpath = find_lib_fpath(libname, root_dir)
+    ex = None
     try:
-        clib = C.cdll[lib_fpath]
-
+        if sys.platform.startswith('win32'):
+            clib = C.windll[lib_fpath]
+        else:
+            clib = C.cdll[lib_fpath]
+    except OSError as ex:
+        print('[C!] Caught OSError:\n{!r}'.format(ex))
+        errsuffix = 'Is there a missing dependency?'
+    except Exception as ex:
+        print('[C!] Caught Exception:\n{!r}'.format(ex))
+        errsuffix = 'Was the library correctly compiled?'
+    else:
         def def_cfunc(return_type, func_name, arg_type_list):
             'Function to define the types that python needs to talk to c'
             cfunc = getattr(clib, func_name)
@@ -194,16 +204,10 @@ def load_clib(libname, root_dir):
             cfunc.argtypes = arg_type_list
         clib.__LIB_FPATH__ = lib_fpath
         return clib, def_cfunc, lib_fpath
-    except OSError as ex:
-        print('[C!] Caught OSError:\n%s' % ex)
-        errsuffix = 'Is there a missing dependency?'
-    except Exception as ex:
-        print('[C!] Caught Exception:\n%s' % ex)
-        errsuffix = 'Was the library correctly compiled?'
-    print('[C!] cwd=%r' % os.getcwd())
-    print('[C!] load_clib(libname=%r root_dir=%r)' % (libname, root_dir))
-    print('[C!] lib_fpath = %r' % lib_fpath)
-    errmsg = '[C] Cannot LOAD %r dynamic library. ' % (libname,) + errsuffix
+    print('[C!] cwd={!r}'.format(os.getcwd()))
+    print('[C!] load_clib(libname={!r}, root_dir={!r})'.format(libname, root_dir))
+    print('[C!] lib_fpath = {!r}'.format(lib_fpath))
+    errmsg = '[C] Cannot LOAD {!r} dynamic library. Caused by ex={!r}. {}'.format(libname, ex, errsuffix)
     print(errmsg)
     raise ImportError(errmsg)
 
