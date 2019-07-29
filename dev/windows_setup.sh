@@ -25,7 +25,10 @@ python setup.py bdist_wheel -- -G "Visual Studio 15 2017 Win64" -DOpenCV_DIR="C:
 
 python setup.py bdist_wheel -- -G "Ninja"
 
-python setup.py build_ext --inplace -- -G "Visual Studio 15 2017 Win64" -DOpenCV_DIR="C:/tools/opencv/build"  -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=TRUE -DBUILD_SHARED_LIBS=TRUE
+python setup.py build_ext --inplace -- -G "Visual Studio 15 2017 Win64" -DOpenCV_DIR="C:/tools/opencv/build"  -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=TRUE
+
+set PATH=C:/tools/opencv/build/x64/vc15/bin;%PATH%
+#-DBUILD_SHARED_LIBS=TRUE
 
 python setup.py bdist_wheel -- -G "Visual Studio 15 2017 Win64" -DOpenCV_DIR="C:/tools/opencv/build"
 

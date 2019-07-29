@@ -14,7 +14,7 @@
 using namespace cv;
 
 #ifndef M_TAU
-#define M_TAU 6.28318
+#define M_TAU 6.28318f
 #endif
 
 // DUPLICATE
@@ -261,7 +261,7 @@ template <class T> T python_modulus(T numer, T denom)
     /*
     modulus like it works in python
     */
-    T result = fmod(numer, denom);
+    T result = static_cast<T>(fmod(static_cast<double>(numer), static_cast<double>(denom)));
     if (result < 0)
     {
         result = denom + result;
@@ -287,7 +287,7 @@ template <class T, class Iterator> Histogram<T> computeInterpolatedHistogram(
     const bool interpolation_wrap = true;
     const T start = range_min;
     const T stop = range_max;
-    const T step = (stop - start) / T(nbins + interpolation_wrap);
+    const T step = (stop - start) / T(nbins + static_cast<T>(interpolation_wrap));
     const T half_step = step / static_cast<T>(2.0);
     const T data_offset = start + half_step;
     // debug info
@@ -357,7 +357,7 @@ template <class T> Histogram<T> wrap_histogram(const Histogram<T>& input)
     // FIXME; THIS NEEDS INFORMATION ABOUT THE DISTANCE FROM THE LAST BIN
     // TO THE FIRST. IT IS OK AS LONG AS ALL STEPS ARE EQUAL, BUT IT IS NOT
     // GENERAL
-    std::vector<int> tmp;
+    std::vector<T> tmp;
     tmp.resize(input.edges.size());
     std::adjacent_difference(input.edges.begin(), input.edges.end(), tmp.begin());
     int low = tmp[0], high = tmp[tmp.size() - 1];
@@ -421,7 +421,7 @@ template <class T> void hist_edges_to_centers(Histogram<T>& hist)
     pairwise_accumulate<T, T(T, T)>(hist.centers, hist.edges, hist_edges_to_centers_lambdas::average);
 }
 
-template <class T> void hist_argmaxima(Histogram<T> hist, std::vector<int>& argmaxima_list, float maxima_thresh=.8)
+template <class T> void hist_argmaxima(Histogram<T> hist, std::vector<int>& argmaxima_list, float maxima_thresh=0.8f)
 {
     int size = static_cast<int>(hist.data.size()) - 2; // the edge points aren't to be counted, due to being only there to make interpolation simpler
     // The first and last bins are duplicates so we dont need to look at those

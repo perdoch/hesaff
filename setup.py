@@ -156,7 +156,7 @@ if __name__ == '__main__':
 
     print("[setup.py] FINISHING UP")
 
-    if True:
+    if False:
         """
         python -c "import distutils; print(distutils.sys.platform)"
         python -c "import ctypes; print(ctypes.cdll['pyhesaff/libhesaff.win-amd64-3.6.dll'])"

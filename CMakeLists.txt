@@ -107,7 +107,18 @@ message(STATUS "OpenMP_EXE_LINKER_FLAGS = ${OpenMP_EXE_LINKER_FLAGS}")
 message(STATUS "OpenCV_INCLUDE_DIR = ${OpenCV_INCLUDE_DIR}")
 message(STATUS "OpenCV_LIBRARIES = ${OpenCV_LIBRARIES}")
 
-add_library(hesaff SHARED ${SOURCE_FILES})
+# Use MODULE instead of SHARED for windows
+#add_library(hesaff SHARED ${SOURCE_FILES})
+add_library(hesaff MODULE ${SOURCE_FILES})
+
+
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+    # Set the DLLEXPORT variable to export symbols
+    target_compile_definitions(hesaff PRIVATE HESAFF_WIN_EXPORT)
+endif()
+
+
 
 target_include_directories(hesaff PRIVATE ${OpenCV_INCLUDE_DIR})
 

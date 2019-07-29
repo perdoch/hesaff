@@ -310,7 +310,7 @@ def get_cpp_version():
         >>> isdebug = get_is_debug_mode()
         >>> print('cpp_version = %r' % (cpp_version,))
         >>> print('isdebug = %r' % (isdebug,))
-        >>> assert cpp_version == 3, 'cpp version mimatch'
+        >>> assert cpp_version == 4, 'cpp version mimatch'
     """
 
     #str_ptr = HESAFF_CLIB.cmake_build_type()
