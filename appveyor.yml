@@ -51,6 +51,10 @@ matrix:
 ## https://www.appveyor.com/docs/lang/cpp/
 # TODO: move specific visual studio configs into scripts that we just call here rather than
 # dealing with appveyor and yaml multiline cmd parsing.
+
+#call "C:/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/VC/Auxiliary/Build/vcvars32.bat"
+#call "C:/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/VC/Auxiliary/Build/vcvars64.bat"
+
 build_script:
 - cmd: |
     echo %ARCH_BITS%
@@ -62,6 +66,7 @@ build_script:
     echo "%GENERATOR%"
     choco install opencv
     refreshenv
+    set PATH=C:/tools/opencv/build/x64/vc14/bin;%PATH%
     "%PYTHON%/python.exe" -m pip install --upgrade pip
     "%PYTHON%/python.exe" -m pip install --upgrade setuptools
     "%PYTHON%/python.exe" -m pip install -r requirements.txt
