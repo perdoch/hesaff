@@ -2,10 +2,9 @@
 #define _HESAFF_DLLDEFINES_H
 
 #ifdef WIN32
-#ifndef snprintf
-#define snprintf _snprintf
+#ifndef snprintf_s
 #define snprintf_s _snprintf_s
-#endif // ndef sprintf
+#endif // snprintf_s
 #endif // WIN32
 
 // Define HESAFF_EXPORTED for any platform

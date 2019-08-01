@@ -1193,13 +1193,16 @@ HESAFF_EXPORTED void writeFeatures(AffineHessianDetector* detector,
     // Dump keypoints to disk in text format
     char suffix[] = ".hesaff.sift";
     const int len = static_cast<int>(strlen(img_fpath) + strlen(suffix)) + 1;
+
     #ifdef WIN32
-    char* out_fpath = new char[len];
+      // windows doesnt follow the ISO C99 snprintf standard.
+      // https://stackoverflow.com/questions/1270387/are-snprintf-and-friends-safe-to-use
+      char* out_fpath = new char[len];
+      snprintf_s(out_fpath, len, len, "%s%s", img_fpath, suffix);
     #else
-    char out_fpath[len];
+      char out_fpath[len];
+      snprintf(out_fpath, len, "%s%s", img_fpath, suffix);
     #endif
-    //snprintf(out_fpath, len, "%s%s", img_fpath, suffix);  // unsafe
-    snprintf_s(out_fpath, len, len, "%s%s", img_fpath, suffix);  // safe
 
     out_fpath[len - 1] = 0;
     printDBG("detector->writing_features: " << out_fpath);

@@ -54,14 +54,14 @@ echo "LOCAL_PREFIX = $LOCAL_PREFIX"
 # git pull
 # cd ..
 # git pull
-build_dname=build-py3
+build_dname=build
 REPO_DIR=$HOME/code/opencv
 echo "REPO_DIR = $REPO_DIR"
 mkdir -p $REPO_DIR/$build_dname
 cd $REPO_DIR/$build_dname
 
 
-cd $HOME/code/opencv/build-py3
+cd $HOME/code/opencv/build
 cmake -G "Ninja" \
     -D CMAKE_BUILD_TYPE=RELEASE \
     -D CMAKE_INSTALL_PREFIX=$HOME/.local \

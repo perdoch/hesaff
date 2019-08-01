@@ -76,6 +76,7 @@ matrix:
       osx_image: xcode8.3
       env:
         - MB_PYTHON_VERSION=3.6
+      stage: final
     - <<: *osx-100
       stage: s1
     - &osx-110
