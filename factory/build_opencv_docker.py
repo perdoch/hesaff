@@ -140,44 +140,6 @@ def build_opencv_cmake_args(config):
     return cmake_args
 
 
-def main():
-    """
-    Usage:
-        cd ~/code/hesaff/factory
-        python ~/code/hesaff/factory/build_opencv_docker.py --publish --no-exec
-        python ~/code/hesaff/factory/build_opencv_docker.py --publish
-    """
-    import multiprocessing
-
-    def argval(clikey, envkey=None, default=ub.NoParam):
-        if envkey is not None:
-            envval = os.environ.get(envkey)
-            if envval:
-                default = envval
-        return ub.argval(clikey, default=default)
-
-    DEFAULT_PY_VER = '{}.{}'.format(sys.version_info.major, sys.version_info.minor)
-    DPATH = argval('--dpath', None, default=os.getcwd())
-    MAKE_CPUS = argval('--make_cpus', 'MAKE_CPUS', multiprocessing.cpu_count() + 1)
-    UNICODE_WIDTH = argval('--unicode_width', 'UNICODE_WIDTH', '32')
-    EXEC = not ub.argflag('--no-exec')
-
-    if ub.argflag('--publish'):
-        fpaths = []
-        plat = ['i686', 'x86_64']
-        pyver = ['2.7', '3.4', '3.5', '3.6', '3.7']
-        for PLAT in plat:
-            for PY_VER in pyver:
-                fpaths += [build(DPATH, MAKE_CPUS, UNICODE_WIDTH, PLAT, PY_VER, EXEC=EXEC)]
-
-        print("WROTE TO: ")
-        print('\n'.join(fpaths))
-    else:
-        PY_VER = argval('--pyver', 'MB_PYTHON_VERSION', default=DEFAULT_PY_VER)
-        PLAT = argval('--plat', 'PLAT', default='x86_64')
-        build(DPATH, MAKE_CPUS, UNICODE_WIDTH, PLAT, PY_VER, EXEC=EXEC)
-
-
 def build(DPATH, MAKE_CPUS, UNICODE_WIDTH, PLAT, PY_VER, EXEC=True):
 
     OPENCV_VERSION = '4.1.0'
@@ -331,6 +293,44 @@ def build(DPATH, MAKE_CPUS, UNICODE_WIDTH, PLAT, PY_VER, EXEC=True):
     manylinux-opencv
     """
     return dockerfile_fpath
+
+
+def main():
+    """
+    Usage:
+        cd ~/code/hesaff/factory
+        python ~/code/hesaff/factory/build_opencv_docker.py --allversions --no-exec
+        python ~/code/hesaff/factory/build_opencv_docker.py --allversions
+    """
+    import multiprocessing
+
+    def argval(clikey, envkey=None, default=ub.NoParam):
+        if envkey is not None:
+            envval = os.environ.get(envkey)
+            if envval:
+                default = envval
+        return ub.argval(clikey, default=default)
+
+    DEFAULT_PY_VER = '{}.{}'.format(sys.version_info.major, sys.version_info.minor)
+    DPATH = argval('--dpath', None, default=os.getcwd())
+    MAKE_CPUS = argval('--make_cpus', 'MAKE_CPUS', multiprocessing.cpu_count() + 1)
+    UNICODE_WIDTH = argval('--unicode_width', 'UNICODE_WIDTH', '32')
+    EXEC = not ub.argflag('--no-exec')
+
+    if ub.argflag('--allversions'):
+        fpaths = []
+        plat = ['i686', 'x86_64']
+        pyver = ['2.7', '3.4', '3.5', '3.6', '3.7', '3.8']
+        for PLAT in plat:
+            for PY_VER in pyver:
+                fpaths += [build(DPATH, MAKE_CPUS, UNICODE_WIDTH, PLAT, PY_VER, EXEC=EXEC)]
+
+        print("WROTE TO: ")
+        print('\n'.join(fpaths))
+    else:
+        PY_VER = argval('--pyver', 'MB_PYTHON_VERSION', default=DEFAULT_PY_VER)
+        PLAT = argval('--plat', 'PLAT', default='x86_64')
+        build(DPATH, MAKE_CPUS, UNICODE_WIDTH, PLAT, PY_VER, EXEC=EXEC)
 
 
 if __name__ == '__main__':
