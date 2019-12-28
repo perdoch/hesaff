@@ -168,7 +168,7 @@ before_install: |
     #git clone https://github.com/matthew-brett/multibuild.git 
     #source multibuild/common_utils.sh
     
-    source factory/factory_utils.sh
+    source dev/factory_utils.sh
 
     if [[ "$TRAVIS_OS_NAME" = "osx" ]]; then 
         echo "do nothing"
@@ -190,7 +190,7 @@ before_install: |
     #source multibuild/common_utils.sh
     #source multibuild/travis_steps.sh
     #
-    source factory/stage_multibuild.sh
+    source dev/stage_multibuild.sh
 
     if [[ "$TRAVIS_OS_NAME" = "osx" ]]; then 
         osx_staging_helper_clean_brew_cache
