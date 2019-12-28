@@ -15,24 +15,24 @@ ZLIB_VERSION="${ZLIB_VERSION:-1.2.10}"
 LIBPNG_VERSION="${LIBPNG_VERSION:-1.6.21}"
 BZIP2_VERSION="${BZIP2_VERSION:-1.0.6}"
 FREETYPE_VERSION="${FREETYPE_VERSION:-2.6.3}"
-TIFF_VERSION="${TIFF_VERSION:-4.0.6}"
+TIFF_VERSION="${TIFF_VERSION:-4.1.0}"
 JPEG_VERSION="${JPEG_VERSION:-9b}"
 OPENJPEG_VERSION="${OPENJPEG_VERSION:-2.1}"
-LCMS2_VERSION="${LCMS2_VERSION:-2.7}"
+LCMS2_VERSION="${LCMS2_VERSION:-2.9}"
 GIFLIB_VERSION="${GIFLIB_VERSION:-5.1.3}"
 LIBWEBP_VERSION="${LIBWEBP_VERSION:-0.5.0}"
 XZ_VERSION="${XZ_VERSION:-5.2.2}"
-LIBYAML_VERSION="${LIBYAML_VERSION:-0.1.5}"
+LIBYAML_VERSION="${LIBYAML_VERSION:-0.2.2}"
 SZIP_VERSION="${SZIP_VERSION:-2.1.1}"
-HDF5_VERSION="${HDF5_VERSION:-1.10.4}"
-LIBAEC_VERSION="${LIBAEC_VERSION:-0.3.3}"
+HDF5_VERSION="${HDF5_VERSION:-1.10.5}"
+LIBAEC_VERSION="${LIBAEC_VERSION:-1.0.4}"
 LZO_VERSION=${LZO_VERSION:-2.10}
 LZF_VERSION="${LZF_VERSION:-3.6}"
 BLOSC_VERSION=${BLOSC_VERSION:-1.10.2}
 SNAPPY_VERSION="${SNAPPY_VERSION:-1.1.3}"
 CURL_VERSION=${CURL_VERSION:-7.49.1}
 NETCDF_VERSION=${NETCDF_VERSION:-4.4.1.1}
-SWIG_VERSION=${SWIG_VERSION:-3.0.12}
+SWIG_VERSION=${SWIG_VERSION:-4.0.1}
 PCRE_VERSION=${PCRE_VERSION:-8.38}
 SUITESPARSE_VERSION=${SUITESPARSE_VERSION:-4.5.6}
 LIBTOOL_VERSION=${LIBTOOL_VERSION:-2.4.6}
@@ -40,10 +40,10 @@ RAGEL_VERSION=${RAGEL_VERSION:-6.10}
 FLEX_VERSION=${FLEX_VERSION:-2.6.4}
 BISON_VERSION=${BISON_VERSION:-3.0.4}
 FFTW_VERSION=${FFTW_VERSION:-3.3.7}
-CFITSIO_VERSION=${CFITSIO_VERSION:-3370}
-OPENSSL_ROOT=openssl-1.0.2s
+CFITSIO_VERSION=${CFITSIO_VERSION:-3450}
+OPENSSL_ROOT=openssl-1.0.2u
 # Hash from https://www.openssl.org/source/openssl-1.0.2?.tar.gz.sha256
-OPENSSL_HASH=cabd5c9492825ce5bd23f3c3aeed6a97f8142f606d893df216411f07d1abab96
+OPENSSL_HASH=ecd0c6ffb493dd06707d38b14bb4d8c2288bb7033735606569d8f90f89669d16
 OPENSSL_DOWNLOAD_URL=https://www.openssl.org/source
 
 
@@ -92,10 +92,11 @@ function build_github {
 function build_openblas {
     if [ -e openblas-stamp ]; then return; fi
     if [ -n "$IS_OSX" ]; then
-        # https://github.com/travis-ci/travis-ci/issues/8826
-        brew cask uninstall oclint || echo "no oclint"
         brew install openblas
         brew link --force openblas
+    elif [ ! -v IS_X86 ]; then
+		# Skip this for now until we can build a suitable tar.gz
+        return;
     else
         mkdir -p $ARCHIVE_SDIR
         local plat=${1:-${PLAT:-x86_64}}
@@ -109,7 +110,7 @@ function build_zlib {
     # Gives an old but safe version
     if [ -n "$IS_OSX" ]; then return; fi  # OSX has zlib already
     if [ -e zlib-stamp ]; then return; fi
-    yum install -y zlib-devel
+    yum_install zlib-devel
     touch zlib-stamp
 }
 
@@ -137,7 +138,7 @@ function build_libpng {
 function build_bzip2 {
     if [ -n "$IS_OSX" ]; then return; fi  # OSX has bzip2 libs already
     if [ -e bzip2-stamp ]; then return; fi
-    fetch_unpack https://download.sourceforge.net/bzip2/bzip2-${BZIP2_VERSION}.tar.gz
+    fetch_unpack https://sourceware.org/pub/bzip2/bzip2-${BZIP2_VERSION}.tar.gz
     (cd bzip2-${BZIP2_VERSION} \
         && make -f Makefile-libbz2_so \
         && make install PREFIX=$BUILD_PREFIX)
@@ -156,7 +157,7 @@ function get_cmake {
     if [ -n "$IS_OSX" ]; then
         brew install cmake > /dev/null
     else
-        yum install -y cmake28 > /dev/null
+        yum_install cmake28 > /dev/null
         cmake=cmake28
     fi
     echo $cmake
@@ -230,6 +231,7 @@ function build_hdf5 {
     fetch_unpack $hdf5_url/hdf5-$short/hdf5-$HDF5_VERSION/src/hdf5-$HDF5_VERSION.tar.gz
     (cd hdf5-$HDF5_VERSION \
         && ./configure --with-szlib=$BUILD_PREFIX --prefix=$BUILD_PREFIX \
+        --enable-threadsafe --enable-unsupported --with-pthread=yes \
         && make -j4 \
         && make install)
     touch hdf5-stamp
@@ -237,10 +239,10 @@ function build_hdf5 {
 
 function build_libaec {
     if [ -e libaec-stamp ]; then return; fi
-    local root_name=libaec-0.3.3
+    local root_name=libaec-1.0.4
     local tar_name=${root_name}.tar.gz
     # Note URL will change for each version
-    fetch_unpack https://gitlab.dkrz.de/k202009/libaec/uploads/48398bd5b7bc05a3edb3325abfeac864/${tar_name}
+    fetch_unpack https://gitlab.dkrz.de/k202009/libaec/uploads/ea0b7d197a950b0c110da8dfdecbb71f/${tar_name}
     (cd $root_name \
         && ./configure --prefix=$BUILD_PREFIX \
         && make \
@@ -358,7 +360,7 @@ function build_suitesparse {
     if [ -n "$IS_OSX" ]; then
         brew install suite-sparse > /dev/null
     else
-        yum install -y suitesparse-devel > /dev/null
+        yum_install suitesparse-devel > /dev/null
     fi
     touch suitesparse-stamp
 }

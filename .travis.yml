@@ -1,5 +1,11 @@
 env:
     global:
+        - secure: "Zw+fTmL69CizALGgVPaQxW1vopeFZMkCRepylg1bFXoboMedpwK0tfKsmJsvZCN+sPe0YSX2MVUyig4EO7w3pPUzHqFyQoNHO3Gp276wKlXzU7BLLZfxUvKoyHT5EUUyE7vdJKxbVSOqTfPM64ZDAiNB5WykNo6Sct1Z0lR0+rA1o/ErWkI0Y8+YMODzm4FdL/SFObUqXffjpAnQS5JBKniBu7oLPV6vNF3y00DtyTqaXB8/PE5JRz+3J5tS9cmUVRzm7jjZlmzz8y7h4eevSgZQ56z8LmjL8++wfiEDYHFCVIqOQkKWLwZ/Ox8U+RQ8PnLarbtGbvCj60t3z8exPhKC3x9iL39Qp8kCBmILrGa/uePYUpbYNDmy2YNm7SR2lZyHjzNkvxDILPUM2RH3Cl66uTvpEBCqC5IZq60YF1FYa0LNkdk1EMMEKtoqfKg+VZm/95iS9fWE37Qkx03TV8J5wGbTAfwOwbPsKDuUbdPrTUYCSO1VtA5gTlaFy8WaSvOsk+DyrcZG1UZCGHXAK+PL+D4cA7JJ3m4nZ/h8KAgn7syg4cbnQ1ODQ2XmTPMenj/Zn15UgROeFHG+0E/4rKrbvypqZwyr0BgDRolikjPeDMDy8ZXYHXM4RkCRRg9xpP0S2ffT1Cu1L77zHx/fAeJXhLmweyI6iXkW6JhlxFg="
+
+        - secure: "Ual0HSMUItgcm3Uco/bDW+GR3cn3GYbeG0Wpfd9J3NUnvu7X28+u9y0xC9SZwTvKWb+8Shr/pYFgouNB1TtCFfxq0Rps6OcdLm1y4ZEwJKUb6ulsHV86N3M8w9w+ylHwWaW7IbxU7xj1PhWd/wpT7kW+IBoBa2BkXfuZyNEpvlZ1YIadsx+qC8maxQ6TrbuQWt0vsDD0UrVeRaPv3ImwS5cxUJYZ8881Jf5RUb0YVYr0iD6io4qXPvgCZ5Kuj3buCjR+Qcx0NWE8bZXWOD0ggpSf1CQX2ZjxDdkhgFtJsnnrVq7f2+S4stjOZpVKIcMlXcUMQ5VRVyXTGF7rtZytJjNfKzA9julPM5kVJWh/NfC+JJZJ9kgqlgC0hr7418Ty902Pwi7QkoJ4RjBty3FbA4Hl4EkWUElj/KDdYYe0N1Vty8dvJqNDQNdJFk0bVWSMd9A/clkSP1nQEMvA1r8FwUECvrSZbjGdn4LtDQUXZGjrbbnLKu0WXag7z+LjCxUBx0BvxxkZX18/JVvrsKHE7fjjbgfa87OBMtcNdXgIKFXdpB2VI8MahjFG/B1Idj8N8Fcicyp8yuvwD2FEpT08M3KaJhvtvfn0+7WL8bSKSNQnbGKMPCwS9TrnHnTNvitXtB2EpGKnG2I/MXICV3uogEbKvPG4pFsdDLchHGOMGb0="
+
+        - secure: "YFu4Xw+jtLHmIwlYozZjhcrCe3TUSfG9lXlotEA9NSv69jbp9R7KOHPDWyDOVvX2z8Y1b6P2DAINTKVZ3TUpCEM7ogWZpvvl5mcrpzW7Uk7vQTYq6aDDwsekNVxfKl6baQas/CDv5DEq3HbGDZUX7Wuho0a77lnfjLPEMj+6R8LmyljiSOsD8WBD3f/LvjJWy0St9JhCIUpKPUV4d5Jv9UObwOLt7AEGwqYdnF3FoSN2DxjDgQ8TTWDfi7aH/3OmuSwIXG2g7rfr+U8Fx7TWwKUtmqF0W16YiWRkcm9n8HefKXa7WBJ+oO9MynpHWXDcgLuPfu9rENagpdlsvvyJfsZRJs1xjg24EM8zrQl8IB7KRmT5ehFYM90OlirKvnoJ2ywquz1IsCKLk8/ShcWfm3kfuNkKz+I+he/pCwhQOqVBTh9I/JWFN/1V9RDzD5S05sU4G/tPN8kdfNd7qw+dInJPz75tpTgWV38yQwFRQ1tWM0KV/buLNiSt0etLl8C0nwXHQuJY8nMj2gTCiD3gcP3YQerUvVem8ZEQL5qosqPj/nRbwqYzTz4qSLAeCLk7AbZUg9vXKlFMKswIiZNjJRQfLPmgoWkAGa4+haG82YdCuSB7CFYf7NZ67O6vil2GXB/v1ovEr2rGOsz97k4s2ijyDV1UKH1aMihdsH/2oXo="
+
         - "PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'"
         - TEST_DEPENDS="numpy==1.11.1"
         - BDIST_PARAMS=""
@@ -7,10 +13,6 @@ env:
         - USE_CCACHE=1
         - PLAT=x86_64
         - UNICODE_WIDTH=32
-        ## travis encrypt GITHUB_USERNAME=$GITHUB_USERNAME -r Erotemic/hesaff
-        - secure: "WomGsFAnYNRy+OWT7Eo1fIO0GJvOQeZ/ovZyvfIowPFqFF1cmWJ4XVcT6qkeeJr1ca1op1zWJerAzJa1Sewj++6q4hhTd6MxqyU6nuoao1PaTZA5XL6qzXTU4EObT79xaE0fM7RO39qm6t7McmN6SS8xhq0itmcSrXjTYUyDqW4gdOlK70CpEb6c23RN9+ommcaAqEz4QP7t2iONF6USeJPx3xQkrKg+zPdkADkAHhy0GNP1dk8FI4tUmft1sDUho9qCMVDYTV88wY+ARnC9sAFWvJcz6lktxr+SxIgcYNJlKXp3Ot4EpsTaxO5mkzvMi3YSKywXyco2ozBvoW5Yo5NNly9rFlovUpQKj/pcwb1c2UYcflDBNII4VhyG93/UID5PYV4z6ipktt0k1kcp/p4wVkzavMZ2Q/dB6zGnHMV1+rJcuUghkHm3esmy7/FiaCTAO7c7ZMJjhNKeA+a4ZG5rq8gnU/JcX5x3Nm+/Oal0hCHGVHo4Solx2ochwAY2H4bIClG2v8lfQhG5fxVoqXkZqJIArVku01ifXlJM5QBRMyFmnvJbFB9P7WHv0nb4xIhvEowWs9dbGJAaRs+JYVaK2fLnSObxPErU/crtKwkBNjWvn+A//Ji0hfHl/QhmJGp4pTdsU25a2aaRw9sdzDx0AXXc6r4ArTsMkEpIzv4="
-        ## travis encrypt TWINE_PASSWORD=$TWINE_PASSWORD -r Erotemic/hesaff
-        - secure: "Bg6XqdzG6FiKg5Ctu24wf702EAqjq0Tiwbv9A1aothvBv4Qtrb1grwRDTUfYhtmNEMxUNozKYb9sbGxSOf5ne7C4KglEyonaxI51lFN3GgC5hMIGGiTwNxli1ANrUiPoMXLFjXVKIhXwmOs+6DE5F5Gic1DKaxr/D9KJ1FnaBl8zycpUi+4d/YDvn4i1dwfFQvfgaPXVp/DOQjruAKeCdroftPZNTWQCbf3Lp/HvKvMEKTTcOvtwxQSqlt4N9vnNr5s/igZAiUK22X0AWMvQfhDoK0CN7h8KyRW6EHpRb5ngmA2a9pHkaVBh4HlERUBstcLdNhfdN+cQr9XyCT4YAQg8aqdS7LTh6Y447Xb46Z/h5bn2SPrIhmbtlCyrGm1HoRs6erChyXFKHFKwKaDlgiMkyY45G4csOpXnAVGtreMkISTxvy2oJakTi+a9AEyPQj1wsuEdujPEhKshca5ePnqCCV8nZYdMd9b4RQ+JmbVSOwbhjTCUSoNN43anXbbTvGQa4JBLmYobJVy7W92fUVEIEezaVnZNkzjktqAWzi67lQy0wNWtV8p2IjLlApBs6wNmIL44UA1K+7jZjUddCAvm8+uqITL+Q3hXqiPSVZ2fKnAw2jxi/lGfbN4K8uBgRtSdc+LzHM7363cfwPP3gl54eHOt/UE9LPggcwJwuHM="
 
 # Host Python is only used in staging
 language: generic
@@ -35,6 +37,10 @@ cache:
     - $HOME/local_bottle_metadata
     # `cache: ccache: true` has no effect if `language:` is not `c` or `cpp`
     - $HOME/.ccache
+    - $HOME/.cache/pip
+    - $HOME/download
+    - $HOME/.pip-cache
+    - $HOME/gpg_install_prefix
 
 # Add more cache stages (s2 etc) and corresponding OSX jobs like s1
 # if brew builds start to take longer than one Travis time limit
@@ -47,28 +53,28 @@ matrix:
   include:
 
     # builds for MacOS
-    - &osx-70
-      os: osx
-      osx_image: xcode8.3
-      env:
-        - MB_PYTHON_VERSION=2.7
-      stage: final
-    - <<: *osx-70
-      stage: s1
-    - &osx-80
-      os: osx
-      osx_image: xcode8.3
-      env:
-        - MB_PYTHON_VERSION=3.4
-      stage: final
-    - <<: *osx-80
-      stage: s1
-    - &osx-90
-      os: osx
-      osx_image: xcode8.3
-      env:
-        - MB_PYTHON_VERSION=3.5
-      stage: final
+    #- &osx-70
+    #  os: osx
+    #  osx_image: xcode8.3
+    #  env:
+    #    - MB_PYTHON_VERSION=2.7
+    #  stage: final
+    #- <<: *osx-70
+    #  stage: s1
+    #- &osx-80
+    #  os: osx
+    #  osx_image: xcode8.3
+    #  env:
+    #    - MB_PYTHON_VERSION=3.4
+    #  stage: final
+    #- <<: *osx-80
+    #  stage: s1
+    #- &osx-90
+    #  os: osx
+    #  osx_image: xcode8.3
+    #  env:
+    #    - MB_PYTHON_VERSION=3.5
+    #  stage: final
     - <<: *osx-90
       stage: s1
     - &osx-100
@@ -94,65 +100,54 @@ matrix:
       stage: s1
       env:
         - MB_PYTHON_VERSION=2.7
-      cache:
-        directories: $HOME/.ccache
     - os: linux
       env:
         - MB_PYTHON_VERSION=2.7
         - UNICODE_WIDTH=16
-      cache:
-        directories: $HOME/.ccache
     - os: linux
       env:
         - MB_PYTHON_VERSION=2.7
         - PLAT=i686
-      cache:
-        directories: $HOME/.ccache
     - os: linux
       env:
         - MB_PYTHON_VERSION=2.7
         - PLAT=i686
         - UNICODE_WIDTH=16
-      cache:
-        directories: $HOME/.ccache
-    - os: linux
-      env:
-        - MB_PYTHON_VERSION=3.4
-      cache:
-        directories: $HOME/.ccache
-    - os: linux
-      env:
-        - MB_PYTHON_VERSION=3.4
-        - PLAT=i686
-      cache:
-        directories: $HOME/.ccache
+    #- os: linux
+    #  env:
+    #    - MB_PYTHON_VERSION=3.4
+    #- os: linux
+    #  env:
+    #    - MB_PYTHON_VERSION=3.4
+    #    - PLAT=i686
     - os: linux
       env:
         - MB_PYTHON_VERSION=3.5
-      cache:
-        directories: $HOME/.ccache
     - os: linux
       env:
         - MB_PYTHON_VERSION=3.5
         - PLAT=i686
-      cache:
-        directories: $HOME/.ccache
     - os: linux
       env:
         - MB_PYTHON_VERSION=3.6
-      cache:
-        directories: $HOME/.ccache
     - os: linux
       env:
         - MB_PYTHON_VERSION=3.6
         - PLAT=i686
-      cache:
-        directories: $HOME/.ccache
     - os: linux
       env:
         - MB_PYTHON_VERSION=3.7
-      cache:
-        directories: $HOME/.ccache
+    - os: linux
+      env:
+        - MB_PYTHON_VERSION=3.7
+        - PLAT=i686
+    - os: linux
+      env:
+        - MB_PYTHON_VERSION=3.8
+    - os: linux
+      env:
+        - MB_PYTHON_VERSION=3.8
+        - PLAT=i686
 
 # The first line is printed in the folding header in Travis output
 before_install: |
@@ -251,12 +246,10 @@ before_cache: |
     set +x; set +e
 
 after_success: 
-    # travis encrypt SOMEVAR=[secret] -r Erotemic/hesaff
-    - secure: BjnarsK2187n4DxoTvZ0f7g9JIbb6FhHF8osNnvM8KvuqXMeqVDQjp1IPcMeyMHDdVd0sXjPgRpkWGMGItDTHAGVP7M9vaKvHAfUnAZQ9Z2c8lfI72ybLO70Nd9a3zLbhIRTyZTNdXI6L5qRRFeDzHrVJAaPGWhqUjikahZfzAU7GariM44sY9fYdCKEW7x3wshL/Gf5bfKXdVXuthUe02LJlZ2S09n+qAhUrcYu9gJg6yXTWMd24vPKr+n7Uf1Zvx0H0XeoqLj917Z970959RPRHaUGrSd2Wra+v4K01dd5RjGB33s/I1A+c0HKZW0VmiBLzol64kD/nbRqOls/tyw7IgbsoKKuPYngJ3myggs0tNWU4zsfBv2iVszn31g+N+b8vKdQaw0IDf6EAy/2UxkNk+Ktxl0TqKbb4OPkjWT2rk8rL5mdg2vcL3AyT6t+ByReopbHON2lWkuz7hoZOYVwUZ6p33yb7EwyJzjOg+EY3Ph7nF5kGntARmdeleLdQc26W1ni++lUz9333vU/FHPMWXzmkdAX8pmxm1/AGUcv3idE51BPqND+Ky+xlqSyJiA00nq4V5XtYAe+dsu+IHEACWlKJjauPY6D/THp34BdpZPANsr+U2xyzeiMwMRR24RBKTrdIgN9gwQG4NuJ/zgOEV1uQGR4Hkucw3cZ1L0=
     - echo "AN_UNSECURE_VAR = $AN_UNSECURE_VAR"
     - echo "SOMEVAR = $SOMEVAR"
     - echo "TEST_DEPENDS = $TEST_DEPENDS"
-    - echo "GITHUB_USERNAME = $GITHUB_USERNAME"
+    - echo "TWINE_USERNAME = $TWINE_USERNAME"
     - echo "TRAVIS_TAG = ${TRAVIS_TAG}"
     - echo "TRAVIS_BRANCH = ${TRAVIS_BRANCH}"
     - |
@@ -277,8 +270,8 @@ after_success:
             fi
 
             echo "TRAVIS_BUILD_DIR $TRAVIS_BUILD_DIR"
-            twine upload --verbose -u "${GITHUB_USERNAME}" -p "${TWINE_PASSWORD}" --skip-existing ${TRAVIS_BUILD_DIR}/wheelhouse/pyhesaff*
-            #twine upload -u "${GITHUB_USERNAME}" -p "${TWINE_PASSWORD}" --skip-existing wheelhouse/pyhesaff*
+            twine upload --verbose -u "${TWINE_USERNAME}" -p "${TWINE_PASSWORD}" --skip-existing ${TRAVIS_BUILD_DIR}/wheelhouse/pyhesaff*
+            #twine upload -u "${TWINE_USERNAME}" -p "${TWINE_PASSWORD}" --skip-existing wheelhouse/pyhesaff*
         else
             echo "Tag not set, deployment skipped."
         fi

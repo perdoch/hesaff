@@ -64,11 +64,13 @@ function good_cmd {
 }
 
 # Store state of options including -e, -x
-# https://stackoverflow.com/questions/14564746/in-bash-how-to-get-the-current-status-of-set-x?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
+# https://stackoverflow.com/questions/14564746/in-bash-how-to-get-the-current-status-of-set-x
 ORIG_OPTS=$-
 set +ex
 [ "$(suppress bad_cmd)" == "$(printf "Running bad_cmd\nbad")" ] \
     || ingest "suppress bad_cmd"
+suppress bash -c '! false' &>/dev/null \
+    || ingest "suppress cmd with space"
 [ "$(suppress good_cmd)" == "Running good_cmd" ] \
     || ingest "suppress good_cmd"
 [ "$(suppress bad_mid_cmd)" == "Running bad_mid_cmd" ] \
@@ -86,8 +88,14 @@ actual="$(set -e; suppress bad_mid_cmd)"
 # Reset options
 set_opts $ORIG_OPTS
 
-# On Linux docker containers in travis, can only be x86_64 or i686
-[ "$(get_platform)" == x86_64 ] || [ "$(get_platform)" == i686 ] || exit 1
+# On Linux docker containers in travis, can be x86_64, i686, s390x, ppc64le, or
+# aarch64
+[ "$(get_platform)" == x86_64 ] || \
+    [ "$(get_platform)" == i686 ] || \
+    [ "$(get_platform)" == aarch64 ] || \
+    [ "$(get_platform)" == ppc64le ] || \
+    [ "$(get_platform)" == s390x ] || \
+    exit 1
 
 # Crudest possible check for get_distutils_platform
 expected=$(python -c "import distutils.util as du; print(du.get_platform())")

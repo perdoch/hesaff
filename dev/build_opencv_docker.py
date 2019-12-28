@@ -298,9 +298,9 @@ def build(DPATH, MAKE_CPUS, UNICODE_WIDTH, PLAT, PY_VER, EXEC=True):
 def main():
     """
     Usage:
-        cd ~/code/hesaff/factory
-        python ~/code/hesaff/factory/build_opencv_docker.py --allversions --no-exec
-        python ~/code/hesaff/factory/build_opencv_docker.py --allversions
+        cd ~/code/hesaff/dev
+        python ~/code/hesaff/dev/build_opencv_docker.py --allversions --no-exec
+        python ~/code/hesaff/dev/build_opencv_docker.py --allversions
     """
     import multiprocessing
 
@@ -336,7 +336,7 @@ def main():
 if __name__ == '__main__':
     """
     CommandLine:
-        python ~/code/hesaff/factory/build_opencv_docker.py --no-exec
+        python ~/code/hesaff/dev/build_opencv_docker.py --no-exec
 
         docker login quay.io
 

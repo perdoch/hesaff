@@ -13,12 +13,6 @@ environment:
     - PYTHON: "C:\\Miniconda-x64"
       PYTHON_VERSION: "2.7"
       PYTHON_ARCH: "64"
-    - PYTHON: "C:\\Miniconda34"
-      PYTHON_VERSION: "3.4"
-      PYTHON_ARCH: "32"
-    - PYTHON: "C:\\Miniconda34-x64"
-      PYTHON_VERSION: "3.4"
-      PYTHON_ARCH: "64"
     - PYTHON: "C:\\Miniconda35"
       PYTHON_VERSION: "3.5"
       PYTHON_ARCH: "32"
@@ -82,7 +76,16 @@ test_script:
     - python -m pyappveyordemo.tests.test_extension
 
     # Smoke test of install_python script
+    # Use C:\PythonXY, C:\PythonXY-x64, C:\PythonXYrcZ, or C:\PythonXYrcZ-x64
     - set PYTHON=C:\Python37
     - ps: .\install_python.ps1
     - set PYTHON=C:\Python37-x64
+    - ps: .\install_python.ps1
+    - set PYTHON=C:\Python38-x64
+    - ps: .\install_python.ps1
+    - set PYTHON=C:\Python38rc1-x64
+    - ps: .\install_python.ps1
+    - set PYTHON=C:\Python38
+    - ps: .\install_python.ps1
+    - set PYTHON=C:\Python38rc1
     - ps: .\install_python.ps1

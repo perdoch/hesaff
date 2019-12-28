@@ -11,8 +11,8 @@ Note that this script uses the network to stage its dependencies.
 """
 
 # All the interesting stuff lives here
-# from factory/stage_multibuild.sh import build_wheel
-source factory/stage_multibuild.sh
+# from dev/stage_multibuild.sh import build_wheel
+source dev/stage_multibuild.sh
 
 echo "--- BEGIN EXEC BUILD WHEEL ---"
 build_wheel $REPO_DIR $PLAT

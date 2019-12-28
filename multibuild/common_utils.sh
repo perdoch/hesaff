@@ -91,14 +91,18 @@ function is_function {
     (set +e; $(declare -Ff "$1" > /dev/null) && echo true)
 }
 
-function gh-clone {
+function gh_clone {
     git clone https://github.com/$1
 }
+
+# gh-clone was renamed to gh_clone, so we have this alias for
+# backwards compatibility.
+alias gh-clone=gh_clone
 
 function set_opts {
     # Set options from input options string (in $- format).
     local opts=$1
-    local chars="exhimBH"
+    local chars="exhmBH"
     for (( i=0; i<${#chars}; i++ )); do
         char=${chars:$i:1}
         [ -n "${opts//[^${char}]/}" ] && set -$char || set +$char
@@ -113,13 +117,14 @@ function suppress {
     # Set -e stuff agonized over in
     # https://unix.stackexchange.com/questions/296526/set-e-in-a-subshell
     local tmp=$(mktemp tmp.XXXXXXXXX) || return
-    local opts=$-
+    local errexit_set
     echo "Running $@"
+    if [[ $- = *e* ]]; then errexit_set=true; fi
     set +e
-    ( set_opts $opts ; $@  > "$tmp" 2>&1 ) ; ret=$?
+    ( if [[ -n $errexit_set ]]; then set -e; fi; "$@"  > "$tmp" 2>&1 ) ; ret=$?
     [ "$ret" -eq 0 ] || cat "$tmp"
     rm -f "$tmp"
-    set_opts $opts
+    if [[ -n $errexit_set ]]; then set -e; fi
     return "$ret"
 }
 
@@ -147,7 +152,7 @@ function untar {
 
 function install_rsync {
     if [ -z "$IS_OSX" ]; then
-        [[ $(type -P rsync) ]] || yum install -y rsync
+        [[ $(type -P rsync) ]] || yum_install rsync
     fi
 }
 
@@ -230,28 +235,7 @@ function build_wheel_cmd {
     if [ -n "$BUILD_DEPENDS" ]; then
         pip install $(pip_opts) $BUILD_DEPENDS
     fi
-
-    echo """
-    ****************
-    ****************
-    ****************
-    """
-    echo "ABOUT TO DO CMD WHEELHOUSE"
-    echo """
-        repo_dir = $repo_dir
-        cmd = $cmd
-        wheelhouse = $wheelhouse
-    """
-
-    if [ "$TRAVIS_OS_NAME" = "osx" ]; then
-        #($cmd $wheelhouse)
-        (cd $repo_dir && $cmd $wheelhouse)
-    else
-        #(cd $repo_dir && $cmd $wheelhouse)
-        ($cmd $wheelhouse)
-    fi
-    echo "DID CMD WHEELHOUSE"
-    
+    (cd $repo_dir && $cmd $wheelhouse)
     repair_wheelhouse $wheelhouse
 }
 
@@ -327,6 +311,9 @@ function get_platform {
     python -c 'import platform; print(platform.uname()[4])'
 }
 
+if [ "$(get_platform)" == x86_64 ] || \
+    [ "$(get_platform)" == i686 ]; then IS_X86=1; fi
+
 function get_distutils_platform {
     # Report platform as given by distutils get_platform.
     # This is the platform tag that pip will use.
@@ -358,6 +345,7 @@ function install_run {
     install_wheel
     mkdir tmp_for_test
     (cd tmp_for_test && run_tests)
+    rmdir tmp_for_test  2>/dev/null || echo "Cannot remove tmp_for_test"
 }
 
 function fill_submodule {
@@ -380,7 +368,7 @@ function fill_submodule {
 
 PYPY_URL=https://bitbucket.org/pypy/pypy/downloads
 
-# As of 2019-03-25, the latest verions of PyPy.
+# As of 2019-10-15, the latest verions of PyPy.
 LATEST_PP_4p0=4.0.1
 LATEST_PP_4=$LATEST_PP_4p0
 
@@ -398,8 +386,9 @@ LATEST_PP_6p0=6.0.0
 LATEST_PP_6=$LATEST_PP_6p0
 
 LATEST_PP_7p0=7.0.0
-LATEST_PP_7p1=7.1.0
-LATEST_PP_7=$LATEST_PP_7p1
+LATEST_PP_7p1=7.1.1
+LATEST_PP_7p2=7.2.0
+LATEST_PP_7=$LATEST_PP_7p2
 
 function unroll_version {
     # Convert major or major.minor format to major.minor.micro using the above

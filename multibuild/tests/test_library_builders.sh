@@ -1,9 +1,23 @@
 # Test some library builders
-# Smoke test
-export BUILD_PREFIX="${PWD}/builds"
-rm_mkdir $BUILD_PREFIX
-source configure_build.sh
-source library_builders.sh
+
+# The environment
+uname -a
+
+if [ -n "$IS_OSX" ]; then
+    # Building on macOS
+    export BUILD_PREFIX="${PWD}/builds"
+    rm_mkdir $BUILD_PREFIX
+    source configure_build.sh
+    source library_builders.sh
+else
+    # Building on Linux
+    # Glibc version
+    ldd --version
+    # configure_build.sh, library_builders.sh sourced in
+    # docker_build_wrap.sh
+fi
+
+source tests/utils.sh
 
 start_spinner
 
@@ -18,7 +32,7 @@ suppress build_swig
 # E.g. arb (below) requires a couple of other libraries.
 # Run here just for the output, even though they fail.
 (set +e ;
-    build_github fredrik-johansson/arb 2.16.0 ;
+    build_github fredrik-johansson/arb 2.17.0 ;
     build_github glennrp/libpng v1.6.37 ;
     build_github wbhart/mpir mpir-3.0.0
     )
@@ -38,5 +52,12 @@ fi
 suppress build_ragel
 suppress build_cfitsio
 suppress build_new_zlib
+suppress build_hdf5
+
+[ ${MB_PYTHON_VERSION+x} ] || ingest "\$MB_PYTHON_VERSION is not set"
+[ "$MB_PYTHON_VERSION" == "$PYTHON_VERSION" ] || ingest "\$MB_PYTHON_VERSION must be equal to \$PYTHON_VERSION"
 
 stop_spinner
+
+# Exit 1 if any test errors
+barf
