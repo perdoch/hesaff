@@ -13,6 +13,7 @@ env:
         - USE_CCACHE=1
         - PLAT=x86_64
         - UNICODE_WIDTH=32
+        - MB_PYTHON_VERSION=3.7
 
 # Host Python is only used in staging
 language: generic
@@ -102,7 +103,6 @@ matrix:
       workspaces:
         use: brew_cache
       
-
     # builds for Linux
     - os: linux
       # the following jobs will use the same stage name by default
