@@ -16,11 +16,9 @@ env:
 
 # Host Python is only used in staging
 language: generic
-# Required to invoke docker ourselves as per https://docs.travis-ci.com/user/docker/
-sudo: required
 services: docker
-# https://docs.travis-ci.com/user/reference/trusty/
-dist: trusty
+# https://docs.travis-ci.com/user/reference/xenial
+dist: xenial
 
 # Save some time, we and setup check them out on demand instead
 # https://docs.travis-ci.com/user/customizing-the-build/#Git-Clone-Depth
@@ -30,11 +28,6 @@ git:
 # https://docs.travis-ci.com/user/caching
 cache:
   directories:
-    # https://stackoverflow.com/questions/39930171/cache-brew-builds-with-travis-ci
-    - $HOME/Library/Caches/Homebrew
-    - /usr/local/Homebrew/
-    # used in OSX custom build script dealing with local bottle caching
-    - $HOME/local_bottle_metadata
     # `cache: ccache: true` has no effect if `language:` is not `c` or `cpp`
     - $HOME/.ccache
     - $HOME/.cache/pip
@@ -52,49 +45,65 @@ matrix:
   fast_finish: true
   include:
 
-    # builds for MacOS
-    #- &osx-70
-    #  os: osx
-    #  osx_image: xcode8.3
-    #  env:
-    #    - MB_PYTHON_VERSION=2.7
-    #  stage: final
-    #- <<: *osx-70
-    #  stage: s1
-    #- &osx-80
-    #  os: osx
-    #  osx_image: xcode8.3
-    #  env:
-    #    - MB_PYTHON_VERSION=3.4
-    #  stage: final
-    #- <<: *osx-80
-    #  stage: s1
-    #- &osx-90
-    #  os: osx
-    #  osx_image: xcode8.3
-    #  env:
-    #    - MB_PYTHON_VERSION=3.5
-    #  stage: final
-    - <<: *osx-90
+    - os: osx
+      osx_image: xcode8.3
       stage: s1
-    - &osx-100
+      workspaces:
+        create:
+          name: brew_cache
+          paths:
+            # https://stackoverflow.com/questions/39930171/cache-brew-builds-with-travis-ci
+            - $HOME/Library/Caches/Homebrew
+            - /usr/local/Homebrew/
+            # used in OSX custom build script dealing with local bottle caching
+            - $HOME/local_bottle_metadata
+      #workspaces share within the same build, cache shares between builds
+      cache:
+        directories:
+          # `cache: ccache: true` has no effect if `language:` is not `c` or `cpp`
+          - $HOME/.ccache
+          # https://stackoverflow.com/questions/39930171/cache-brew-builds-with-travis-ci
+          - $HOME/Library/Caches/Homebrew
+          - /usr/local/Homebrew/
+          # used in OSX custom build script dealing with local bottle caching
+          - $HOME/local_bottle_metadata
+
+    # default builds for MacOS
+    # further jobs in the list will use the same stage until the next assignment
+    - stage: final
       os: osx
+      osx_image: xcode8.3
+      env:
+        - MB_PYTHON_VERSION=2.7
+      workspaces:
+        use: brew_cache
+    - os: osx
+      osx_image: xcode8.3
+      env:
+        - MB_PYTHON_VERSION=3.5
+      workspaces:
+        use: brew_cache
+    - os: osx
       osx_image: xcode8.3
       env:
         - MB_PYTHON_VERSION=3.6
-      stage: final
-    - <<: *osx-100
-      stage: s1
-    - &osx-110
-      os: osx
+      workspaces:
+        use: brew_cache
+    - os: osx
       osx_image: xcode8.3
       env:
         - MB_PYTHON_VERSION=3.7
-      stage: final
-    - <<: *osx-110
-      stage: s1
+      workspaces:
+        use: brew_cache
+    - os: osx
+      osx_image: xcode8.3
+      env:
+        - MB_PYTHON_VERSION=3.8
+      workspaces:
+        use: brew_cache
+      
 
-    # headless builds for Linux
+    # builds for Linux
     - os: linux
       # the following jobs will use the same stage name by default
       stage: s1
@@ -252,6 +261,11 @@ after_success:
     - echo "TWINE_USERNAME = $TWINE_USERNAME"
     - echo "TRAVIS_TAG = ${TRAVIS_TAG}"
     - echo "TRAVIS_BRANCH = ${TRAVIS_BRANCH}"
+    - | 
+      __heredoc__='''
+      python -c "import yaml; yaml.safe_load(open('.travis.yml'))"
+
+      ''' # '
     - |
         TARGET_BRANCH="release"
         TARGET_BRANCH="dev/wheels"
