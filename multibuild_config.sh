@@ -148,7 +148,7 @@ function pre_build {
     pip install --quiet scikit-build ninja cmake ubelt numpy
   else
     echo "Running for linux"
-    pip install --quiet numpy scikit-build ubelt cmake ninja 
+    pip install --quiet numpy scikit-build ubelt ninja 
   fi
 }
 
