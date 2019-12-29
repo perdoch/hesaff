@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 """
+NOTE: We are using the docker image built using the vtool script now, although
+this doesn't give us as wide platform coverage.
+
 Setup the base image containing the opencv deps that pyhesaff needs to build
 
 References:
@@ -120,6 +123,8 @@ def build_opencv_cmake_args(config):
         cmake_args.append("-DWITH_IPP=OFF")
         if not config['is_64bit']:
             cmake_args.append("-DCMAKE_CXX_FLAGS=-U__STRICT_ANSI__")
+            # import subprocess
+            # subprocess.check_call(["patch", "-p0", "<", "patches/patchOpenEXR"])
 
         if config['linux_jpeg_args'] is not None:
             jpeg_config = config['linux_jpeg_args']
@@ -135,7 +140,7 @@ def build_opencv_cmake_args(config):
         # https://github.com/skvark/opencv-python/issues/21
         cmake_args.append("-DWITH_LAPACK=OFF")
         cmake_args.append("-DCMAKE_CXX_FLAGS=-stdlib=libc++")
-        cmake_args.append("-DCMAKE_OSX_DEPLOYMENT_TARGET:STRING=10.7")
+        cmake_args.append("-DCMAKE_OSX_DEPLOYMENT_TARGET:STRING=10.8")
 
     return cmake_args
 

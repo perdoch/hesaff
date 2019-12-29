@@ -109,19 +109,19 @@ matrix:
       stage: s1
       env:
         - MB_PYTHON_VERSION=2.7
-    - os: linux
-      env:
-        - MB_PYTHON_VERSION=2.7
-        - UNICODE_WIDTH=16
-    - os: linux
-      env:
-        - MB_PYTHON_VERSION=2.7
-        - PLAT=i686
+    #- os: linux
+    #  env:
+    #    - MB_PYTHON_VERSION=2.7
+    #    - UNICODE_WIDTH=16
     - os: linux
       env:
         - MB_PYTHON_VERSION=2.7
         - PLAT=i686
-        - UNICODE_WIDTH=16
+    #- os: linux
+    #  env:
+    #    - MB_PYTHON_VERSION=2.7
+    #    - PLAT=i686
+    #    - UNICODE_WIDTH=16
     #- os: linux
     #  env:
     #    - MB_PYTHON_VERSION=3.4

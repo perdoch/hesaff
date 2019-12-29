@@ -89,11 +89,18 @@ setup_staging_helper(){
         _USE_QUAY="True"
         if [ $_USE_QUAY = "True" ]; then
             # Assume that the query.io/erotemic/manylinux-opencv:{DOCKER_TAG} image exists
-            python dev/build_opencv_docker.py --dpath=$_STAGEING_DPATH --no-exec
-            DOCKER_TAG=$(cat $_STAGEING_DPATH/opencv-docker-tag.txt)
-            DOCKER_IMAGE="quay.io/erotemic/manylinux-opencv:${DOCKER_TAG}"
+            #python dev/build_opencv_docker.py --dpath=$_STAGEING_DPATH --no-exec
+            #DOCKER_TAG=$(cat $_STAGEING_DPATH/opencv-docker-tag.txt)
+
+            #DOCKER_TAG="x86_64-opencv4.1.0-v4"
+            #PLAT
+            DOCKER_TAG="${PLAT}-opencv4.1.0-v4"
+            DOCKER_IMAGE="quay.io/erotemic/manylinux-for:${DOCKER_TAG}"
+            
+            #DOCKER_IMAGE="quay.io/erotemic/manylinux-opencv:${DOCKER_TAG}"
             #docker pull $DOCKER_IMAGE
         else
+            # OLD AND DEPRECATED
             # Patch multibuild so we can start from a local docker image  
             find $_STAGED_REPO/multibuild -iname "*.sh" -type f -exec sed -i 's/ retry docker pull/ #retry docker pull/g' {} +
             # Ensure that the manylinux1_x86_64-opencv4.1.0-py3.6 docker image exists
