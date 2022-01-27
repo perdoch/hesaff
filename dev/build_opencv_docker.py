@@ -8,7 +8,6 @@ Setup the base image containing the opencv deps that pyhesaff needs to build
 References:
     https://github.com/skvark/opencv-python
 """
-from __future__ import absolute_import, division, print_function
 import ubelt as ub
 import sys
 import os
@@ -145,7 +144,7 @@ def build_opencv_cmake_args(config):
     return cmake_args
 
 
-def build(DPATH, MAKE_CPUS, UNICODE_WIDTH, PLAT, PY_VER, EXEC=True):
+def build(DPATH, MAKE_CPUS, UNICODE_WIDTH, ARCH, PY_VER, EXEC=True):
 
     OPENCV_VERSION = '4.1.0'
 
@@ -153,7 +152,7 @@ def build(DPATH, MAKE_CPUS, UNICODE_WIDTH, PLAT, PY_VER, EXEC=True):
     dpath = ub.ensuredir(dpath)
     os.chdir(dpath)
 
-    BASE = 'manylinux1_{}'.format(PLAT)
+    BASE = 'manylinux2014_{}'.format(ARCH)
     BASE_REPO = 'quay.io/skvark'
 
     PY_TAG = 'cp{ver}-cp{ver}m'.format(ver=PY_VER.replace('.', ''))
@@ -174,7 +173,7 @@ def build(DPATH, MAKE_CPUS, UNICODE_WIDTH, PLAT, PY_VER, EXEC=True):
             ub.cmd('unzip {}'.format(fpath), cwd=dpath, verbose=0)
 
     config = {
-        'is_64bit': PLAT in {'x86_64'},
+        'is_64bit': ARCH in {'x86_64'},
         'build_contrib': False,
         'build_headless': True,
         'python_args': {
@@ -205,7 +204,7 @@ def build(DPATH, MAKE_CPUS, UNICODE_WIDTH, PLAT, PY_VER, EXEC=True):
         ENV PATH=/opt/python/{PY_TAG}/bin:$PATH
         ENV PYTHON_EXE=/opt/python/{PY_TAG}/bin/python
         ENV HOME=/root
-        ENV PLAT={PLAT}
+        ENV ARCH={ARCH}
         ENV UNICODE_WIDTH={UNICODE_WIDTH}
 
         # Update python environment
@@ -324,24 +323,26 @@ def main():
 
     if ub.argflag('--allversions'):
         fpaths = []
-        plat = ['i686', 'x86_64']
-        pyver = ['2.7', '3.4', '3.5', '3.6', '3.7', '3.8']
-        for PLAT in plat:
+        arch = ['i686', 'x86_64', 'aarch64']
+        # pyver = ['2.7', '3.4', '3.5', '3.6', '3.7', '3.8']
+        pyver = ['3.6', '3.7', '3.8', '3.9']
+        for ARCH in arch:
             for PY_VER in pyver:
-                fpaths += [build(DPATH, MAKE_CPUS, UNICODE_WIDTH, PLAT, PY_VER, EXEC=EXEC)]
+                fpaths += [build(DPATH, MAKE_CPUS, UNICODE_WIDTH, ARCH, PY_VER, EXEC=EXEC)]
 
         print("WROTE TO: ")
         print('\n'.join(fpaths))
     else:
         PY_VER = argval('--pyver', 'MB_PYTHON_VERSION', default=DEFAULT_PY_VER)
-        PLAT = argval('--plat', 'PLAT', default='x86_64')
-        build(DPATH, MAKE_CPUS, UNICODE_WIDTH, PLAT, PY_VER, EXEC=EXEC)
+        ARCH = argval('--arch', 'ARCH', default='x86_64')
+        build(DPATH, MAKE_CPUS, UNICODE_WIDTH, ARCH, PY_VER, EXEC=EXEC)
 
 
 if __name__ == '__main__':
     """
     CommandLine:
-        python ~/code/hesaff/dev/build_opencv_docker.py --no-exec
+        python ~/code/pyhesaff/dev/build_opencv_docker.py
+        python ~/code/pyhesaff/dev/build_opencv_docker.py --no-exec
 
         docker login quay.io
 
