@@ -1,5 +1,7 @@
 #!/bin/bash
 __heredoc__="""
+DEPRECATED FOR CIBUILDWHEEL
+
 Execute the multibuild.
 
 This file is the entry point for a multibuild. It can either be run locally in
