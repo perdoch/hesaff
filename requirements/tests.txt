@@ -1,2 +1,3 @@
 xdoctest
-opencv-python
+pytest
+opencv-python-headless
