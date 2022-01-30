@@ -1,4 +1,9 @@
 #!/usr/bin/env python
+"""
+CIBW_BUILD='cp*-manylinux_x86_64' CIBW_MANYLINUX_X86_64_IMAGE=quay.io/erotemic/manylinux-for:x86_64-fletch1.5.0-opencv cibuildwheel --platform linux --archs x86_64
+
+CIBW_SKIP='pp*' cibuildwheel --config-file pyproject.toml --platform linux --arch x86_64
+"""
 from __future__ import absolute_import, division, print_function
 from os.path import exists
 from skbuild import setup
@@ -219,7 +224,7 @@ if __name__ == '__main__':
         # hack_libconfig = '.so'
         # print('hack_libconfig = {!r}'.format(hack_libconfig))
 
-    import ubelt as ub
+    # import ubelt as ub
     # ub.cmd('pwd', verbose=3)
     # ub.cmd('ls -al', verbose=3)
     # ub.cmd('ls dist', verbose=3)
@@ -270,16 +275,17 @@ if __name__ == '__main__':
             # This should be interpreted as Apache License v2.0
             'License :: OSI Approved :: Apache Software License',
             # Supported Python versions
-            'Programming Language :: Python :: 3.5',
+            # 'Programming Language :: Python :: 3.5',
             'Programming Language :: Python :: 3.6',
             'Programming Language :: Python :: 3.7',
             'Programming Language :: Python :: 3.8',
+            'Programming Language :: Python :: 3.9',
         ],
     )
     setup(**kwargs)
 
     # ub.cmd('ls -al', verbose=3)
-    ub.cmd('ls dist', verbose=3)
+    # ub.cmd('ls dist', verbose=3)
 
     print("[setup.py] FINISHING UP")
 
