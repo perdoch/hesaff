@@ -92,8 +92,8 @@ def TEST_keypoint(imgBGR, img_fpath, kpts, desc, sel, fnum=1, figtitle=''):
 
     TEST_figure2(imgBGR, kpts, desc, sel, fnum=fnum + 1)
     df2.set_figtitle(figtitle)
-#    TEST_figure2(imgBGR, kpts2, Desc2, sel, fnum=fnum + 2)
-#    df2.set_figtitle('Rotation Invariant')
+    # TEST_figure2(imgBGR, kpts2, Desc2, sel, fnum=fnum + 2)
+    # df2.set_figtitle('Rotation Invariant')
 
     #df2.draw_keypoint_gradient_orientations(imgBGR, kp=kpts2[sel],
     #                                        sift=desc[sel], mode='vec',
@@ -104,24 +104,23 @@ def TEST_keypoint(imgBGR, img_fpath, kpts, desc, sel, fnum=1, figtitle=''):
     return locals()
 
 
-#if __name__ == '__main__':
-
 def test_cpp_rotinvar_main():
     r"""
     CommandLine:
         python -m pyhesaff.tests.test_cpp_rotation_invariance --test-test_cpp_rotinvar_main
         python -m pyhesaff.tests.test_cpp_rotation_invariance --test-test_cpp_rotinvar_main --show
 
-
-    Example:
-        >>> # DISABLE_DOCTEST
-        >>> from pyhesaff.tests.test_cpp_rotation_invariance import *  # NOQA
-        >>> # build test data
-        >>> # execute function
-        >>> result = test_cpp_rotinvar_main()
-        >>> # verify results
-        >>> print(result)
+    # Example:
+    #     >>> # DISABLE_DOCTEST
+    #     >>> from pyhesaff.tests.test_cpp_rotation_invariance import *  # NOQA
+    #     >>> # build test data
+    #     >>> # execute function
+    #     >>> result = test_cpp_rotinvar_main()
+    #     >>> # verify results
+    #     >>> print(result)
     """
+    import pytest
+    pytest.skip('Broken in CI')
     # TODO; take visualization out of this test by default
     from pyhesaff.tests import pyhestest
     import pyhesaff
@@ -168,20 +167,6 @@ def test_cpp_rotinvar_main():
     if ut.show_was_requested():
         from plottool import draw_func2 as df2
         exec(df2.present())
-
-
-#if __name__ == '__main__':
-#    """
-#    CommandLine:
-#        python -c "import utool, pyhesaff.tests.test_cpp_rotation_invariance; utool.doctest_funcs(pyhesaff.tests.test_cpp_rotation_invariance, allexamples=True)"
-#
-#        python -m pyhesaff.tests.test_cpp_rotation_invariance --allexamples
-#        python -m pyhesaff.tests.test_cpp_rotation_invariance --allexamples --noface --nosrc
-#    """
-#    import multiprocessing
-#    multiprocessing.freeze_support()  # for win32
-#    import utool as ut  # NOQA
-#    ut.doctest_funcs()
 
 
 if __name__ == '__main__':

@@ -1,13 +1,13 @@
 from __future__ import absolute_import, print_function, division
 import sys
 from os.path import realpath, join, split
-from vtool.tests import grabdata
 import numpy as np
 import cv2
 import pyhesaff
 
 
 def get_test_image():
+    from vtool.tests import grabdata
     img_fname = 'zebra.jpg'
     if '--zebra.png' in sys.argv:
         img_fname = 'zebra.jpg'

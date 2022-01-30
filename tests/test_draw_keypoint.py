@@ -2,7 +2,7 @@
 from __future__ import absolute_import, division, print_function
 import numpy as np
 from six.moves import range
-from itertools import product as iprod
+import itertools as it
 import utool as ut
 import six
 
@@ -15,12 +15,15 @@ def test_draw_keypoint_main():
     CommandLine:
         python -m pyhesaff.tests.test_draw_keypoint --test-test_draw_keypoint_main --show
 
-    Example:
-        >>> # DISABLE_DOCTEST
-        >>> from pyhesaff.tests.test_draw_keypoint import *  # NOQA
-        >>> test_draw_keypoint_main()
-        >>> ut.show_if_requested()
+    # Example:
+    #     >>> # DISABLE_DOCTEST
+    #     >>> from pyhesaff.tests.test_draw_keypoint import *  # NOQA
+    #     >>> test_draw_keypoint_main()
+    #     >>> ut.show_if_requested()
     """
+    import pytest
+    pytest.skip('Broken in CI')
+
     from plottool import draw_func2 as df2
     from plottool import mpl_keypoint
     import vtool.keypoint as ktool  # NOQA
@@ -132,7 +135,7 @@ def test_draw_keypoint_main():
 
     #kp_list = []
 
-    for row, col in iprod(range(nRows), range(nCols)):
+    for row, col in it.product(range(nRows), range(nCols)):
         #print((row, col))
         alpha = col / (nCols)
         beta  = row / (nRows)
