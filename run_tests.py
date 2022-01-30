@@ -119,14 +119,15 @@ if __name__ == '__main__':
         os.chdir(test_dir)
 
         pytest_args = [
-            # '--cov-config', '../pyproject.toml',
-            # '--cov-report', 'html',
+            '--cov-config', '../pyproject.toml',
+            '--cov-report', 'html',
             '--cov-report', 'term',
-            # '--cov-report', 'xml',
+            '--cov-report', 'xml',
             '--cov=' + package_name,
         ]
         if is_cibuildwheel():
             pytest_args.append('--cov-append')
+
         pytest_args.append(modpath)
         print('pytest_args = {!r}'.format(pytest_args))
 
