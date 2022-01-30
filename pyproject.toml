@@ -15,3 +15,12 @@ manylinux-aarch64-image = "quay.io/erotemic/manylinux2014_aarch64_for:fletchv1.5
 musllinux-x86_64-image = "quay.io/erotemic/musllinux2014_x86_64_for:fletchv1.5.0-opencv"
 musllinux-i686-image = "quay.io/erotemic/musllinux2014_i686_for:fletchv1.5.0-opencv"
 musllinux-aarch64-image = "quay.io/erotemic/musllinux2014_aarch64_for:fletchv1.5.0-opencv"
+
+
+[[tool.cibuildwheel.overrides]]
+select = "*-manylinux_x86_64*"
+build-verbosity = 1
+
+#CIBW_BEFORE_BUILD_MACOS
+#CIBW_BEFORE_BUILD_WINDOWS
+#CIBW_BEFORE_BUILD_WINDOWS
