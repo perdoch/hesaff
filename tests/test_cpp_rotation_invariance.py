@@ -6,6 +6,7 @@ import utool
 
 
 def TEST_ptool_find_kpts_direction(imgBGR, kpts):
+    import vtool.patch as ptool
     hrint = utool.horiz_print
     print('[rotinvar] +---')
     print('[rotinvar] | 3) Find dominant orientation in histogram')
@@ -20,6 +21,9 @@ def TEST_ptool_find_kpts_direction(imgBGR, kpts):
 
 def TEST_figure1(wpatch, gradx, grady, gmag, gori, hist, centers, fnum=1):
     print('[rotinvar] 4) Draw histogram with interpolation annotations')
+    import vtool.patch as ptool
+    import plottool
+    from plottool import draw_func2 as df2
     gorimag = plottool.color_orimag(gori, gmag)
     nRow, nCol = (2, 7)
 
@@ -49,6 +53,9 @@ def TEST_figure1(wpatch, gradx, grady, gmag, gori, hist, centers, fnum=1):
 
 
 def TEST_figure2(imgBGR, kpts, desc, sel, fnum=2):
+    from plottool import draw_func2 as df2
+    from plottool.viz_keypoints import _annotate_kpts, show_keypoints
+    from plottool.viz_featrow import draw_feat_row
     #df2.imshow(wpatch, fnum=2)
     sift = desc[sel]
     viz_kwargs = dict(ell=True, eig=False,
@@ -60,9 +67,6 @@ def TEST_figure2(imgBGR, kpts, desc, sel, fnum=2):
 
 def TEST_keypoint(imgBGR, img_fpath, kpts, desc, sel, fnum=1, figtitle=''):
     from plottool import draw_func2 as df2
-    from plottool.viz_keypoints import _annotate_kpts, show_keypoints
-    from plottool.viz_featrow import draw_feat_row
-    import plottool
     import vtool.patch as ptool
     #----------------------#
     # --- Extract Data --- #
@@ -162,6 +166,7 @@ def test_cpp_rotinvar_main():
 
     #pinteract.interact_keypoints(imgBGR, kpts2, desc, arrow=True, rect=True)
     if ut.show_was_requested():
+        from plottool import draw_func2 as df2
         exec(df2.present())
 
 

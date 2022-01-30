@@ -1,11 +1,6 @@
 #!/usr/bin/env python
 from __future__ import absolute_import, division, print_function
-#----------------
-# Test Functions
-#----------------
 from six.moves import zip, range
-#from plottool import draw_func2 as df2
-#from plottool.viz_keypoints import show_keypoints
 import utool as ut
 import matplotlib as mpl
 import numpy as np

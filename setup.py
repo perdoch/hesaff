@@ -4,7 +4,7 @@ pip install cibuildwheel
 
 CIBW_BUILD_VERBOSITY=1 \
 CIBW_TEST_REQUIRES="-r requirements/tests.txt" \
-CIBW_TEST_COMMAND='python {project}/run_tests.py' \
+CIBW_TEST_COMMAND='python {project}/run_tests.py .' \
 CIBW_SKIP='pp*' \
     cibuildwheel --config-file pyproject.toml --platform linux --arch x86_64
 

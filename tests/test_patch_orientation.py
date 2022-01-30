@@ -2,13 +2,9 @@
 from __future__ import absolute_import, division, print_function
 import numpy as np
 import utool
-import utool as ut
 
 
 def TEST_ptool_find_kpts_direction(imgBGR, kpts):
-    from plottool import draw_func2 as df2
-    from plottool.viz_keypoints import _annotate_kpts, show_keypoints
-    from plottool.viz_featrow import draw_feat_row
     import vtool.patch as ptool
     hrint = utool.horiz_print
     print('[rotinvar] +---')
@@ -126,6 +122,7 @@ def test_patch_ori_main():
         >>> # xdoctest: +SKIP
         >>> from pyhesaff.tests.test_patch_orientation import *  # NOQA
         >>> test_patch_ori_main()
+        >>> import utool as ut
         >>> ut.show_if_requested()
     """
     print('[rotinvar] loading test data')
@@ -147,7 +144,5 @@ if __name__ == '__main__':
         python -m pyhesaff.tests.test_patch_orientation --allexamples
         python -m pyhesaff.tests.test_patch_orientation --allexamples --noface --nosrc
     """
-    import multiprocessing
-    multiprocessing.freeze_support()  # for win32
-    import utool as ut  # NOQA
-    ut.doctest_funcs()
+    import xdoctest
+    xdoctest.doctest_module(__file__)
