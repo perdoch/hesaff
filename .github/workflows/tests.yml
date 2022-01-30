@@ -17,10 +17,10 @@ jobs:
     strategy:
       matrix:
         #os: [ubuntu-latest, windows-latest, macOS-latest]
-        os: [ubuntu-latest]
-        arch: [auto]
-        cibw_build: [cp3*-*]
-        cibw_skip: ["*-win32", "pp*"]
+        #os: [ubuntu-latest]
+        #arch: [auto]
+        #cibw_build: [cp3*-*]
+        #cibw_skip: ["*-win32", "pp*"]
         # Add additional workers to reduce overall build time
         #include: 
         #  - os: windows-latest
@@ -42,6 +42,11 @@ jobs:
           #- os: ubuntu-latest
           #  arch: aarch64
           #  cibw_build: cp310-*
+        include: 
+          - {"os": "ubuntu-latest", "arch": "x86_64", "cibw_build": "cp36-manylinux_x86_64"}
+          - {"os": "ubuntu-latest", "arch": "x86_64", "cibw_build": "cp37-manylinux_x86_64"}
+          - {"os": "ubuntu-latest", "arch": "x86_64", "cibw_build": "cp38-manylinux_x86_64"}
+          - {"os": "ubuntu-latest", "arch": "x86_64", "cibw_build": "cp39-manylinux_x86_64"}
 
 
     steps:
