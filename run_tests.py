@@ -80,6 +80,7 @@ if __name__ == '__main__':
     cwd = os.getcwd()
     repo_dir = abspath(dirname(__file__))
     test_dir = join(repo_dir, 'tests')
+    print('Begin run_tests.py script')
     print('cwd = {!r}'.format(cwd))
 
     import pytest
@@ -107,26 +108,35 @@ if __name__ == '__main__':
         print('Installed module = {!r}'.format(module))
     else:
         print(f'No installed version of {package_name} found')
+        modpath = ub.modname_to_modpath(package_name)
+        if modpath is None:
+            print('Editable install not available')
+        else:
+            print('Editable install seems available modpath = {!r}'.format(modpath))
 
     try:
         print('Changing dirs to test_dir={!r}'.format(test_dir))
         os.chdir(test_dir)
 
         pytest_args = [
-            '--cov-config', '../pyproject.toml',
-            '--cov-report', 'html',
+            # '--cov-config', '../pyproject.toml',
+            # '--cov-report', 'html',
             '--cov-report', 'term',
-            '--cov-report', 'xml',
+            # '--cov-report', 'xml',
             '--cov=' + package_name,
         ]
         if is_cibuildwheel():
             pytest_args.append('--cov-append')
+        pytest_args.append(modpath)
+        print('pytest_args = {!r}'.format(pytest_args))
 
         pytest_args = pytest_args + sys.argv[1:]
-        sys.exit(pytest.main(pytest_args))
+        ret = pytest.main(pytest_args)
     finally:
         os.chdir(cwd)
         if is_cibuildwheel():
             # for CIBW under linux
             copy_coverage_cibuildwheel_docker(f'/home/runner/work/{package_name}/{package_name}')
         print('Restoring cwd = {!r}'.format(cwd))
+    print('pytest got ret = {!r}'.format(ret))
+    sys.exit(ret)

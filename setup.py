@@ -2,9 +2,11 @@
 """
 pip install cibuildwheel
 
-CIBW_BUILD_VERBOSITY=1 \
+Requires OpenCV to build
+
+CIBW_BUILD_VERBOSITY=2 \
 CIBW_TEST_REQUIRES="-r requirements/tests.txt" \
-CIBW_TEST_COMMAND='python {project}/run_tests.py $(python -c "import os, pyhesaff; print(os.path.dirname(pyhesaff.__file__))")' \
+CIBW_TEST_COMMAND='python {project}/run_tests.py' \
 CIBW_SKIP='pp*' \
     cibuildwheel --config-file pyproject.toml --platform linux --arch x86_64
 

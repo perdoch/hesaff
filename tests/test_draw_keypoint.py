@@ -178,11 +178,7 @@ def test_draw_keypoint_main():
 if __name__ == '__main__':
     """
     CommandLine:
-        python -m pyhesaff.tests.test_draw_keypoint
-        python -m pyhesaff.tests.test_draw_keypoint --allexamples
-        python -m pyhesaff.tests.test_draw_keypoint --allexamples --noface --nosrc
+        python ~/code/pyhesaff/tests/test_draw_keypoint.py
     """
-    import multiprocessing
-    multiprocessing.freeze_support()  # for win32
-    import utool as ut  # NOQA
-    ut.doctest_funcs()
+    import xdoctest
+    xdoctest.doctest_module(__file__)

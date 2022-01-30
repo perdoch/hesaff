@@ -2,12 +2,11 @@
 from __future__ import absolute_import, division, print_function
 import numpy as np
 import utool as ut
-import utool
 
 
 def TEST_ptool_find_kpts_direction(imgBGR, kpts):
     import vtool.patch as ptool
-    hrint = utool.horiz_print
+    hrint = ut.horiz_print
     print('[rotinvar] +---')
     print('[rotinvar] | 3) Find dominant orientation in histogram')
     hrint('[rotinvar] |  * kpts.shape = ', (kpts.shape,))
@@ -160,8 +159,8 @@ def test_cpp_rotinvar_main():
     TEST_keypoint(imgBGR, img_fpath, kpts2, desc2, sel, fnum=9001, figtitle='Adapted Rotation')
 
     #locals_ = TEST_keypoint(imgBGR, img_fpath, kpts1, desc1, sel)
-    #exec(utool.execstr_dict(locals_, 'locals_'))
-    #exec(utool.execstr_dict(f1_loc, 'f1_loc'))  # NOQA
+    #exec(ut.execstr_dict(locals_, 'locals_'))
+    #exec(ut.execstr_dict(f1_loc, 'f1_loc'))  # NOQA
 
     #pinteract.interact_keypoints(imgBGR, kpts2, desc, arrow=True, rect=True)
     if ut.show_was_requested():
@@ -172,11 +171,7 @@ def test_cpp_rotinvar_main():
 if __name__ == '__main__':
     """
     CommandLine:
-        python -m pyhesaff.tests.test_cpp_rotation_invariance
-        python -m pyhesaff.tests.test_cpp_rotation_invariance --allexamples
-        python -m pyhesaff.tests.test_cpp_rotation_invariance --allexamples --noface --nosrc
+        python ~/code/pyhesaff/tests/test_cpp_rotation_invariance.py
     """
-    import multiprocessing
-    multiprocessing.freeze_support()  # for win32
-    import utool as ut  # NOQA
-    ut.doctest_funcs()
+    import xdoctest
+    xdoctest.doctest_module(__file__)

@@ -136,6 +136,7 @@ hesaff_kwargs_docstr_block = _build_typed_params_kwargs_docstr_block(HESAFF_TYPE
 
 HESAFF_CLIB = None
 
+
 def argparse_hesaff_params():
     alias_dict = {'affine_invariance': 'ai'}
     alias_dict = {'rotation_invariance': 'ri'}
@@ -190,7 +191,7 @@ def _load_hesaff_clib():
 # Create a global interface to the hesaff lib
 try:
     HESAFF_CLIB, __LIB_FPATH__ = _load_hesaff_clib()
-except AttributeError as ex:
+except AttributeError:
     print('Need to rebuild hesaff')
     raise
 
@@ -253,7 +254,7 @@ def _new_fpath_hesaff(img_fpath, **kwargs):
         img_realpath = img_realpath.encode('ascii')
     try:
         hesaff_ptr = HESAFF_CLIB.new_hesaff_fpath(img_realpath, *hesaff_args)
-    except Exception as ex:
+    except Exception:
         msg = 'hesaff_ptr = HESAFF_CLIB.new_hesaff_fpath(img_realpath, *hesaff_args)',
         print('msg = {!r}'.format(msg))
         print('hesaff_args = {!r}'.format(hesaff_args))
@@ -273,7 +274,7 @@ def _new_image_hesaff(img, **kwargs):
     try:
         hesaff_ptr = HESAFF_CLIB.new_hesaff_image(
             img, rows, cols, channels, *hesaff_args)
-    except Exception as ex:
+    except Exception:
         msg = ('hesaff_ptr = '
                'HESAFF_CLIB.new_hesaff_image(img_realpath, *hesaff_args)')
         print('msg = {!r}'.format(msg))

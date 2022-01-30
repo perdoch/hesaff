@@ -35,3 +35,6 @@ failed_doctests.txt
 timeings.txt
 cmake_builds
 _skbuild
+deps
+.coverage
+coverage.xml

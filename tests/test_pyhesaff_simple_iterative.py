@@ -49,7 +49,5 @@ if __name__ == '__main__':
         python -m pyhesaff.tests.test_pyhesaff_simple_iterative --allexamples
         python -m pyhesaff.tests.test_pyhesaff_simple_iterative --allexamples --noface --nosrc
     """
-    import multiprocessing
-    multiprocessing.freeze_support()  # for win32
-    import utool as ut  # NOQA
-    ut.doctest_funcs()
+    import xdoctest
+    xdoctest.doctest_module(__file__)
