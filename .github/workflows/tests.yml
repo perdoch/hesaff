@@ -18,7 +18,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         arch: [auto]
-        cibw_build: [cp36* cp37* cp38* cp39*]
+        cibw_build: [cp36*, cp37*, cp38*, cp39*, cp310*]
         #os: [ubuntu-latest, windows-latest, macOS-latest]
         #os: [ubuntu-latest]
         #arch: [auto]
