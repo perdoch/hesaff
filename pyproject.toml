@@ -5,22 +5,28 @@ requires = ["setuptools>=41.0.1", "wheel", "scikit-build>=0.9.0", "numpy", "cmak
 
 
 [tool.cibuildwheel]
+build = "*"
+skip = "pp*"
 
 manylinux-x86_64-image = "quay.io/erotemic/manylinux2014_x86_64_for:fletchv1.5.0-opencv"
 manylinux-i686-image = "quay.io/erotemic/manylinux2014_i686_for:fletchv1.5.0-opencv"
-manylinux-aarch64-image = "quay.io/erotemic/manylinux2014_aarch64_for:fletchv1.5.0-opencv"
-#manylinux-ppc64le-image
-#manylinux-s390x-image
-
 musllinux-x86_64-image = "quay.io/erotemic/musllinux2014_x86_64_for:fletchv1.5.0-opencv"
 musllinux-i686-image = "quay.io/erotemic/musllinux2014_i686_for:fletchv1.5.0-opencv"
-musllinux-aarch64-image = "quay.io/erotemic/musllinux2014_aarch64_for:fletchv1.5.0-opencv"
+
+#manylinux-aarch64-image = "quay.io/erotemic/manylinux2014_aarch64_for:fletchv1.5.0-opencv"
+#manylinux-ppc64le-image
+#manylinux-s390x-image
+#musllinux-aarch64-image = "quay.io/erotemic/musllinux2014_aarch64_for:fletchv1.5.0-opencv"
 
 
-[[tool.cibuildwheel.overrides]]
 select = "*-manylinux_x86_64*"
 build-verbosity = 1
 
 #CIBW_BEFORE_BUILD_MACOS
 #CIBW_BEFORE_BUILD_WINDOWS
 #CIBW_BEFORE_BUILD_WINDOWS
+
+
+#[[tool.cibuildwheel.overrides]]
+#[tool.cibuildwheel.macos]
+#[tool.cibuildwheel.windows]
