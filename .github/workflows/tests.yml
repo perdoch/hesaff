@@ -87,7 +87,10 @@ jobs:
       # to supply options, put them in 'env', like:
       env:
         CIBW_BUILD_VERBOSITY: 1
-        CIBW_SKIP: ${{ matrix.cibw_skip }}
+        CIBW_BEFORE_BUILD_LINUX: bash dev/ci_prepare_linux_for_build.sh
+        CIBW_BEFORE_BUILD_MACOS: bash dev/ci_prepare_macos_for_build.sh
+        #CIBW_SKIP: ${{ matrix.cibw_skip }}
+        CIBW_SKIP: pp* cp36-* *_i686 *_ppc64le *_s390x cp36-musllinux_* cp37-musllinux_* cp38-musllinux_* cp39-musllinux_* cp310-musllinux_* cp310-macosx_*
         CIBW_BUILD: ${{ matrix.cibw_build }}
         CIBW_TEST_REQUIRES: -r requirements/tests.txt
         CIBW_TEST_COMMAND: python {project}/run_tests.py
@@ -186,7 +189,7 @@ jobs:
               TWINE_USERNAME=$TWINE_USERNAME \
               GPG_EXECUTABLE=$GPG_EXECUTABLE \
               DO_UPLOAD=True \
-              DO_TAG=False ./publish.sh 
+              DO_TAG=False ./publish.sh
 
   test_deploy:
     # Publish on the test PyPI
