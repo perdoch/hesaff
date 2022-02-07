@@ -175,15 +175,13 @@ jobs:
           $GPG_EXECUTABLE --list-keys || true
           $GPG_EXECUTABLE --list-keys  || echo "first invocation of gpg creates directories and returns 1"
           $GPG_EXECUTABLE --list-keys  
-          MB_PYTHON_TAG=$(python -c "import setup; print(setup.MB_PYTHON_TAG)")
           VERSION=$(python -c "import setup; print(setup.VERSION)") 
           pip install twine
           pip install six pyopenssl ndg-httpsclient pyasn1 -U --user
           pip install requests[security] twine --user
           GPG_KEYID=$(cat dev/public_gpg_key)
           echo "GPG_KEYID = '$GPG_KEYID'"
-          MB_PYTHON_TAG=$MB_PYTHON_TAG \
-              DO_GPG=True GPG_KEYID=$GPG_KEYID \
+          DO_GPG=True GPG_KEYID=$GPG_KEYID \
               TWINE_REPOSITORY_URL=${TWINE_REPOSITORY_URL} \
               TWINE_PASSWORD=$TWINE_PASSWORD \
               TWINE_USERNAME=$TWINE_USERNAME \
@@ -236,15 +234,13 @@ jobs:
           echo "Finish Decrypt Keys"
           $GPG_EXECUTABLE --list-keys  || echo "first invocation of gpg creates directories and returns 1"
           $GPG_EXECUTABLE --list-keys  
-          MB_PYTHON_TAG=$(python -c "import setup; print(setup.MB_PYTHON_TAG)")
           VERSION=$(python -c "import setup; print(setup.VERSION)") 
           pip install twine
           pip install six pyopenssl ndg-httpsclient pyasn1 -U --user
           pip install requests[security] twine --user
           GPG_KEYID=$(cat dev/public_gpg_key)
           echo "GPG_KEYID = '$GPG_KEYID'"
-          MB_PYTHON_TAG=$MB_PYTHON_TAG \
-              DO_GPG=True GPG_KEYID=$GPG_KEYID \
+          DO_GPG=True GPG_KEYID=$GPG_KEYID \
               TWINE_REPOSITORY_URL=${TEST_TWINE_REPOSITORY_URL} \
               TWINE_USERNAME=${TEST_TWINE_USERNAME} \
               TWINE_PASSWORD=${TEST_TWINE_PASSWORD} \
