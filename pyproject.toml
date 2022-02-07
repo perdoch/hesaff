@@ -2,27 +2,27 @@
 requires = ["setuptools", "wheel", "setuptools_scm[toml]", "scikit-build", "cmake", "ninja"]
 
 
-#[tool.cibuildwheel]
-#build = "*"
-#skip = "pp*"
-#build-verbosity = 1
+[tool.cibuildwheel]
+build = "*"
+skip = "pp*"
+build-verbosity = 1
 
-#manylinux-x86_64-image = "quay.io/erotemic/manylinux2014_x86_64_for:fletchv1.5.0-opencv"
-#manylinux-i686-image = "quay.io/erotemic/manylinux2014_i686_for:fletchv1.5.0-opencv"
-#musllinux-x86_64-image = "quay.io/erotemic/muslinux_1_1_x86_64_for:fletchv1.5.0-opencv"
-#musllinux-i686-image = "quay.io/erotemic/musllinux_1_1_i686_for:fletchv1.5.0-opencv"
+manylinux-x86_64-image = "quay.io/erotemic/manylinux2014_x86_64_for:fletchv1.5.0-opencv"
+manylinux-i686-image = "quay.io/erotemic/manylinux2014_i686_for:fletchv1.5.0-opencv"
+musllinux-x86_64-image = "quay.io/erotemic/muslinux_1_1_x86_64_for:fletchv1.5.0-opencv"
+musllinux-i686-image = "quay.io/erotemic/musllinux_1_1_i686_for:fletchv1.5.0-opencv"
 
-##manylinux-aarch64-image = "quay.io/erotemic/manylinux2014_aarch64_for:fletchv1.5.0-opencv"
-##manylinux-ppc64le-image
-##manylinux-s390x-image
-##musllinux-aarch64-image = "quay.io/erotemic/musllinux_1_1_aarch64_for:fletchv1.5.0-opencv"
+#manylinux-aarch64-image = "quay.io/erotemic/manylinux2014_aarch64_for:fletchv1.5.0-opencv"
+#manylinux-ppc64le-image
+#manylinux-s390x-image
+#musllinux-aarch64-image = "quay.io/erotemic/musllinux_1_1_aarch64_for:fletchv1.5.0-opencv"
 
-##select = "*-manylinux_x86_64*"
-##CIBW_BEFORE_BUILD_MACOS
-##CIBW_BEFORE_BUILD_WINDOWS
-##CIBW_BEFORE_BUILD_WINDOWS
+#select = "*-manylinux_x86_64*"
+#CIBW_BEFORE_BUILD_MACOS
+#CIBW_BEFORE_BUILD_WINDOWS
+#CIBW_BEFORE_BUILD_WINDOWS
 
 
-##[[tool.cibuildwheel.overrides]]
-##[tool.cibuildwheel.macos]
-##[tool.cibuildwheel.windows]
+#[[tool.cibuildwheel.overrides]]
+#[tool.cibuildwheel.macos]
+#[tool.cibuildwheel.windows]
