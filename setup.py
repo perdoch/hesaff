@@ -14,7 +14,6 @@ CIBW_SKIP='pp*' cibuildwheel --config-file pyproject.toml --platform linux --arc
 """
 from __future__ import absolute_import, division, print_function
 from os.path import exists
-from skbuild import setup
 
 URL_LIST = [
     'http://cmp.felk.cvut.cz/~perdom1/hesaff/',
@@ -196,6 +195,7 @@ INSTALL_REQUIRES = [
 ]
 
 if __name__ == '__main__':
+    from skbuild import setup
     import sysconfig
     import os
     import sys
