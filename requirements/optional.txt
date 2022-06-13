@@ -1,0 +1,2 @@
+# Add requirements here, use the script for help (erotemic needs to publish this script)
+# python ~/local/tools/supported_python_versions_pip.py pygments
