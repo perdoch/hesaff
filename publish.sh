@@ -166,17 +166,26 @@ DO_TAG=$(normalize_boolean "$DO_TAG")
 TWINE_USERNAME=${TWINE_USERNAME:=""}
 TWINE_PASSWORD=${TWINE_PASSWORD:=""}
 
+DEFAULT_TEST_TWINE_REPO_URL="https://test.pypi.org/legacy/"
+DEFAULT_LIVE_TWINE_REPO_URL="https://upload.pypi.org/legacy/"
+
 TWINE_REPOSITORY_URL=${TWINE_REPOSITORY_URL:="auto"}
 if [[ "${TWINE_REPOSITORY_URL}" == "auto" ]]; then
     #if [[ "$(cat .git/HEAD)" != "ref: refs/heads/release" ]]; then 
     #    # If we are not on release, then default to the test pypi upload repo
     #    TWINE_REPOSITORY_URL=${TWINE_REPOSITORY_URL:="https://test.pypi.org/legacy/"}
     #else
-    if [[ "$DEBUG" != "" ]]; then
-        TWINE_REPOSITORY_URL="https://upload.pypi.org/legacy/"
+    if [[ "$DEBUG" == "" ]]; then
+        TWINE_REPOSITORY_URL="live"
     else
-        TWINE_REPOSITORY_URL="https://test.pypi.org/legacy/"
+        TWINE_REPOSITORY_URL="test"
     fi
+fi
+
+if [[ "${TWINE_REPOSITORY_URL}" == "live" ]]; then
+    TWINE_REPOSITORY_URL=$DEFAULT_LIVE_TWINE_REPO_URL
+elif [[ "${TWINE_REPOSITORY_URL}" == "test" ]]; then
+    TWINE_REPOSITORY_URL=$DEFAULT_TEST_TWINE_REPO_URL
 fi
 
 GPG_EXECUTABLE=${GPG_EXECUTABLE:="auto"}
@@ -206,7 +215,7 @@ MODE=${MODE:=$DEFAULT_MODE}
 if [[ "$MODE" == "all" ]]; then
     MODE_LIST=("${DEFAULT_MODE_LIST[@]}")
 elif [[ "$MODE" == "pure" ]]; then
-    MODE_LIST=("sdist" "naitive")
+    MODE_LIST=("sdist" "native")
 elif [[ "$MODE" == "binary" ]]; then
     MODE_LIST=("sdist" "bdist")
 else

@@ -1,7 +1,30 @@
+[build-system]
+requires = [ "setuptools>=41.0.1", "wheel", "scikit-build>=0.9.0", "numpy", "ninja",]
+
+[tool.cibuildwheel]
+build = "cp37-* cp38-* cp39-* cp310-*"
+build-frontend = "build"
+skip = "pp* cp27-* cp34-* cp35-* cp36-* *-musllinux_*"
+build-verbosity = 1
+test-requires = [ "-r requirements/tests.txt",]
+test-command = "python {project}/run_tests.py"
+
+[tool.mypy]
+ignore_missing_imports = true
+
 [tool.xcookie]
-tags = []
+tags = [ "github", "cv2", "erotemic", "binpy",]
 mod_name = "pyhesaff"
 repo_name = "pyhesaff"
+
+[tool.cibuildwheel.linux]
+before-all = "yum install opencv opencv-devel -y"
+
+[tool.cibuildwheel.windows]
+before-all = "choco install lz4 -y"
+
+[tool.cibuildwheel.macos]
+before-all = "brew install lz4"
 
 [tool.pytest.ini_options]
 addopts = "-p no:doctest --xdoctest --xdoctest-style=google --ignore-glob=setup.py"
