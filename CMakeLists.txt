@@ -66,6 +66,9 @@ IF(OpenCV_FOUND)
   message(STATUS "OpenCV_LIBRARIES = ${OpenCV_LIBRARIES}")
   message(STATUS "OpenCV_LINK_DIRECTORIES = ${OpenCV_LINK_DIRECTORIES}")
   message(STATUS "OpenCV_ROOT_DIR = ${OpenCV_ROOT_DIR}")
+
+  # HACK ON CENTOS
+  include_directories(/usr/local/include)
 ELSE()
   message(FATAL_ERROR "Missing OpenCV! x.x")
 ENDIF()
