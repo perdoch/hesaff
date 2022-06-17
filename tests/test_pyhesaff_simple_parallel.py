@@ -35,6 +35,7 @@ def test_simple_parallel():
     pytest.skip('Broken in CI')
 
     import pyhesaff
+    # import kwimage
     test_fnames = ['carl.jpg', 'lena.png', 'zebra.png', 'ada.jpg', 'star.png']
     img_fpaths = list(map(ut.grab_test_imgpath, test_fnames)) * 2
 

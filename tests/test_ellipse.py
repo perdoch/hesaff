@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 from __future__ import absolute_import, division, print_function
 from six.moves import zip, range
-import utool as ut
 import numpy as np
 
 
@@ -62,6 +61,7 @@ def in_depth_ellipse(kp):
     #     >>> ut.quit_if_noshow()
     #     >>> ut.show_if_requested()
     """
+    import utool as ut
     import matplotlib as mpl
     import plottool as pt
     import vtool.linalg as ltool

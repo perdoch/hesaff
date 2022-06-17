@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 from __future__ import absolute_import, division, print_function
 import numpy as np
-from six.moves import range
 import itertools as it
-import utool as ut
+from six.moves import range
 import six
 
 
@@ -120,15 +119,20 @@ def test_draw_keypoint_main():
     #        px_ += 1
     #        px = px_
     #    return (nRows, nCols, px)
+    import ubelt as ub
+    # ub.argval
 
-    MIN_ORI = ut.get_argval('--min-ori', float, DOWN)
-    MAX_ORI = ut.get_argval('--max-ori', float, DOWN + TAU - .2)
-
+    # MIN_ORI = ut.get_argval('--min-ori', float, DOWN)
+    # MAX_ORI = ut.get_argval('--max-ori', float, DOWN + TAU - .2)
+    # MIN_SWEW = ut.get_argval('--min-skew', float, 0)
+    # MAX_SKEW = ut.get_argval('--max-skew', float, 1)
+    MIN_ORI = float(ub.argval('--min-ori', DOWN))
+    MAX_ORI = float(ub.argval('--max-ori', DOWN + TAU - .2))
     MIN_X = .5
     MAX_X = 2
 
-    MIN_SWEW = ut.get_argval('--min-skew', float, 0)
-    MAX_SKEW = ut.get_argval('--max-skew', float, 1)
+    MIN_SWEW = float(ub.argval('--min-skew', 0))
+    MAX_SKEW = float(ub.argval('--max-skew', 1))
 
     MIN_Y = .5
     MAX_Y = 2

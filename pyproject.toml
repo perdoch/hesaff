@@ -9,8 +9,8 @@ build-verbosity = 1
 test-requires = [ "-r requirements/tests.txt",]
 test-command = "python {project}/run_tests.py"
 
-manylinux-x86_64-image = "quay.io/Erotemic/manylinux2014_x86_64_for:opencv"
-manylinux-i686-image = "quay.io/Erotemic/manylinux2014_i686_for:opencv"
+manylinux-x86_64-image = "quay.io/erotemic/manylinux2014_x86_64_for:opencv"
+manylinux-i686-image = "quay.io/erotemic/manylinux2014_i686_for:opencv"
 #manylinux-x86_64-image = "manylinux2014"
 #manylinux-i686-image = "manylinux2014"
 #manylinux-aarch64-image = "manylinux2014"
@@ -37,14 +37,14 @@ tags = [ "github", "cv2", "erotemic", "binpy",]
 mod_name = "pyhesaff"
 repo_name = "pyhesaff"
 
-[tool.cibuildwheel.linux]
-before-all = "yum install opencv opencv-devel -y"
+#[tool.cibuildwheel.linux]
+#before-all = "yum install opencv opencv-devel -y"
 
-[tool.cibuildwheel.windows]
-before-all = "choco install lz4 -y"
+#[tool.cibuildwheel.windows]
+#before-all = "choco install lz4 -y"
 
-[tool.cibuildwheel.macos]
-before-all = "brew install lz4"
+#[tool.cibuildwheel.macos]
+#before-all = "brew install lz4"
 
 [tool.pytest.ini_options]
 addopts = "-p no:doctest --xdoctest --xdoctest-style=google --ignore-glob=setup.py"

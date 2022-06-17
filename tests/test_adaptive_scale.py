@@ -156,9 +156,9 @@ def test_adaptive_scale_main():
     """
     import pytest
     pytest.skip('Broken in CI')
-    import utool as ut
     print('__main__ = test_adaptive_scale.py')
     from plottool import draw_func2 as df2
+    import ubelt as ub
     np.set_printoptions(threshold=5000, linewidth=5000, precision=3)
 
     #adaptive_locals = test_adaptive_scale()
@@ -166,7 +166,7 @@ def test_adaptive_scale_main():
     # TODO: take the gui functions out of this test
     test_adaptive_scale()
 
-    if ut.show_was_requested():
+    if ub.argflag('--show'):
         exec(df2.present())
 
 
