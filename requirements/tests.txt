@@ -5,4 +5,4 @@ pytest-cov>=2.8.1
 coverage >= 4.3.4
 codecov >= 2.0.15
 opencv-python-headless
-utool
+utool >= 2.1.5
