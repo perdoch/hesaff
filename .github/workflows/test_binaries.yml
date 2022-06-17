@@ -122,17 +122,18 @@ jobs:
     #  with:
     #    file: ./tests/coverage.xml
 
-    - name: Upload wheels artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: wheels
-        path: ./wheelhouse/*.whl
+    #- name: Upload wheels artifact
+    #  uses: actions/upload-artifact@v3
+    #  with:
+    #    name: wheels
+    #    path: ./wheelhouse/*.whl
 
   deploy:
     # Publish on the real PyPI
     name: Uploading to PyPi
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+    #if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+    if: github.event_name == 'push' && (startsWith(github.event.ref, 'refs/tags') || startsWith(github.event.ref, 'refs/heads/release'))
     #needs: [build_and_test_wheels, build_and_test_sdist]
     needs: [build_and_test_wheels]
     steps:
@@ -143,11 +144,11 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: wheels
-          path: dist
+          path: wheelhouse
 
       - name: Show files to upload
         shell: bash
-        run: ls -la dist
+        run: ls -la wheelhouse
 
       # Note:
       # See ../../dev/setup_secrets.sh for details on how secrets are deployed securely
@@ -202,11 +203,11 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: wheels
-          path: dist
+          path: wheelhouse
 
       - name: Show files to upload
         shell: bash
-        run: ls -la dist
+        run: ls -la wheelhouse
       - name: Sign and Publish
         env:
           TEST_TWINE_REPOSITORY_URL: https://test.pypi.org/legacy/
