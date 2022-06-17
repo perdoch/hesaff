@@ -1,5 +1,5 @@
 [build-system]
-requires = [ "setuptools>=41.0.1", "wheel", "scikit-build>=0.9.0", "numpy", "ninja",]
+requires = [ "setuptools>=41.0.1", "wheel", "scikit-build>=0.9.0", "numpy", "ninja", "build"]
 
 [tool.cibuildwheel]
 build = "cp37-* cp38-* cp39-* cp310-*"
@@ -8,6 +8,26 @@ skip = "pp* cp27-* cp34-* cp35-* cp36-* *-musllinux_*"
 build-verbosity = 1
 test-requires = [ "-r requirements/tests.txt",]
 test-command = "python {project}/run_tests.py"
+
+manylinux-x86_64-image = "quay.io/Erotemic/manylinux2014_x86_64_for:opencv"
+manylinux-i686-image = "quay.io/Erotemic/manylinux2014_i686_for:opencv"
+#manylinux-x86_64-image = "manylinux2014"
+#manylinux-i686-image = "manylinux2014"
+#manylinux-aarch64-image = "manylinux2014"
+#manylinux-ppc64le-image = "manylinux2014"
+#manylinux-s390x-image = "manylinux2014"
+#manylinux-pypy_x86_64-image = "manylinux2014"
+#manylinux-pypy_i686-image = "manylinux2014"
+#manylinux-pypy_aarch64-image = "manylinux2014"
+#musllinux-x86_64-image = "musllinux_1_1"
+#musllinux-i686-image = "musllinux_1_1"
+#musllinux-aarch64-image = "musllinux_1_1"
+#musllinux-ppc64le-image = "musllinux_1_1"
+#musllinux-s390x-image = "musllinux_1_1"
+
+
+#    quay.io/Erotemic/manylinux2014_x86_64_for:opencv
+
 
 [tool.mypy]
 ignore_missing_imports = true

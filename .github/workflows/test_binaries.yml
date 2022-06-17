@@ -247,30 +247,32 @@ jobs:
               DO_TAG=False ./publish.sh
 
 
-.debugging:
-  - | 
+#.debugging:
+#  - | 
 
-    IMAGE_NAME=quay.io/pypa/manylinux2014_x86_64
-    docker run -v $PWD:/io:ro -v $HOME/.cache/pip:/pip_cache -it $IMAGE_NAME bash
+#    #IMAGE_NAME=quay.io/pypa/manylinux2014_x86_64
+#    IMAGE_NAME=
+#    quay.io/Erotemic/manylinux2014_x86_64_for:opencv
+#    docker run -v $PWD:/io:ro -v $HOME/.cache/pip:/pip_cache -it $IMAGE_NAME bash
 
-    # Will need to chmod things afterwords
-    export PIP_CACHE_DIR=/pip_cache
-    echo $PIP_CACHE_DIR
-    chmod -R o+rw $PIP_CACHE_DIR
-    chmod -R o+rw $PIP_CACHE_DIR
-    chmod -R g+rw $PIP_CACHE_DIR
-    USER=$(whoami)
-    chown -R $USER $PIP_CACHE_DIR
-    cd $HOME
-    git clone /io ./repo
+#    # Will need to chmod things afterwords
+#    export PIP_CACHE_DIR=/pip_cache
+#    echo $PIP_CACHE_DIR
+#    chmod -R o+rw $PIP_CACHE_DIR
+#    chmod -R o+rw $PIP_CACHE_DIR
+#    chmod -R g+rw $PIP_CACHE_DIR
+#    USER=$(whoami)
+#    chown -R $USER $PIP_CACHE_DIR
+#    cd $HOME
+#    git clone /io ./repo
 
-    cd $HOME/repo
+#    cd $HOME/repo
 
-    # Make a virtualenv
-    PY_EXE=/opt/python/cp37-cp37m/bin/python
-    PYVER=$($PY_EXE -c "import sys; print('{}{}'.format(*sys.version_info[0:2]))")
-    $PY_EXE -m pip install virtualenv
-    $PY_EXE -m virtualenv venv$PYVER
-    source venv$PYVER/bin/activate
-    #pip install pip -U
-    #pip install pip setuptools -U
+#    # Make a virtualenv
+#    PY_EXE=/opt/python/cp37-cp37m/bin/python
+#    PYVER=$($PY_EXE -c "import sys; print('{}{}'.format(*sys.version_info[0:2]))")
+#    $PY_EXE -m pip install virtualenv
+#    $PY_EXE -m virtualenv venv$PYVER
+#    source venv$PYVER/bin/activate
+#    #pip install pip -U
+#    #pip install pip setuptools -U
