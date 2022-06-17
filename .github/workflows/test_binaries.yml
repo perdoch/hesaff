@@ -122,11 +122,11 @@ jobs:
     #  with:
     #    file: ./tests/coverage.xml
 
-    #- name: Upload wheels artifact
-    #  uses: actions/upload-artifact@v3
-    #  with:
-    #    name: wheels
-    #    path: ./wheelhouse/*.whl
+    - name: Upload wheels artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: wheels
+        path: ./wheelhouse/*.whl
 
   deploy:
     # Publish on the real PyPI
