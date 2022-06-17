@@ -50,7 +50,7 @@ jobs:
 
     steps:
     - name: Checkout source
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     # Configure compilers for Windows 64bit.
     - name: Enable MSVC 64bit
@@ -137,7 +137,7 @@ jobs:
     needs: [build_and_test_wheels]
     steps:
       - name: Checkout source
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Download wheels and sdist
         uses: actions/download-artifact@v3
@@ -196,7 +196,7 @@ jobs:
     needs: [build_and_test_wheels]
     steps:
       - name: Checkout source
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Download wheels and sdist
         uses: actions/download-artifact@v3
