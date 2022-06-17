@@ -192,7 +192,6 @@ def load_clib(libname, root_dir):
         ex = ex_
         print('[C!] Caught OSError:\n{!r}'.format(ex))
         errsuffix = 'Is there a missing dependency?'
-        raise
     except Exception as ex_:
         ex = ex_
         print('[C!] Caught Exception:\n{!r}'.format(ex))

@@ -275,6 +275,8 @@ jobs:
     source venv$PYVER/bin/activate
     #pip install pip -U
     #pip install pip setuptools -U
+    #yum install mlocate
+    #yum install opencv opencv-devel
     #
     pip install -r requirements/build.txt
     python setup.py build_ext
