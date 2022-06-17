@@ -251,7 +251,7 @@ jobs:
   - | 
 
     #IMAGE_NAME=quay.io/pypa/manylinux2014_x86_64
-    IMAGE_NAME=quay.io/Erotemic/manylinux2014_x86_64_for:opencv
+    IMAGE_NAME=quay.io/erotemic/manylinux2014_x86_64_for:opencv
     docker run -v $PWD:/io:ro -v $HOME/.cache/pip:/pip_cache -it $IMAGE_NAME bash
 
     # Will need to chmod things afterwords
@@ -275,3 +275,6 @@ jobs:
     source venv$PYVER/bin/activate
     #pip install pip -U
     #pip install pip setuptools -U
+    #
+    pip install -r requirements/build.txt
+    python setup.py build_ext

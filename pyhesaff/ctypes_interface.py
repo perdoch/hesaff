@@ -5,7 +5,7 @@ Its a bit hacky and could use a cleanup by someone who really understands
 how python c-extension libraries are named and placed depending on system.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
-from os.path import join, exists, dirname, normpath
+from os.path import join, exists, normpath
 import sys
 import os
 import ctypes as C

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""
+r"""
 pip install cibuildwheel
 
 Requires OpenCV to build
@@ -261,10 +261,10 @@ if __name__ == '__main__':
         # long_description_content_type='text/x-rst',
         # long_description_content_type='text/markdown',
         # install_requires=parse_requirements('requirements/runtime.txt'),
-        # extras_require={
-        #     'all': parse_requirements('requirements.txt'),
-        #     'tests': parse_requirements('requirements/tests.txt'),
-        # },
+        extras_require={
+            'all': parse_requirements('requirements.txt'),
+            'tests': parse_requirements('requirements/tests.txt'),
+        },
         maintainer="Jon Crall",
         ext_modules=EmptyListWithLength(),  # hack for including ctypes bins
         install_requires=INSTALL_REQUIRES,
