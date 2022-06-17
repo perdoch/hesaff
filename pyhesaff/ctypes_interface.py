@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
 """
 This helps find the shared library that contains the compiled subroutines.
 Its a bit hacky and could use a cleanup by someone who really understands
 how python c-extension libraries are named and placed depending on system.
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
 from os.path import join, exists, normpath
 import sys
 import os
-import ctypes as C
+import ctypes
 
 
 #============================
@@ -144,7 +142,7 @@ def find_lib_fpath(libname, root_dir, verbose=False):
         if verbose:
             print('--')
         curr_dpath = root_dir
-        max_depth = 0
+        # max_depth = 0
 
         for lib_dpath in get_lib_dpath_list(curr_dpath):
             lib_fpath = normpath(join(lib_dpath, lib_fname))
@@ -187,13 +185,14 @@ def load_clib(libname, root_dir):
     lib_fpath = find_lib_fpath(libname, root_dir)
     try:
         if sys.platform.startswith('win32'):
-            clib = C.windll[lib_fpath]
+            clib = ctypes.windll[lib_fpath]
         else:
-            clib = C.cdll[lib_fpath]
+            clib = ctypes.cdll[lib_fpath]
     except OSError as ex_:
         ex = ex_
         print('[C!] Caught OSError:\n{!r}'.format(ex))
         errsuffix = 'Is there a missing dependency?'
+        raise
     except Exception as ex_:
         ex = ex_
         print('[C!] Caught Exception:\n{!r}'.format(ex))

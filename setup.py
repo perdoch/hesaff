@@ -271,6 +271,7 @@ if __name__ == '__main__':
         include_package_data=True,
         # packages=find_packages(include='pyhesaff.*'),
         packages=['pyhesaff'],
+        python_requires='>=3.6',
         package_data={
             'pyhesaff': pyhesaff_package_data,
         },
@@ -288,6 +289,7 @@ if __name__ == '__main__':
             'Programming Language :: Python :: 3.7',
             'Programming Language :: Python :: 3.8',
             'Programming Language :: Python :: 3.9',
+            'Programming Language :: Python :: 3.10',
         ],
     )
     setup(**kwargs)

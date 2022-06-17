@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 """
 The python hessian affine keypoint module
 
@@ -8,19 +7,12 @@ Command Line:
     python -m pyhesaff detect_feats --show
     python -m pyhesaff detect_feats --show --siftPower=0.5,
 """
-from __future__ import absolute_import, print_function, division, unicode_literals
-import six
-from six.moves import zip
-from six.moves import range
-from os.path import realpath, dirname
-import ctypes as C
+import ctypes
 import numpy as np
 import ubelt as ub
+from os.path import realpath, dirname
 from collections import OrderedDict
-try:
-    from pyhesaff import ctypes_interface
-except ValueError:
-    import ctypes_interface
+from pyhesaff import ctypes_interface
 
 #============================
 # hesaff ctypes interface
@@ -32,17 +24,15 @@ vecs_dtype = np.uint8
 img_dtype  = np.uint8
 img32_dtype  = np.float32
 # scalar ctypes
-obj_t     = C.c_void_p
-str_t     = C.c_char_p
-#if True or six.PY2:  # HACK ALWAYS ON
-int_t     = C.c_int
+obj_t     = ctypes.c_void_p
+str_t     = ctypes.c_char_p
+int_t     = ctypes.c_int
 #else:
 #    raise NotImplementedError('PY3')
-#if six.PY3:
-#    int_t     = C.c_long
-bool_t    = C.c_bool
-float_t   = C.c_float
-#byte_t    = C.c_char
+#    int_t     = ctypes.c_long
+bool_t    = ctypes.c_bool
+float_t   = ctypes.c_float
+#byte_t    = ctypes.c_char
 # array ctypes
 FLAGS_RW = str('aligned, c_contiguous, writeable')
 FLAGS_RO = str('aligned, c_contiguous')
@@ -54,7 +44,7 @@ img32_t      = np.ctypeslib.ndpointer(dtype=img32_dtype, ndim=3, flags=FLAGS_RO)
 kpts_array_t = np.ctypeslib.ndpointer(dtype=kpts_t, ndim=1, flags=FLAGS_RW)
 vecs_array_t = np.ctypeslib.ndpointer(dtype=vecs_t, ndim=1, flags=FLAGS_RW)
 int_array_t  = np.ctypeslib.ndpointer(dtype=int_t, ndim=1, flags=FLAGS_RW)
-str_list_t   = C.POINTER(str_t)
+str_list_t   = ctypes.POINTER(str_t)
 
 # THE ORDER OF THIS LIST IS IMPORTANT!
 HESAFF_TYPED_PARAMS = [
@@ -169,8 +159,8 @@ def _load_hesaff_clib():
     libname = 'hesaff'
     (clib, def_cfunc, lib_fpath) = ctypes_interface.load_clib(libname, root_dir)
     # Expose extern C Functions to hesaff's clib
-    #def_cfunc(C.c_char_p, 'cmake_build_type',       [])
-    #def_cfunc(None,  'free_char',       [C.c_char_p])
+    #def_cfunc(ctypes.c_char_p, 'cmake_build_type',       [])
+    #def_cfunc(None,  'free_char',       [ctypes.c_char_p])
     def_cfunc(int_t, 'get_cpp_version',        [])
     def_cfunc(int_t, 'is_debug_mode',          [])
     def_cfunc(int_t, 'detect',                 [obj_t])
@@ -224,7 +214,7 @@ def alloc_kpts(nKpts):
 
 def _make_hesaff_cpp_params(kwargs):
     hesaff_params = HESAFF_PARAM_DICT.copy()
-    for key, val in six.iteritems(kwargs):
+    for key, val in kwargs.items():
         if key in hesaff_params:
             hesaff_params[key] = val
         else:
@@ -249,9 +239,8 @@ def _new_fpath_hesaff(img_fpath, **kwargs):
     hesaff_params = _make_hesaff_cpp_params(kwargs)
     hesaff_args = hesaff_params.values()  # pass all parameters to HESAFF_CLIB
     img_realpath = realpath(img_fpath)
-    if six.PY3:
-        # convert out of unicode
-        img_realpath = img_realpath.encode('ascii')
+    # convert out of unicode
+    img_realpath = img_realpath.encode('ascii')
     try:
         hesaff_ptr = HESAFF_CLIB.new_hesaff_fpath(img_realpath, *hesaff_args)
     except Exception:
@@ -316,7 +305,7 @@ def get_cpp_version():
 
     #str_ptr = HESAFF_CLIB.cmake_build_type()
     # copy c string into python
-    #pystr = C.c_char_p(str_ptr).value
+    #pystr = ctypes.c_char_p(str_ptr).value
     # need to free c string
     #HESAFF_CLIB.free_char(str_ptr)
     #print('pystr = %r' % (pystr,))
@@ -464,7 +453,7 @@ def detect_feats2(img_or_fpath, **kwargs):
     Returns:
         tuple
     """
-    if isinstance(img_or_fpath, six.string_types):
+    if isinstance(img_or_fpath, str):
         fpath = img_or_fpath
         return detect_feats(fpath, **kwargs)
     else:
@@ -521,10 +510,7 @@ def detect_feats_list(image_paths_list, **kwargs):
     num_imgs = len(image_paths_list)
 
     # Cast string list to C
-    if six.PY2:
-        realpaths_list = list(map(realpath, image_paths_list))
-    if six.PY3:
-        realpaths_list = [realpath(path).encode('ascii') for path in image_paths_list]
+    realpaths_list = [realpath(path).encode('ascii') for path in image_paths_list]
 
     c_strs = _cast_strlist_to_C(realpaths_list)
 
@@ -770,7 +756,7 @@ def extract_patches(img_or_fpath, kpts, **kwargs):
         >>> ax.set_title('Python extracted')
         >>> pt.show_if_requested()
     """
-    if isinstance(img_or_fpath, six.string_types):
+    if isinstance(img_or_fpath, str):
         hesaff_ptr = _new_fpath_hesaff(img_or_fpath, **kwargs)
     else:
         hesaff_ptr = _new_image_hesaff(img_or_fpath, **kwargs)
