@@ -57,10 +57,9 @@ Args:
         Path to the GPG executable. 
         Defaults to "auto", which chooses "gpg2" if it exists, otherwise "gpg".
 
-    DEFAULT_MODE_LIST (str) :
-        TODO
-        comma separated list of "modes", which can be sdist, bdist, universal,
-        or native
+    MODE (str):
+        Can be pure, binary, or all. Defaults to pure unless a CMakeLists.txt
+        exists in which case it defaults to binary.
 
 Requirements:
      twine >= 1.13.0
@@ -155,14 +154,6 @@ DEPLOY_REMOTE=${DEPLOY_REMOTE:=origin}
 NAME=${NAME:=$(python -c "import setup; print(setup.NAME)")}
 VERSION=$(python -c "import setup; print(setup.VERSION)")
 
-# TODO: parameterize
-# The default should change depending on the application
-#DEFAULT_MODE_LIST=${DEFAULT_MODE_LIST:="auto"}
-#DEFAULT_MODE_LIST=("sdist" "bdist")
-DEFAULT_MODE_LIST=("sdist" "native")
-#DEFAULT_MODE_LIST=("sdist" "native")
-#DEFAULT_MODE_LIST=("sdist" "bdist")
-
 check_variable DEPLOY_REMOTE
 
 ARG_1=$1
@@ -235,9 +226,13 @@ if [ -f CMakeLists.txt ] ; then
 else
     DEFAULT_MODE="pure"
 fi
+
+
+# TODO: parameterize
+# The default should change depending on the application
 MODE=${MODE:=$DEFAULT_MODE}
 if [[ "$MODE" == "all" ]]; then
-    MODE_LIST=("${DEFAULT_MODE_LIST[@]}")
+    MODE_LIST=("sdist" "native" "bdist")
 elif [[ "$MODE" == "pure" ]]; then
     MODE_LIST=("sdist" "native")
 elif [[ "$MODE" == "binary" ]]; then
@@ -384,13 +379,13 @@ do
     echo "_MODE = $_MODE"
     if [[ "$_MODE" == "sdist" ]]; then
         ls_array "_NEW_WHEEL_PATHS" "dist/${NAME}-${VERSION}*.tar.gz"
-        WHEEL_PATHS+=("$_NEW_WHEEL_PATHS")
+        WHEEL_PATHS+=("${_NEW_WHEEL_PATHS[@]}")
     elif [[ "$_MODE" == "native" ]]; then
         ls_array "_NEW_WHEEL_PATHS" "dist/${NAME}-${VERSION}*.whl"
-        WHEEL_PATHS+=("$_NEW_WHEEL_PATHS")
+        WHEEL_PATHS+=("${_NEW_WHEEL_PATHS[@]}")
     elif [[ "$_MODE" == "bdist" ]]; then
         ls_array "_NEW_WHEEL_PATHS" "wheelhouse/${NAME}-${VERSION}-*.whl"
-        WHEEL_PATHS+=("$_NEW_WHEEL_PATHS")
+        WHEEL_PATHS+=("${_NEW_WHEEL_PATHS[@]}")
     else
         echo "ERROR: bad mode"
         exit 1
@@ -404,13 +399,13 @@ readarray -t WHEEL_PATHS < <(printf '%s\n' "${WHEEL_PATHS[@]}" | sort -u)
 WHEEL_PATHS_STR=$(printf '"%s" ' "${WHEEL_PATHS[@]}")
 
 echo "
-======
+
 GLOBED
 ------
 MODE=$MODE
 VERSION='$VERSION'
 WHEEL_PATHS='$WHEEL_PATHS_STR'
-=====
+
 "
 
 
