@@ -122,6 +122,30 @@ normalize_boolean(){
 }
 
 
+ls_array(){
+    __doc__='
+    Read the results of a glob pattern into an array
+
+    Args:
+        arr_name
+        glob_pattern
+
+    Example:
+        arr_name="myarray"
+        glob_pattern="*"
+        pass
+    '
+    local arr_name="$1"
+    local glob_pattern="$2"
+    shopt -s nullglob
+    # shellcheck disable=SC2206
+    array=($glob_pattern)
+    shopt -u nullglob # Turn off nullglob to make sure it doesn't interfere with anything later
+    # Copy the array into the dynamically named variable
+    readarray -t "$arr_name" < <(printf '%s\n' "${array[@]}")
+}
+
+
 ####
 # Parameters
 ###
@@ -335,18 +359,14 @@ if [ "$DO_BUILD" == "True" ]; then
         echo "_MODE = $_MODE"
         if [[ "$_MODE" == "sdist" ]]; then
             python setup.py sdist || { echo 'failed to build sdist wheel' ; exit 1; }
-            WHEEL_PATH=$(ls "dist/$NAME-$VERSION"*.tar.gz)
         elif [[ "$_MODE" == "native" ]]; then
             python setup.py bdist_wheel || { echo 'failed to build native wheel' ; exit 1; }
-            WHEEL_PATH=$(ls "dist/$NAME-$VERSION"*.whl)
         elif [[ "$_MODE" == "bdist" ]]; then
             echo "Assume wheel has already been built"
-            WHEEL_PATH=$(ls "wheelhouse/$NAME-$VERSION-"*.whl || echo "")
         else
-            echo "bad mode"
+            echo "ERROR: bad mode"
             exit 1
         fi
-        echo "WHEEL_PATH = $WHEEL_PATH"
     done
 
     echo "
@@ -363,37 +383,34 @@ for _MODE in "${MODE_LIST[@]}"
 do
     echo "_MODE = $_MODE"
     if [[ "$_MODE" == "sdist" ]]; then
-        WHEEL_PATH=$(ls "dist/$NAME-$VERSION"*.tar.gz)
-        if [[ "$WHEEL_PATH" != "" ]]; then
-            WHEEL_PATHS+=("$WHEEL_PATH")
-        fi
+        ls_array "_NEW_WHEEL_PATHS" "dist/${NAME}-${VERSION}*.tar.gz"
+        WHEEL_PATHS+=("$_NEW_WHEEL_PATHS")
     elif [[ "$_MODE" == "native" ]]; then
-        WHEEL_PATH=$(ls "dist/$NAME-$VERSION"*.whl)
-        if [[ "$WHEEL_PATH" != "" ]]; then
-            WHEEL_PATHS+=("$WHEEL_PATH")
-        fi
+        ls_array "_NEW_WHEEL_PATHS" "dist/${NAME}-${VERSION}*.whl"
+        WHEEL_PATHS+=("$_NEW_WHEEL_PATHS")
     elif [[ "$_MODE" == "bdist" ]]; then
-        WHEEL_PATH=$(ls "wheelhouse/$NAME-$VERSION-"*.whl)
-        if [[ "$WHEEL_PATH" != "" ]]; then
-            WHEEL_PATHS+=("$WHEEL_PATH")
-        fi
-        WHEEL_PATH=$(ls "dist/$NAME-$VERSION-"*.whl)
-        if [[ "$WHEEL_PATH" != "" ]]; then
-            WHEEL_PATHS+=("$WHEEL_PATH")
-        fi
+        ls_array "_NEW_WHEEL_PATHS" "wheelhouse/${NAME}-${VERSION}-*.whl"
+        WHEEL_PATHS+=("$_NEW_WHEEL_PATHS")
     else
-        echo "bad mode"
+        echo "ERROR: bad mode"
         exit 1
     fi
-    echo "WHEEL_PATH = $WHEEL_PATH"
 done
+
+
+# Dedup the paths
+readarray -t WHEEL_PATHS < <(printf '%s\n' "${WHEEL_PATHS[@]}" | sort -u)
 
 WHEEL_PATHS_STR=$(printf '"%s" ' "${WHEEL_PATHS[@]}")
 
 echo "
+======
+GLOBED
+------
 MODE=$MODE
 VERSION='$VERSION'
 WHEEL_PATHS='$WHEEL_PATHS_STR'
+=====
 "
 
 

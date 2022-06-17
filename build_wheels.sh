@@ -3,6 +3,6 @@ __doc__="""
 SeeAlso:
     pyproject.toml
 """
-# python -m build /project --wheel --outdir=/tmp/cibuildwheel/built_wheel --config-setting=-v
 #pip wheel -w wheelhouse .
-cibuildwheel --config-file pyproject.toml --platform linux --arch x86_64
+# python -m build --wheel -o wheelhouse  #  pyhesaff: +COMMENT_IF(binpy)
+cibuildwheel --config-file pyproject.toml --platform linux --arch x86_64  #  pyhesaff: +UNCOMMENT_IF(binpy)

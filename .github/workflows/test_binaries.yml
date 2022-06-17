@@ -250,8 +250,7 @@ jobs:
 #.debugging:
 #  - | 
 
-#    #IMAGE_NAME=quay.io/pypa/manylinux2014_x86_64
-#    IMAGE_NAME=quay.io/erotemic/manylinux2014_x86_64_for:opencv
+#    IMAGE_NAME=quay.io/pypa/manylinux2014_x86_64
 #    docker run -v $PWD:/io:ro -v $HOME/.cache/pip:/pip_cache -it $IMAGE_NAME bash
 
 #    # Will need to chmod things afterwords
@@ -275,8 +274,7 @@ jobs:
 #    source venv$PYVER/bin/activate
 #    #pip install pip -U
 #    #pip install pip setuptools -U
+#    #
 #    #yum install mlocate
 #    #yum install opencv opencv-devel
-#    #
-#    pip install -r requirements/build.txt
-#    python setup.py build_ext
+#    export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
