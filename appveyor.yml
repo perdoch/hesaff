@@ -1,0 +1,121 @@
+image:
+    # https://www.appveyor.com/docs/build-environment/#build-worker-images
+#- Visual Studio 2017
+- Visual Studio 2015
+
+environment:
+  OpenCV_DIR: "C:/tools/opencv/build"
+  CMAKE_MODULE_PATH: "C:/tools/opencv/build"
+  # https://cmake.org/cmake/help/v3.11/generator/Visual%20Studio%2015%202017.html
+  #GENERATOR: "Visual Studio 15 2017 Win64"
+
+  #CMAKE_PREFIX_PATH: "C:/tools/opencv/build/OpenCVConfig.cmake"
+  #USER:
+  #  secure: fXgF9uyy6sT0JoVOR7BoqA==
+  #PASS:
+  #  secure: 0bXSOVjf9x8L7nErTivu92TF1FwNosTjFJQPmxp8Dys=
+
+  matrix:
+    #- PYTHON: "C:/Python27"
+    #- PYTHON: "C:/Python27-x64"
+    #- PYTHON: "C:/Python34"
+    #- PYTHON: "C:/Python34-x64"
+
+    #- PYTHON: "C:/Python35"
+    #  ARCH_BITS: "32"
+
+    - PYTHON: "C:/Python35-x64"
+      ARCH_BITS: "64"
+
+    #- PYTHON: "C:/Python36"
+    #  ARCH_BITS: "32"
+
+    - PYTHON: "C:/Python36-x64"
+      ARCH_BITS: "64"
+
+    #- PYTHON: "C:/Python37"
+    #  ARCH_BITS: "32"
+
+    - PYTHON: "C:/Python37-x64"
+      ARCH_BITS: "64"
+
+matrix:
+    fast_finish: true
+
+# Reference: https://github.com/votchallenge/trax/blob/master/appveyor.yml
+#"%PYTHON%/python.exe" -m pip install ninja
+# TODO: try vs15 with ninja
+# https://stackoverflow.com/questions/31262342/cmake-g-ninja-on-windows-specify-x64
+# https://github.com/opencv/opencv/issues/6132
+#"%PYTHON%/python.exe" setup.py bdist_wheel -- -G "%GENERATOR%" -DOpenCV_DIR="C:/tools/opencv/build"
+## https://www.appveyor.com/docs/lang/cpp/
+# TODO: move specific visual studio configs into scripts that we just call here rather than
+# dealing with appveyor and yaml multiline cmd parsing.
+
+#call "C:/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/VC/Auxiliary/Build/vcvars32.bat"
+#call "C:/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/VC/Auxiliary/Build/vcvars64.bat"
+
+build_script:
+- cmd: |
+    echo %ARCH_BITS%
+    IF %ARCH_BITS%==32 (SET GENERATOR=Visual Studio 14 2015)
+    IF %ARCH_BITS%==32 (call "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/vcvarsall.bat" x86)
+    IF %ARCH_BITS%==64 (SET GENERATOR=Visual Studio 14 2015 Win64)
+    IF %ARCH_BITS%==64 (call "C:/Program Files/Microsoft SDKs/Windows/v7.1/Bin/SetEnv.cmd" /x64)
+    IF %ARCH_BITS%==64 (call "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/vcvarsall.bat" x86_amd64)
+    echo "%GENERATOR%"
+    choco install opencv
+    refreshenv
+    set PATH=C:/tools/opencv/build/x64/vc14/bin;%PATH%
+    "%PYTHON%/python.exe" -m pip install --upgrade pip
+    "%PYTHON%/python.exe" -m pip install --upgrade setuptools
+    "%PYTHON%/python.exe" -m pip install -r requirements.txt
+    "%PYTHON%/python.exe" setup.py bdist_wheel -- -G "%GENERATOR%" -DOpenCV_DIR="C:/tools/opencv/build"
+
+before_test:
+- ps: |
+
+    cd ${Env:APPVEYOR_BUILD_FOLDER}\tests
+    $env:PYTHONWARNINGS = "ignore:::pip._internal.cli.base_command"
+    &"${Env:PYTHON}/python.exe" -m pip install --user (ls "../dist/pyhesaff*.whl")
+    if ($LastExitCode -ne 0) {throw $LastExitCode}
+
+test_script:
+- cmd: |
+
+    "%PYTHON%/python.exe" -m pip install xdoctest
+    "%PYTHON%/python.exe" -m xdoctest -m pyhesaff
+
+artifacts:
+- path: dist\*.whl
+  name: wheels
+
+deploy_script:
+- ps: |
+
+    # TODO: APPVEYOR_REPO_TAG
+    if (${Env:APPVEYOR_REPO_TAG} -eq "true") {
+      cd ${Env:APPVEYOR_BUILD_FOLDER}
+      if (${Env:ENABLE_CONTRIB} -eq 0) {
+        if (${Env:ENABLE_HEADLESS} -eq 0) {
+          echo "This is a default build. Deployment will be done to PyPI entry opencv-python."
+        }
+        else {
+          echo "This is a headless build. Deployment will be done to PyPI entry opencv-python-headless."
+        }
+      }
+      else {
+        if (${Env:ENABLE_HEADLESS} -eq 0) {
+          echo "This is a contrib build. Deployment will be done to PyPI entry opencv-contrib-python."
+        }
+        else {
+          echo "This is a headless contrib build. Deployment will be done to PyPI entry opencv-contrib-python-headless."
+        }
+      }
+
+      &"${Env:PYTHON}/python.exe" -m pip install twine
+      &"${Env:PYTHON}/python.exe" -m twine upload -u ${Env:USER} -p ${Env:PASS} --skip-existing dist/opencv*
+    }
+    else {
+      echo "Tag not set, deployment skipped."
+    }

@@ -16,6 +16,12 @@ neighbourhood is normalized to a fixed size patch and SIFT
 descriptor(Lowe 1999, Lowe 2004) computed.
 
 
+BUILDING
+--------
+
+There are wheels publishe on pypi using cibuildwheel.
+
+
 IMPLEMENTATION
 --------------
 

@@ -4,24 +4,22 @@ import cv2
 import utool as ut
 
 
-def test_pyheaff(img_fpath):
+def interactive_test_pyheaff(img_fpath):
     r"""
     This show is interactive in this test!
 
     Args:
         img_fpath (str):
 
-    CommandLine:
-        python -m pyhesaff.tests.test_pyhesaff --test-test_pyheaff
-        python -m pyhesaff.tests.test_pyhesaff --test-test_pyheaff --show
-
-    Example:
-        >>> # ENABLE_DOCTEST
-        >>> from pyhesaff.tests.test_pyhesaff import *  # NOQA
-        >>> img_fpath = ut.grab_test_imgpath('jeff.png')
-        >>> test_pyheaff(img_fpath)
-        >>> ut.show_if_requested()
+    # Example:
+    #     >>> # ENABLE_DOCTEST
+    #     >>> from pyhesaff.tests.test_pyhesaff import *  # NOQA
+    #     >>> img_fpath = ut.grab_test_imgpath('jeff.png')
+    #     >>> interactive_test_pyheaff(img_fpath)
     """
+    import pytest
+    pytest.skip('Broken in CI')
+
     import pyhesaff
     kpts, desc = pyhesaff.detect_feats(img_fpath)
     rchip = cv2.imread(img_fpath)
@@ -32,13 +30,5 @@ def test_pyheaff(img_fpath):
 
 
 if __name__ == '__main__':
-    """
-    CommandLine:
-        python -m pyhesaff.tests.test_pyhesaff
-        python -m pyhesaff.tests.test_pyhesaff --allexamples
-        python -m pyhesaff.tests.test_pyhesaff --allexamples --noface --nosrc
-    """
-    import multiprocessing
-    multiprocessing.freeze_support()  # for win32
-    import utool as ut  # NOQA
-    ut.doctest_funcs()
+    import xdoctest
+    xdoctest.doctest_module(__file__)

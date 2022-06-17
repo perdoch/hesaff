@@ -160,8 +160,8 @@ void solveLinear3x3(float *A, float *b)
 
 void rotateAffineTransformation(float &a11, float &a12, float &a21, float &a22, float &theta)
 {
-    double a = a11, b = a12,
-           c = a21, d = a22;
+    double a = static_cast<double>(a11), b = static_cast<double>(a12),
+           c = static_cast<double>(a21), d = static_cast<double>(a22);
     double sin_ = sin(theta);
     double cos_ = cos(theta);
     a11 = (cos_ * a) + (-sin_ * c);
@@ -178,7 +178,8 @@ void rotateAffineTransformation(float &a11, float &a12, float &a21, float &a22, 
 void rectifyAffineTransformationUpIsUp(float &a11, float &a12, float &a21, float &a22)
 {
     // Rotates a matrix into its lower triangular form
-    double a = a11, b = a12, c = a21, d = a22;
+    double a = static_cast<double>(a11), b = static_cast<double>(a12),
+           c = static_cast<double>(a21), d = static_cast<double>(a22);
     double det = sqrt(abs(a * d - b * c));
     double b2a2 = sqrt(b * b + a * a);
     a11 = b2a2 / det;
@@ -344,15 +345,15 @@ bool interpolateCheckBorders(const Mat &im, float ofsx, float ofsy,
     const int halfWidth  = res.cols >> 1;
     const int halfHeight = res.rows >> 1;
     float x[4];
-    x[0] = -halfWidth;
-    x[1] = -halfWidth;
-    x[2] = +halfWidth;
-    x[3] = +halfWidth;
+    x[0] = static_cast< float >(-halfWidth);
+    x[1] = static_cast< float >(-halfWidth);
+    x[2] = static_cast< float >(+halfWidth);
+    x[3] = static_cast< float >(+halfWidth);
     float y[4];
-    y[0] = -halfHeight;
-    y[1] = +halfHeight;
-    y[2] = -halfHeight;
-    y[3] = +halfHeight;
+    y[0] = static_cast< float >(-halfHeight);
+    y[1] = static_cast< float >(+halfHeight);
+    y[2] = static_cast< float >(-halfHeight);
+    y[3] = static_cast< float >(+halfHeight);
     for(int i = 0; i < 4; i++)
     {
         float imx = ofsx + x[i] * a11 + y[i] * a12;
@@ -554,7 +555,7 @@ Mat halfImage(const Mat &input)
 
 bool almost_eq(float f1, float f2)
 {
-    float thresh = 1E-10;
+    float thresh = static_cast< float >(1E-10);
     return fabs(f1 - f2) < thresh;
 }
 

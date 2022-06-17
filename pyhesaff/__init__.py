@@ -1,6 +1,6 @@
 # flake8: noqa
 from __future__ import absolute_import, print_function, division
-__version__ = '1.2'
+__version__ = '2.0.1'
 
 
 from pyhesaff import ctypes_interface

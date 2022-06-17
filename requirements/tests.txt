@@ -1,0 +1,8 @@
+xdoctest >= 0.10.3
+ubelt >= v0.11.0
+pytest >= 3.3.1
+pytest-cov>=2.8.1
+coverage >= 4.3.4
+codecov >= 2.0.15
+opencv-python-headless
+utool >= 2.1.5

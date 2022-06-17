@@ -1,0 +1,282 @@
+# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+# Based on ~/code/xcookie/.github/workflows/test_binaries.yml.in
+
+name: TestBinaries
+
+on:
+  push:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+
+  build_and_test_wheels:
+    name: ${{ matrix.cibw_build }} on ${{ matrix.os }}, arch=${{ matrix.arch }}
+    runs-on: ${{ matrix.os }}
+    #needs: [lint]
+    strategy:
+      matrix:
+        #os: [ubuntu-latest]
+        #os: [ubuntu-latest, windows-latest, macOS-latest]
+        #arch: [auto]
+        #cibw_build: [cp36*, cp37*, cp38*, cp39*, cp310*]
+        ##cibw_skip: ["*-win32 *muslinux*"]
+        ## Add additional workers to reduce overall build time
+        include: 
+          - {"os": "ubuntu-latest", "arch": "x86_64"}
+          #- {"os": "macOS-latest", "arch": "x86_64"} 
+          #- {"os": "windows-latest", "arch": "x86_64"}
+          
+        #  - os: windows-latest
+        #    cibw_build: cp3*-win32
+        #    arch: auto
+        #    cibw_skip: ""
+          #- os: ubuntu-latest
+          #  arch: aarch64
+          #  cibw_build: cp36-*
+          #- os: ubuntu-latest
+          #  arch: aarch64
+          #  cibw_build: cp37-*
+          #- os: ubuntu-latest
+          #  arch: aarch64
+          #  cibw_build: cp38-*
+          #- os: ubuntu-latest
+          #  arch: aarch64
+          #  cibw_build: cp39-*
+          #- os: ubuntu-latest
+          #  arch: aarch64
+          #  cibw_build: cp310-*
+
+    steps:
+    - name: Checkout source
+      uses: actions/checkout@v2
+
+    # Configure compilers for Windows 64bit.
+    - name: Enable MSVC 64bit
+      if: matrix.os == 'windows-latest' && matrix.cibw_build != 'cp3*-win32'
+      uses: ilammy/msvc-dev-cmd@v1
+    
+    # Configure compilers for Windows 32bit.
+    - name: Enable MSVC 32bit
+      if: matrix.os == 'windows-latest' && matrix.cibw_build == 'cp3*-win32'
+      uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: x86
+
+    - name: Install Xcode 
+      if: matrix.os == 'macOS-latest' 
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: latest-stable
+
+    # Emulate aarch64 ppc64le s390x under linux
+    - name: Set up QEMU
+      if: runner.os == 'Linux' && matrix.arch != 'auto'
+      uses: docker/setup-qemu-action@v2
+      with:
+        platforms: all
+
+    # See: https://github.com/pypa/cibuildwheel/blob/main/action.yml
+    - name: Build wheels
+      uses: pypa/cibuildwheel@v2.3.1
+      with:
+        output-dir: wheelhouse
+        config-file: pyproject.toml
+      # to supply options, put them in 'env', like:
+      env:
+        CIBW_BUILD_VERBOSITY: 1
+        #CIBW_SKIP: ${{ matrix.cibw_skip }}
+        #CIBW_BUILD: ${{ matrix.cibw_build }}
+        #CIBW_TEST_REQUIRES: -r requirements/tests.txt
+        #CIBW_TEST_COMMAND: python {project}/run_tests.py
+        # configure cibuildwheel to build native archs ('auto'), or emulated ones
+        CIBW_ARCHS_LINUX: ${{ matrix.arch }}
+
+    - name: Show built files
+      shell: bash
+      run: ls -la wheelhouse
+
+    - name: Set up Python 3.8 to combine coverage Linux
+      if: runner.os == 'Linux'
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.8
+
+    - name: Combine coverage Linux
+      if: runner.os == 'Linux'
+      run: |
+        echo '############ PWD'
+        pwd
+        python -m pip install coverage[toml]
+        echo '############ combine'
+        coverage combine ./wheelhouse
+        echo '############ XML'
+        coverage xml -o ./tests/coverage.xml
+        echo '############ FIND'
+        find . -name .coverage.*
+        find . -name coverage.xml
+
+    - name: Codecov Upload
+      uses: codecov/codecov-action@v2.1.0
+      with:
+        file: ./tests/coverage.xml
+
+    - name: Upload wheels artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: wheels
+        path: ./wheelhouse/*.whl
+
+  deploy:
+    # Publish on the real PyPI
+    name: Uploading to PyPi
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+    #needs: [build_and_test_wheels, build_and_test_sdist]
+    needs: [build_and_test_wheels]
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v2
+
+      - name: Download wheels and sdist
+        uses: actions/download-artifact@v3
+        with:
+          name: wheels
+          path: dist
+
+      - name: Show files to upload
+        shell: bash
+        run: ls -la dist
+
+      # Note:
+      # See ../../dev/setup_secrets.sh for details on how secrets are deployed securely
+      - name: Sign and Publish
+        env:
+          TWINE_REPOSITORY_URL: https://upload.pypi.org/legacy/
+          TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
+          EROTEMIC_CI_SECRET: ${{ secrets.EROTEMIC_CI_SECRET }}
+        run: |
+          ls -al
+          GPG_EXECUTABLE=gpg
+          $GPG_EXECUTABLE --version
+          openssl version
+          $GPG_EXECUTABLE --list-keys
+          echo "Decrypting Keys"
+          GLKWS=$EROTEMIC_CI_SECRET openssl enc -aes-256-cbc -pbkdf2 -md SHA512 -pass env:GLKWS -d -a -in dev/ci_public_gpg_key.pgp.enc | $GPG_EXECUTABLE --import 
+          GLKWS=$EROTEMIC_CI_SECRET openssl enc -aes-256-cbc -pbkdf2 -md SHA512 -pass env:GLKWS -d -a -in dev/gpg_owner_trust.enc | $GPG_EXECUTABLE --import-ownertrust 
+          GLKWS=$EROTEMIC_CI_SECRET openssl enc -aes-256-cbc -pbkdf2 -md SHA512 -pass env:GLKWS -d -a -in dev/ci_secret_gpg_subkeys.pgp.enc | $GPG_EXECUTABLE --import
+          echo "Finish Decrypt Keys"
+          $GPG_EXECUTABLE --list-keys || true
+          $GPG_EXECUTABLE --list-keys  || echo "first invocation of gpg creates directories and returns 1"
+          $GPG_EXECUTABLE --list-keys  
+          pip install scikit-build
+          VERSION=$(python -c "import setup; print(setup.VERSION)") 
+          pip install twine
+          pip install six pyopenssl ndg-httpsclient pyasn1 -U --user
+          pip install requests[security] twine --user
+          GPG_KEYID=$(cat dev/public_gpg_key)
+          echo "GPG_KEYID = '$GPG_KEYID'"
+          DO_GPG=True GPG_KEYID=$GPG_KEYID \
+              TWINE_REPOSITORY_URL=${TWINE_REPOSITORY_URL} \
+              TWINE_PASSWORD=$TWINE_PASSWORD \
+              TWINE_USERNAME=$TWINE_USERNAME \
+              GPG_EXECUTABLE=$GPG_EXECUTABLE \
+              DO_UPLOAD=True \
+              DO_TAG=False ./publish.sh 
+
+  test_deploy:
+    # Publish on the test PyPI
+    name: Uploading to Test PyPi
+    runs-on: ubuntu-latest
+    #if: github.event_name == 'push' && (startsWith(github.event.ref, 'refs/heads/main') || startsWith(github.event.ref, 'refs/heads/master'))
+    if: github.event_name == 'push' && !startsWith(github.event.ref, 'refs/tags')
+    #needs: [build_and_test_wheels, build_and_test_sdist]
+    needs: [build_and_test_wheels]
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v2
+
+      - name: Download wheels and sdist
+        uses: actions/download-artifact@v3
+        with:
+          name: wheels
+          path: dist
+
+      - name: Show files to upload
+        shell: bash
+        run: ls -la dist
+      - name: Sign and Publish
+        env:
+          TEST_TWINE_REPOSITORY_URL: https://test.pypi.org/legacy/
+          #TEST_TWINE_USERNAME: ${{ secrets.TEST_TWINE_USERNAME }}
+          #TEST_TWINE_PASSWORD: ${{ secrets.TEST_TWINE_PASSWORD }}
+          #export TEST_TWINE_USERNAME=${{ secrets.EROTEMIC_TEST_TWINE_USERNAME }}
+          #export TEST_TWINE_PASSWORD=${{ secrets.EROTEMIC_TEST_TWINE_PASSWORD }}
+          #PYUTILS_CI_SECRET: ${{ secrets.PYUTILS_CI_SECRET }}
+          TEST_TWINE_USERNAME: ${{ secrets.TEST_TWINE_USERNAME }}
+          TEST_TWINE_PASSWORD: ${{ secrets.TEST_TWINE_PASSWORD }}
+          EROTEMIC_CI_SECRET: ${{ secrets.EROTEMIC_CI_SECRET }}
+        run: |
+          ls -al
+          GPG_EXECUTABLE=gpg
+          $GPG_EXECUTABLE --version
+          openssl version
+          $GPG_EXECUTABLE --list-keys
+          echo "Decrypting Keys"
+          GLKWS=$EROTEMIC_CI_SECRET openssl enc -aes-256-cbc -pbkdf2 -md SHA512 -pass env:GLKWS -d -a -in dev/ci_public_gpg_key.pgp.enc | $GPG_EXECUTABLE --import 
+          GLKWS=$EROTEMIC_CI_SECRET openssl enc -aes-256-cbc -pbkdf2 -md SHA512 -pass env:GLKWS -d -a -in dev/gpg_owner_trust.enc | $GPG_EXECUTABLE --import-ownertrust 
+          GLKWS=$EROTEMIC_CI_SECRET openssl enc -aes-256-cbc -pbkdf2 -md SHA512 -pass env:GLKWS -d -a -in dev/ci_secret_gpg_subkeys.pgp.enc | $GPG_EXECUTABLE --import
+          echo "Finish Decrypt Keys"
+          $GPG_EXECUTABLE --list-keys  || echo "first invocation of gpg creates directories and returns 1"
+          $GPG_EXECUTABLE --list-keys  
+          pip install scikit-build
+          VERSION=$(python -c "import setup; print(setup.VERSION)") 
+          pip install twine
+          pip install six pyopenssl ndg-httpsclient pyasn1 -U --user
+          pip install requests[security] twine --user
+          GPG_KEYID=$(cat dev/public_gpg_key)
+          echo "GPG_KEYID = '$GPG_KEYID'"
+          DO_GPG=True GPG_KEYID=$GPG_KEYID \
+              TWINE_REPOSITORY_URL=${TEST_TWINE_REPOSITORY_URL} \
+              TWINE_USERNAME=${TEST_TWINE_USERNAME} \
+              TWINE_PASSWORD=${TEST_TWINE_PASSWORD} \
+              GPG_EXECUTABLE=$GPG_EXECUTABLE \
+              DO_UPLOAD=True \
+              DO_TAG=False ./publish.sh
+
+
+#.debugging:
+#  - | 
+
+#    #IMAGE_NAME=quay.io/pypa/manylinux2014_x86_64
+#    IMAGE_NAME=quay.io/erotemic/manylinux2014_x86_64_for:opencv
+#    docker run -v $PWD:/io:ro -v $HOME/.cache/pip:/pip_cache -it $IMAGE_NAME bash
+
+#    # Will need to chmod things afterwords
+#    export PIP_CACHE_DIR=/pip_cache
+#    echo $PIP_CACHE_DIR
+#    chmod -R o+rw $PIP_CACHE_DIR
+#    chmod -R o+rw $PIP_CACHE_DIR
+#    chmod -R g+rw $PIP_CACHE_DIR
+#    USER=$(whoami)
+#    chown -R $USER $PIP_CACHE_DIR
+#    cd $HOME
+#    git clone /io ./repo
+
+#    cd $HOME/repo
+
+#    # Make a virtualenv
+#    PY_EXE=/opt/python/cp37-cp37m/bin/python
+#    PYVER=$($PY_EXE -c "import sys; print('{}{}'.format(*sys.version_info[0:2]))")
+#    $PY_EXE -m pip install virtualenv
+#    $PY_EXE -m virtualenv venv$PYVER
+#    source venv$PYVER/bin/activate
+#    #pip install pip -U
+#    #pip install pip setuptools -U
+#    #yum install mlocate
+#    #yum install opencv opencv-devel
+#    #
+#    pip install -r requirements/build.txt
+#    python setup.py build_ext

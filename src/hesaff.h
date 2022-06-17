@@ -2,21 +2,39 @@
 #define _HESAFF_DLLDEFINES_H
 
 #ifdef WIN32
-#ifndef snprintf
-#define snprintf _snprintf
-#endif // ndef sprintf
+#ifndef snprintf_s
+#define snprintf_s _snprintf_s
+#endif // snprintf_s
 #endif // WIN32
 
-#define HESAFF_EXPORT // ????
-#ifndef FOO_DLL  // ???
-#ifdef HESAFF_EXPORTS // EXPORTS??? ... No need on mingw
-#define HESAFF_EXPORT __declspec(dllexport)
+// Define HESAFF_EXPORTED for any platform
+// References: https://atomheartother.github.io/c++/2018/07/12/CPPDynLib.html
+#if defined _WIN32 || defined __CYGWIN__
+  #ifdef HESAFF_WIN_EXPORT
+    // Exporting...
+    #ifdef __GNUC__
+      #define HESAFF_EXPORTED __attribute__ ((dllexport))
+    #else
+      #define HESAFF_EXPORTED __declspec(dllexport) // Note: actually gcc seems to also supports this syntax.
+    #endif
+  #else
+    #ifdef __GNUC__
+      #define HESAFF_EXPORTED __attribute__ ((dllimport))
+    #else
+      #define HESAFF_EXPORTED __declspec(dllimport) // Note: actually gcc seems to also supports this syntax.
+    #endif
+  #endif
+  #define HESAFF_NOT_EXPORTED
 #else
-//#define HESAFF_EXPORT __declspec(dllimport)
+  #if __GNUC__ >= 4
+    #define HESAFF_EXPORTED __attribute__ ((visibility ("default")))
+    #define HESAFF_NOT_EXPORTED  __attribute__ ((visibility ("hidden")))
+  #else
+    #define HESAFF_EXPORTED
+    #define HESAFF_NOT_EXPORTED
+  #endif
 #endif
-#else
-#define HESAFF_EXPORT
-#endif // FOO_DLL // ???
+
 
 // TODO : use either adapt_rotation or rotation_invariance, but not both
 
@@ -34,14 +52,14 @@ struct HesaffParams
 
     HesaffParams()
     {
-        scale_min = -1;
-        scale_max = -1;
-        ori_maxima_thresh = .8; 
+        scale_min = -1.0f;
+        scale_max = -1.0f;
+        ori_maxima_thresh = 0.8f;
         rotation_invariance = false; //remove in favor of adapt_rotation?
         augment_orientation = false; //remove in favor of adapt_rotation?
         adapt_rotation = false;
         adapt_scale = false;
-        affine_invariance = true;  // if false uses circular keypoints 
+        affine_invariance = true;  // if false uses circular keypoints
         only_count = false;
     }
 };

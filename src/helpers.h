@@ -22,7 +22,7 @@
 
 
 #ifndef M_TAU
-#define M_TAU 6.28318
+#define M_TAU 6.28318f
 #endif
 
 void solveLinear3x3(float *A, float *b);

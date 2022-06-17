@@ -1,0 +1,6 @@
+cmake
+ninja
+scikit-build
+setuptools
+setuptools_scm[toml]
+wheel

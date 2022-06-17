@@ -1,15 +1,7 @@
 #!/usr/bin/env python
 from __future__ import absolute_import, division, print_function
-#----------------
-# Test Functions
-#----------------
 from six.moves import zip, range
-#from plottool import draw_func2 as df2
-#from plottool.viz_keypoints import show_keypoints
-import utool as ut
-import matplotlib as mpl
 import numpy as np
-import vtool.linalg as ltool
 
 
 TAU = 2 * np.pi  # References: tauday.com
@@ -57,19 +49,22 @@ def in_depth_ellipse(kp):
     CommandLine:
         python -m pyhesaff.tests.test_ellipse --test-in_depth_ellipse --show --num-samples=12
 
-    Example:
-        >>> # SCRIPT
-        >>> from pyhesaff.tests.test_ellipse import *  # NOQA
-        >>> import pyhesaff.tests.pyhestest as pyhestest
-        >>> test_data = pyhestest.load_test_data(short=True)
-        >>> kpts = test_data['kpts']
-        >>> kp = kpts[0]
-        >>> #kp = np.array([0, 0, 10, 10, 10, 0])
-        >>> test_locals = in_depth_ellipse(kp)
-        >>> ut.quit_if_noshow()
-        >>> ut.show_if_requested()
+    # Example:
+    #     >>> # SCRIPT
+    #     >>> from pyhesaff.tests.test_ellipse import *  # NOQA
+    #     >>> import pyhesaff.tests.pyhestest as pyhestest
+    #     >>> test_data = pyhestest.load_test_data(short=True)
+    #     >>> kpts = test_data['kpts']
+    #     >>> kp = kpts[0]
+    #     >>> #kp = np.array([0, 0, 10, 10, 10, 0])
+    #     >>> test_locals = in_depth_ellipse(kp)
+    #     >>> ut.quit_if_noshow()
+    #     >>> ut.show_if_requested()
     """
+    import utool as ut
+    import matplotlib as mpl
     import plottool as pt
+    import vtool.linalg as ltool
     #nSamples = 12
     nSamples = ut.get_argval('--num-samples', type_=int, default=12)
     kp = np.array(kp, dtype=np.float64)
@@ -542,7 +537,5 @@ if __name__ == '__main__':
         python -m pyhesaff.tests.test_ellipse --allexamples
         python -m pyhesaff.tests.test_ellipse --allexamples --noface --nosrc
     """
-    import multiprocessing
-    multiprocessing.freeze_support()  # for win32
-    import utool as ut  # NOQA
-    ut.doctest_funcs()
+    import xdoctest
+    xdoctest.doctest_module(__file__)

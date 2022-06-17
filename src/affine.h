@@ -31,7 +31,7 @@ struct AffineShapeParams
     {
         maxIterations = 16;
         initialSigma = 1.6f;
-        convergenceThreshold = 0.05;
+        convergenceThreshold = 0.05f;
         patchSize = 41;
         smmWindowSize = 19;
         mrSize = 3.0f*sqrt(3.0f);

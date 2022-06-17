@@ -70,18 +70,18 @@ CommandLine:
 };
 
 #ifndef M_PI
-#define M_PI 3.14159
+#define M_PI 3.14159f
 #endif
 
 #ifndef M_TAU
-#define M_TAU 6.28318
+#define M_TAU 6.28318f
 #endif
 
 // Gravity points downward = tau / 4 = pi / 2
 #ifndef M_GRAVITY_THETA
-#define M_GRAVITY_THETA 1.570795
+#define M_GRAVITY_THETA 1.570795f
 // relative to gravity
-#define R_GRAVITY_THETA 0
+#define R_GRAVITY_THETA 0.0f
 #endif
 
 #if DEBUG_HESAFF
@@ -161,7 +161,7 @@ public:
         for(size_t fx = 0; fx < nKpts; fx++)
         {
             Keypoint &k = this->keys[fx];
-            float x, y, iv11, iv12, iv21, iv22, s, det;
+            float x, y, iv11, iv12, iv21, iv22, det;
             const float sc = AffineShape::par.mrSize * k.s;
             const size_t rowk = fx * KPTS_DIM;
             const size_t rowd = fx * DESC_DIM;
@@ -199,7 +199,7 @@ public:
          *  [iE_b, iE_d]
          */
         out << DESC_DIM << std::endl;
-        int nKpts = this->keys.size();
+        int nKpts = static_cast<int>(this->keys.size());
         printDBG("[export] Writing " << nKpts << " keypoints");
         out << nKpts << std::endl;
         for(size_t i = 0; i < nKpts; i++)
@@ -472,13 +472,13 @@ public:
             if (hesPar.augment_orientation)
             {
                 // +- 15 degrees or tau/24 ~= 0.26 radians
-                submaxima_oris.push_back(R_GRAVITY_THETA + M_TAU / 24.0);
-                submaxima_oris.push_back(R_GRAVITY_THETA - M_TAU / 24.0);
+                submaxima_oris.push_back(R_GRAVITY_THETA + M_TAU / 24.0f);
+                submaxima_oris.push_back(R_GRAVITY_THETA - M_TAU / 24.0f);
             }
         }
         //printDBG("[onAffShapeFound] Found " << submaxima_oris.size() << " orientations")
         global_c1++;
-        global_nmulti_ori += submaxima_oris.size() - 1;
+        global_nmulti_ori += static_cast<int>(submaxima_oris.size()) - 1;
         // push a keypoint for every orientation found
         for (int i = 0; i < submaxima_oris.size(); i++)
         {
@@ -631,8 +631,8 @@ public:
         // gaussian weight magnitudes
         //float sigma0 = (magnitudes.rows / 2) * .95;
         //float sigma1 = (magnitudes.cols / 2) * .95;
-        const float sigma0 = (magnitudes.rows / 2) * .4;
-        const float sigma1 = (magnitudes.cols / 2) * .4;
+        const float sigma0 = (static_cast<float>(magnitudes.rows) / 2.0f) * .4f;
+        const float sigma1 = (static_cast<float>(magnitudes.cols) / 2.0f) * .4f;
         cv::Mat gauss_weights;
         make_2d_gauss_patch_01(magnitudes.rows, magnitudes.cols, sigma0,
                 sigma1, gauss_weights);
@@ -678,7 +678,7 @@ public:
         Histogram<float> hist = computeInterpolatedHistogram<float>(
                 orientations.begin<float>(), orientations.end<float>(),
                 weights.begin<float>(), weights.end<float>(),
-                nbins, M_TAU, 0.0);
+                nbins, M_TAU, 0.0f);
 
         Histogram<float> wrapped_hist = htool::wrap_histogram(hist);
         std::vector<float> submaxima_xs, submaxima_ys;
@@ -928,10 +928,10 @@ extern "C" {
 #endif
 
 // Python binds to extern C code
-#define PYHESAFF extern HESAFF_EXPORT
+//#define HESAFF_EXPORTED extern HESAFF_EXPORTED
 
 
-PYHESAFF int detect(AffineHessianDetector* detector)
+HESAFF_EXPORTED int detect(AffineHessianDetector* detector)
 {
     printDBG("detector->detect");
     int nKpts = detector->detect();
@@ -944,24 +944,24 @@ PYHESAFF int detect(AffineHessianDetector* detector)
 }
 
 
-PYHESAFF int get_cpp_version()
+HESAFF_EXPORTED int get_cpp_version()
 {
-    return 3;
+    return 4;
 }
 
 
-PYHESAFF int is_debug_mode()
+HESAFF_EXPORTED int is_debug_mode()
 {
     return DEBUG_ROTINVAR || DEBUG_HESAFF;
 }
 
 
-PYHESAFF int get_kpts_dim()
+HESAFF_EXPORTED int get_kpts_dim()
 {
     return KPTS_DIM;
 }
 
-PYHESAFF int get_desc_dim()
+HESAFF_EXPORTED int get_desc_dim()
 {
     return DESC_DIM;
 }
@@ -1046,7 +1046,7 @@ affine_invariance, only_count, use_dense, dense_stride, siftPower
     hesParams.ori_maxima_thresh    = ori_maxima_thresh;         \
     hesParams.affine_invariance    = affine_invariance;         \
     hesParams.only_count           = only_count;                \
-    __MACRO_COMMENT__()                                         \
+    __MACRO_COMMENT__( )                                        \
     pyrParams.use_dense                 = use_dense;            \
     pyrParams.dense_stride              = dense_stride;         \
     siftParams.siftPower                = siftPower;
@@ -1061,7 +1061,7 @@ affine_invariance, only_count, use_dense, dense_stride, siftPower
     const int   maxPyramidLevels = -1;          \
     __MACRO_COMMENT__( Affine Params Shape)     \
     const int   maxIterations = 16;             \
-    const float convergenceThreshold = 0.05;    \
+    const float convergenceThreshold = 0.05f;   \
     const int   smmWindowSize = 19;             \
     const float mrSize = 3.0f * sqrt(3.0f);     \
     __MACRO_COMMENT__( SIFT params)             \
@@ -1073,21 +1073,21 @@ affine_invariance, only_count, use_dense, dense_stride, siftPower
     __MACRO_COMMENT__( Shared SIFT + Affine)    \
     const int patchSize = 41;                   \
     __MACRO_COMMENT__( My params)               \
-    const float scale_min = -1;                 \
-    const float scale_max = -1;                 \
+    const float scale_min = -1.0f;              \
+    const float scale_max = -1.0f;              \
     const bool rotation_invariance = false;     \
     const bool augment_orientation = false;     \
-    const float ori_maxima_thresh = .8;         \
+    const float ori_maxima_thresh = .8f;        \
     const bool affine_invariance = true;        \
-    __MACRO_COMMENT__()                         \
+    __MACRO_COMMENT__( )                        \
     const bool use_dense = false;               \
     const int  dense_stride = 32;               \
-    const float siftPower = 1.0;                \
+    const float siftPower = 1.0f;               \
     const bool only_count = false;
 
 
 // new hessian affine detector (from image pixels)
-PYHESAFF AffineHessianDetector* new_hesaff_image(uint8 *imgin, int rows, int cols, int  channels, __HESAFF_PARAM_SIGNATURE_ARGS__)
+HESAFF_EXPORTED AffineHessianDetector* new_hesaff_image(uint8 *imgin, int rows, int cols, int  channels, __HESAFF_PARAM_SIGNATURE_ARGS__)
 {
     // Convert input image to float32
     cv::Mat image(rows, cols, CV_32FC1, Scalar(0));
@@ -1120,7 +1120,7 @@ PYHESAFF AffineHessianDetector* new_hesaff_image(uint8 *imgin, int rows, int col
 }
 
 // new hessian affine detector (from image fpath)
-PYHESAFF AffineHessianDetector* new_hesaff_fpath(char* img_fpath, __HESAFF_PARAM_SIGNATURE_ARGS__)
+HESAFF_EXPORTED AffineHessianDetector* new_hesaff_fpath(char* img_fpath, __HESAFF_PARAM_SIGNATURE_ARGS__)
 {
     printDBG("making detector for " << img_fpath);
     printDBG(" * img_fpath = " << img_fpath);
@@ -1137,7 +1137,7 @@ PYHESAFF AffineHessianDetector* new_hesaff_fpath(char* img_fpath, __HESAFF_PARAM
 
 
 // new default hessian affine detector WRAPPER
-PYHESAFF AffineHessianDetector* new_hesaff_imgpath_noparams(char* img_fpath)
+HESAFF_EXPORTED AffineHessianDetector* new_hesaff_imgpath_noparams(char* img_fpath)
 {
 
     __HESAFF_DEFINE_PARAMS_FROM_DEFAULTS__
@@ -1146,7 +1146,7 @@ PYHESAFF AffineHessianDetector* new_hesaff_imgpath_noparams(char* img_fpath)
     return detector;
 }
 
-PYHESAFF void free_hesaff(AffineHessianDetector* detector)
+HESAFF_EXPORTED void free_hesaff(AffineHessianDetector* detector)
 {
     printDBG("about to free detector=@" << static_cast<void*>(detector))
     //printDBG("about to free &detector=@" << static_cast<void*>(&detector))
@@ -1155,7 +1155,7 @@ PYHESAFF void free_hesaff(AffineHessianDetector* detector)
 }
 
 // extract descriptors from user specified keypoints
-PYHESAFF void extractDesc(AffineHessianDetector* detector,
+HESAFF_EXPORTED void extractDesc(AffineHessianDetector* detector,
                           int nKpts, float* kpts, uint8* desc)
 {
     printDBG("detector->extractDesc");
@@ -1165,7 +1165,7 @@ PYHESAFF void extractDesc(AffineHessianDetector* detector,
 
 
 // Extracts patches used to compute descriptors
-PYHESAFF void extractPatches(AffineHessianDetector* detector,
+HESAFF_EXPORTED void extractPatches(AffineHessianDetector* detector,
                           int nKpts, float* kpts, float* patch_array)
 {
     printDBG("detector->extractPatches");
@@ -1174,7 +1174,7 @@ PYHESAFF void extractPatches(AffineHessianDetector* detector,
 }
 
 // export current detections to numpy arrays
-PYHESAFF void exportArrays(AffineHessianDetector* detector,
+HESAFF_EXPORTED void exportArrays(AffineHessianDetector* detector,
                            int nKpts, float *kpts, uint8 *desc)
 {
     printDBG("detector->exportArrays(" << nKpts << ")");
@@ -1187,18 +1187,23 @@ PYHESAFF void exportArrays(AffineHessianDetector* detector,
 }
 
 // dump current detections to disk
-PYHESAFF void writeFeatures(AffineHessianDetector* detector,
+HESAFF_EXPORTED void writeFeatures(AffineHessianDetector* detector,
                             char* img_fpath)
 {
     // Dump keypoints to disk in text format
     char suffix[] = ".hesaff.sift";
-    const int len = strlen(img_fpath) + strlen(suffix) + 1;
+    const int len = static_cast<int>(strlen(img_fpath) + strlen(suffix)) + 1;
+
     #ifdef WIN32
-    char* out_fpath = new char[len];
+      // windows doesnt follow the ISO C99 snprintf standard.
+      // https://stackoverflow.com/questions/1270387/are-snprintf-and-friends-safe-to-use
+      char* out_fpath = new char[len];
+      snprintf_s(out_fpath, len, len, "%s%s", img_fpath, suffix);
     #else
-    char out_fpath[len];
+      char out_fpath[len];
+      snprintf(out_fpath, len, "%s%s", img_fpath, suffix);
     #endif
-    snprintf(out_fpath, len, "%s%s", img_fpath, suffix);
+
     out_fpath[len - 1] = 0;
     printDBG("detector->writing_features: " << out_fpath);
     std::ofstream out(out_fpath);
@@ -1209,7 +1214,7 @@ PYHESAFF void writeFeatures(AffineHessianDetector* detector,
     #endif
 }
 
-PYHESAFF void extractDescFromPatches(int num_patches,
+HESAFF_EXPORTED void extractDescFromPatches(int num_patches,
                                      int patch_h,
                                      int patch_w,
                                      uint8* patches_array,
@@ -1253,7 +1258,7 @@ PYHESAFF void extractDescFromPatches(int num_patches,
 }
 
 
-PYHESAFF AffineHessianDetector** detectFeaturesListStep1(int num_fpaths,
+HESAFF_EXPORTED AffineHessianDetector** detectFeaturesListStep1(int num_fpaths,
                                                           char** image_fpath_list,
                                                           __HESAFF_PARAM_SIGNATURE_ARGS__)
 {
@@ -1272,7 +1277,7 @@ PYHESAFF AffineHessianDetector** detectFeaturesListStep1(int num_fpaths,
     return detector_array;
 }
 
-PYHESAFF void detectFeaturesListStep2(int num_fpaths, AffineHessianDetector** detector_array, int* length_array)
+HESAFF_EXPORTED void detectFeaturesListStep2(int num_fpaths, AffineHessianDetector** detector_array, int* length_array)
 {
     printDBG("detectFeaturesListStep2()");
     // Run Detection
@@ -1286,7 +1291,7 @@ PYHESAFF void detectFeaturesListStep2(int num_fpaths, AffineHessianDetector** de
     }
 }
 
-PYHESAFF void detectFeaturesListStep3(int num_fpaths,
+HESAFF_EXPORTED void detectFeaturesListStep3(int num_fpaths,
                                        AffineHessianDetector** detector_array,
                                        int* length_array,
                                        int* offset_array,

@@ -1,4 +1,59 @@
 [build-system]
-requires = ["setuptools>=41.0.1", "wheel", "scikit-build>=0.9.0", "numpy", "cmake", "cython", "ninja", "ubelt", "cffi"]
-# build-backend = "setuptools.build_meta"  commented out to disable pep517
-### build-backend = "scikit-build"
+requires = [ "setuptools>=41.0.1", "wheel", "scikit-build>=0.9.0", "numpy", "ninja", "build"]
+
+[tool.cibuildwheel]
+build = "cp37-* cp38-* cp39-* cp310-*"
+build-frontend = "build"
+skip = "pp* cp27-* cp34-* cp35-* cp36-* *-musllinux_*"
+build-verbosity = 1
+test-requires = [ "-r requirements/tests.txt",]
+test-command = "python {project}/run_tests.py"
+
+manylinux-x86_64-image = "quay.io/erotemic/manylinux2014_x86_64_for:opencv"
+manylinux-i686-image = "quay.io/erotemic/manylinux2014_i686_for:opencv"
+#manylinux-x86_64-image = "manylinux2014"
+#manylinux-i686-image = "manylinux2014"
+#manylinux-aarch64-image = "manylinux2014"
+#manylinux-ppc64le-image = "manylinux2014"
+#manylinux-s390x-image = "manylinux2014"
+#manylinux-pypy_x86_64-image = "manylinux2014"
+#manylinux-pypy_i686-image = "manylinux2014"
+#manylinux-pypy_aarch64-image = "manylinux2014"
+#musllinux-x86_64-image = "musllinux_1_1"
+#musllinux-i686-image = "musllinux_1_1"
+#musllinux-aarch64-image = "musllinux_1_1"
+#musllinux-ppc64le-image = "musllinux_1_1"
+#musllinux-s390x-image = "musllinux_1_1"
+
+
+#    quay.io/Erotemic/manylinux2014_x86_64_for:opencv
+
+
+[tool.mypy]
+ignore_missing_imports = true
+
+[tool.xcookie]
+tags = [ "github", "cv2", "erotemic", "binpy",]
+mod_name = "pyhesaff"
+repo_name = "pyhesaff"
+
+#[tool.cibuildwheel.linux]
+#before-all = "yum install opencv opencv-devel -y"
+
+#[tool.cibuildwheel.windows]
+#before-all = "choco install lz4 -y"
+
+#[tool.cibuildwheel.macos]
+#before-all = "brew install lz4"
+
+[tool.pytest.ini_options]
+addopts = "-p no:doctest --xdoctest --xdoctest-style=google --ignore-glob=setup.py"
+norecursedirs = ".git ignore build __pycache__ dev _skbuild"
+filterwarnings = [ "default", "ignore:.*No cfgstr given in Cacher constructor or call.*:Warning", "ignore:.*Define the __nice__ method for.*:Warning", "ignore:.*private pytest class or function.*:Warning",]
+
+[tool.coverage.run]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [ "pragma: no cover", ".*  # pragma: no cover", ".*  # nocover", "def __repr__", "raise AssertionError", "raise NotImplementedError", "if 0:", "if trace is not None", "verbose = .*", "^ *raise", "^ *pass *$", "if _debug:", "if __name__ == .__main__.:", ".*if six.PY2:",]
+omit = [ "pyhesaff/__main__.py", "*/setup.py",]
