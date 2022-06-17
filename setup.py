@@ -256,11 +256,9 @@ if __name__ == '__main__':
         author=ORIGINAL_AUTHORS + ', ' + EXTENDED_AUTHORS,
         author_email='erotemic@gmail.com',
         version=version,
-        # license=['Apache 2', util_setup.read_license('LICENSE.SIFT')],
-        # long_description=util_setup.parse_readme('README.md'),
-        # long_description_content_type='text/x-rst',
-        # long_description_content_type='text/markdown',
-        # install_requires=parse_requirements('requirements/runtime.txt'),
+        license='Apache 2',
+        long_description=parse_description(),
+        long_description_content_type='text/x-rst',
         extras_require={
             'all': parse_requirements('requirements.txt'),
             'tests': parse_requirements('requirements/tests.txt'),
@@ -271,7 +269,7 @@ if __name__ == '__main__':
         include_package_data=True,
         # packages=find_packages(include='pyhesaff.*'),
         packages=['pyhesaff'],
-        python_requires='>=3.6',
+        python_requires='>=3.7',
         package_data={
             'pyhesaff': pyhesaff_package_data,
         },
@@ -285,7 +283,7 @@ if __name__ == '__main__':
             'License :: OSI Approved :: Apache Software License',
             # Supported Python versions
             # 'Programming Language :: Python :: 3.5',
-            'Programming Language :: Python :: 3.6',
+            # 'Programming Language :: Python :: 3.6',
             'Programming Language :: Python :: 3.7',
             'Programming Language :: Python :: 3.8',
             'Programming Language :: Python :: 3.9',
