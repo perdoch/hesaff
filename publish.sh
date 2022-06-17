@@ -377,6 +377,10 @@ do
         if [[ "$WHEEL_PATH" != "" ]]; then
             WHEEL_PATHS+=("$WHEEL_PATH")
         fi
+        WHEEL_PATH=$(ls "dist/$NAME-$VERSION-"*.whl)
+        if [[ "$WHEEL_PATH" != "" ]]; then
+            WHEEL_PATHS+=("$WHEEL_PATH")
+        fi
     else
         echo "bad mode"
         exit 1
