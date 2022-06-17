@@ -121,30 +121,6 @@ normalize_boolean(){
 }
 
 
-ls_array(){
-    __doc__='
-    Read the results of a glob pattern into an array
-
-    Args:
-        arr_name
-        glob_pattern
-
-    Example:
-        arr_name="myarray"
-        glob_pattern="*"
-        pass
-    '
-    local arr_name="$1"
-    local glob_pattern="$2"
-    shopt -s nullglob
-    # shellcheck disable=SC2206
-    array=($glob_pattern)
-    shopt -u nullglob # Turn off nullglob to make sure it doesn't interfere with anything later
-    # Copy the array into the dynamically named variable
-    readarray -t "$arr_name" < <(printf '%s\n' "${array[@]}")
-}
-
-
 ####
 # Parameters
 ###
@@ -373,30 +349,60 @@ else
 fi
 
 
+ls_array(){
+    __doc__='
+    Read the results of a glob pattern into an array
+
+    Args:
+        arr_name
+        glob_pattern
+
+    Example:
+        arr_name="myarray"
+        glob_pattern="*"
+        pass
+    '
+    local arr_name="$1"
+    local glob_pattern="$2"
+    shopt -s nullglob
+    # shellcheck disable=SC2206
+    array=($glob_pattern)
+    shopt -u nullglob # Turn off nullglob to make sure it doesn't interfere with anything later
+    # FIXME; for some reason this doesnt always work properly
+    # Copy the array into the dynamically named variable
+    # shellcheck disable=SC2086
+    readarray -t $arr_name < <(printf '%s\n' "${array[@]}")
+}
+
+
 WHEEL_PATHS=()
 for _MODE in "${MODE_LIST[@]}"
 do
-    echo "_MODE = $_MODE"
     if [[ "$_MODE" == "sdist" ]]; then
         ls_array "_NEW_WHEEL_PATHS" "dist/${NAME}-${VERSION}*.tar.gz"
-        WHEEL_PATHS+=("${_NEW_WHEEL_PATHS[@]}")
     elif [[ "$_MODE" == "native" ]]; then
         ls_array "_NEW_WHEEL_PATHS" "dist/${NAME}-${VERSION}*.whl"
-        WHEEL_PATHS+=("${_NEW_WHEEL_PATHS[@]}")
     elif [[ "$_MODE" == "bdist" ]]; then
         ls_array "_NEW_WHEEL_PATHS" "wheelhouse/${NAME}-${VERSION}-*.whl"
-        WHEEL_PATHS+=("${_NEW_WHEEL_PATHS[@]}")
     else
         echo "ERROR: bad mode"
         exit 1
     fi
+    # hacky CONCAT because for some reason ls_array will return 
+    # something that looks empty but has one empty element
+    for new_item in "${_NEW_WHEEL_PATHS[@]}"
+    do
+        if [[ "$new_item" != "" ]]; then
+            WHEEL_PATHS+=("$new_item")
+        fi
+    done
 done
-
 
 # Dedup the paths
 readarray -t WHEEL_PATHS < <(printf '%s\n' "${WHEEL_PATHS[@]}" | sort -u)
 
 WHEEL_PATHS_STR=$(printf '"%s" ' "${WHEEL_PATHS[@]}")
+echo "WHEEL_PATHS_STR = $WHEEL_PATHS_STR"
 
 echo "
 
