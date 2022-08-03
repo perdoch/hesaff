@@ -48,30 +48,34 @@ def in_depth_ellipse(kp):
 
     CommandLine:
         python -m pyhesaff.tests.test_ellipse --test-in_depth_ellipse --show --num-samples=12
+        xdoctest ~/code/pyhesaff/tests/test_ellipse.py --show --num-samples=12
 
-    # Example:
-    #     >>> # SCRIPT
-    #     >>> from pyhesaff.tests.test_ellipse import *  # NOQA
-    #     >>> import pyhesaff.tests.pyhestest as pyhestest
-    #     >>> test_data = pyhestest.load_test_data(short=True)
-    #     >>> kpts = test_data['kpts']
-    #     >>> kp = kpts[0]
-    #     >>> #kp = np.array([0, 0, 10, 10, 10, 0])
-    #     >>> test_locals = in_depth_ellipse(kp)
-    #     >>> ut.quit_if_noshow()
-    #     >>> ut.show_if_requested()
+    Example:
+        >>> # xdoctest: +REQUIRES(--show)
+        >>> # xdoctest: +REQUIRES(module:kwimage)
+        >>> # xdoctest: +REQUIRES(module:kwplot)
+        >>> import kwimage
+        >>> import pyhesaff
+        >>> img = kwimage.grab_test_image('astro')
+        >>> kpts, vecs = pyhesaff.detect_feats_in_image(img)
+        >>> kp = kpts[0]
+        >>> import kwplot
+        >>> kwplot.autompl()
+        >>> test_locals = in_depth_ellipse(kp)
+        >>> kwplot.show_if_requested()
     """
-    import utool as ut
     import matplotlib as mpl
-    import plottool as pt
-    import vtool.linalg as ltool
+    import plottool_ibeis as pt
+    import vtool_ibeis.linalg as ltool
+    import vtool_ibeis as vt
+    import ubelt as ub
     #nSamples = 12
-    nSamples = ut.get_argval('--num-samples', type_=int, default=12)
+    nSamples = int(ub.argval('--num-samples', default=12))
     kp = np.array(kp, dtype=np.float64)
     #-----------------------
     # SETUP
     #-----------------------
-    np.set_printoptions(precision=3)
+    # np.set_printoptions(precision=3)
     #pt.reset()
     pt.figure(9003, docla=True, doclf=True)
     ax = pt.gca()
@@ -94,13 +98,13 @@ def in_depth_ellipse(kp):
     #-----------------------
     # INPUT
     #-----------------------
-    print('kp = %s' % ut.repr2(kp, precision=3))
+    print('kp = %s' % ub.repr2(kp, precision=3))
     print('--------------------------------')
     print('Let V = Perdoch.A')
     print('Let Z = Perdoch.E')
     print('Let invV = Perdoch.invA')
     print('--------------------------------')
-    print('Input from Perdoch\'s detector: ')
+    print("Input from Perdoch's detector: ")
 
     # We are given the keypoint in invA format
     if len(kp) == 5:
@@ -115,7 +119,6 @@ def in_depth_ellipse(kp):
     V = np.linalg.inv(invV)
     Z = (V.T).dot(V)
 
-    import vtool as vt
     V_2x2 = V[0:2, 0:2]
     Z_2x2 = Z[0:2, 0:2]
     V_2x2_ = vt.decompose_Z_to_V_2x2(Z_2x2)
@@ -126,15 +129,15 @@ def in_depth_ellipse(kp):
     #Z
 
     print('invV is a transform from points on a unit-circle to the ellipse')
-    ut.horiz_print('invV = ', invV)
+    print(ub.hzcat(['invV = ', str(invV)]))
     print('--------------------------------')
     print('V is a transformation from points on the ellipse to a unit circle')
-    ut.horiz_print('V = ', V)
+    print(ub.hzcat(['V = ', str(V)]))
     print('--------------------------------')
     print('An ellipse is a special case of a conic. For any ellipse:')
     print('Points on the ellipse satisfy (x_ - x_0).T.dot(Z).dot(x_ - x_0) = 1')
     print('where Z = (V.T).dot(V)')
-    ut.horiz_print('Z = ', Z)
+    print(ub.hzcat(['Z = ', str(Z)]))
 
     # Define points on a unit circle
     theta_list = np.linspace(0, TAU, nSamples)
@@ -149,14 +152,14 @@ def in_depth_ellipse(kp):
     try:
         # HELP: The phase is off here. in 3x3 version I'm not sure why
         #assert all([almost_eq(1, check) for check in checks1])
-        is_almost_eq_pos1 = [ut.almost_eq(1, check) for check in checks]
-        is_almost_eq_neg1 = [ut.almost_eq(-1, check) for check in checks]
+        is_almost_eq_pos1 = [np.allclose(1, check) for check in checks]
+        is_almost_eq_neg1 = [np.allclose(-1, check) for check in checks]
         assert all(is_almost_eq_pos1)
     except AssertionError as ex:
         print('circle pts = %r ' % cicrle_pts)
         print(ex)
         print(checks)
-        print([ut.almost_eq(-1, check, 1E-9) for check in checks])
+        print([np.allclose(-1, check) for check in checks])
         raise
     else:
         #assert all([abs(1 - check) < 1E-11 for check in checks2])
@@ -189,14 +192,14 @@ def in_depth_ellipse(kp):
     con = np.array((('    A', 'B / 2', 'D / 2'),
                     ('B / 2', '    C', 'E / 2'),
                     ('D / 2', 'E / 2', '    F')))
-    ut.horiz_print('A matrix A_Q = ', con)
+    print(ub.hzcat(['A matrix A_Q = ', str(con)]))
 
     # A_Q is our conic section (aka ellipse matrix)
     A_Q = np.array(((    A, B / 2, D / 2),
                     (B / 2,     C, E / 2),
                     (D / 2, E / 2,     F)))
 
-    ut.horiz_print('A_Q = ', A_Q)
+    print(ub.hzcat(['A_Q = ', str(A_Q)]))
 
     #-----------------------
     # DEGENERATE CONICS
@@ -209,7 +212,7 @@ def in_depth_ellipse(kp):
     assert np.linalg.det(A_Q) != 0, 'degenerate conic'
     A_33 = np.array(((    A, B / 2),
                      (B / 2,     C)))
-    ut.horiz_print('A_33 = ', A_33)
+    print(ub.hzcat(['A_33 = ', str(A_33)]))
 
     #-----------------------
     # CONIC CLASSIFICATION
@@ -235,8 +238,8 @@ def in_depth_ellipse(kp):
     # shits and giggles
     x_center = (B * E - (2 * C * D)) / (4 * A * C - B ** 2)
     y_center = (D * B - (2 * A * E)) / (4 * A * C - B ** 2)
-    ut.horiz_print('x_center = ', x_center)
-    ut.horiz_print('y_center = ', y_center)
+    print(ub.hzcat(['x_center = ', str(x_center)]))
+    print(ub.hzcat(['y_center = ', str(y_center)]))
 
     #-----------------------
     # MAJOR AND MINOR AXES
@@ -268,8 +271,13 @@ def in_depth_ellipse(kp):
     print('theta = ' + str(theta[0] / TAU) + ' * 2pi')
     # The warped eigenvects should have the same magintude
     # As the axis lengths
-    assert ut.almost_eq(a, major.dot(ltool.rotation_mat2x2(theta))[0])
-    assert ut.almost_eq(b, minor.dot(ltool.rotation_mat2x2(theta))[1])
+
+    try:
+        assert np.allclose(a, major.dot(ltool.rotation_mat2x2(theta))[0])
+        assert np.allclose(b, minor.dot(ltool.rotation_mat2x2(theta))[1])
+    except AssertionError:
+        print('WARNING: warped eigenvects do not have same magintude as axis length')
+
     try:
         # HACK
         if len(theta) == 1:
@@ -297,7 +305,10 @@ def in_depth_ellipse(kp):
     # Eccentricity is a little easier in axis aligned coordinates
     # Make sure they aggree
     ecc2 = np.sqrt(1 - (b ** 2) / (a ** 2))
-    assert ut.almost_eq(ecc, ecc2)
+    try:
+        assert np.allclose(ecc, ecc2), 'ecc does not aggree!'
+    except Exception as ex:
+        print(f'WARNING ex={ex}')
 
     #-----------------------
     # APPROXIMATE UNIFORM SAMPLING
