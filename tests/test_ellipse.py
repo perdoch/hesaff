@@ -47,7 +47,6 @@ def in_depth_ellipse(kp):
     understanding.
 
     CommandLine:
-        python -m pyhesaff.tests.test_ellipse --test-in_depth_ellipse --show --num-samples=12
         xdoctest ~/code/pyhesaff/tests/test_ellipse.py --show --num-samples=12
 
     Example:
@@ -72,6 +71,8 @@ def in_depth_ellipse(kp):
     #nSamples = 12
     nSamples = int(ub.argval('--num-samples', default=12))
     kp = np.array(kp, dtype=np.float64)
+
+    kp = np.array([5, 6, 10.8,  3.431, 8.06, 0])
     #-----------------------
     # SETUP
     #-----------------------
@@ -421,6 +422,37 @@ def in_depth_ellipse(kp):
 
     _plotpts(approx_pts, 0, pt.YELLOW, label='approx points', marker='o-')
     _plotpts(uniform_ell_pts, 0, pt.RED, label='uniform points', marker='o-')
+
+    #### ALTERNATE METHOD
+    import scipy.optimize
+    import scipy as sp
+    def angles_in_ellipse(num, a, b):
+        """
+        References:
+            https://stackoverflow.com/questions/6972331/how-can-i-generate-a-set-of-points-evenly-distributed-along-the-perimeter-of-an
+        """
+        assert num > 0
+        assert a < b
+        angles = 2 * np.pi * np.arange(num) / num
+        if a != b:
+            e2 = (1.0 - a ** 2.0 / b ** 2.0)
+            tot_size = sp.special.ellipeinc(2.0 * np.pi, e2)
+            arc_size = tot_size / num
+            arcs = np.arange(num) * arc_size
+            res = sp.optimize.root(
+                lambda x: (sp.special.ellipeinc(x, e2) - arcs), angles,
+                options={'maxiter': 5}
+            )
+            angles = res.x
+        return angles
+
+    uniform_arclen_thetas = angles_in_ellipse(nSamples, a, b)
+    import kwimage
+    axis_aligned_optimized_uniform_pts = kwimage.Points(xy=xy_fn(uniform_arclen_thetas))
+    optimized_uniform_pts = axis_aligned_optimized_uniform_pts.warp(
+        kwimage.Affine.coerce(theta=theta, offset=(x_center, y_center)))
+
+    _plotpts(optimized_uniform_pts.xy, 0, pt.GREEN, label='optimized', marker='o-')
 
     # Desired number of points
     #ecc = np.sqrt(1 - (b ** 2) / (a ** 2))
