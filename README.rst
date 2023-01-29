@@ -1,4 +1,4 @@
-|CircleCI| |Travis| |Appveyor| |Codecov| |Pypi| |Downloads| |ReadTheDocs|
+|GithubActions| |Codecov| |Pypi| |Downloads| |ReadTheDocs|
 
 
 Hessian Affine + SIFT keypoints in Python
@@ -77,17 +77,19 @@ NOTES
 Requires opencv. On ubuntu you can: ``sudo apt-get install libopencv-dev``. You can also build / use wheels. 
 
 
-.. |CircleCI| image:: https://circleci.com/gh/Erotemic/hesaff.svg?style=svg
-    :target: https://circleci.com/gh/Erotemic/hesaff
-.. |Travis| image:: https://img.shields.io/travis/Erotemic/hesaff/master.svg?label=Travis%20CI
-   :target: https://travis-ci.org/Erotemic/hesaff?branch=master
-.. |Appveyor| image:: https://ci.appveyor.com/api/projects/status/github/Erotemic/hesaff?branch=master&svg=True
-   :target: https://ci.appveyor.com/project/Erotemic/hesaff/branch/master
-.. |Codecov| image:: https://codecov.io/github/Erotemic/hesaff/badge.svg?branch=master&service=github
-   :target: https://codecov.io/github/Erotemic/hesaff?branch=master
-.. |Pypi| image:: https://img.shields.io/pypi/v/hesaff.svg
-   :target: https://pypi.python.org/pypi/hesaff
-.. |Downloads| image:: https://img.shields.io/pypi/dm/hesaff.svg
-   :target: https://pypistats.org/packages/hesaff
-.. |ReadTheDocs| image:: https://readthedocs.org/projects/hesaff/badge/?version=latest
-    :target: http://hesaff.readthedocs.io/en/latest/
+.. |CircleCI| image:: https://circleci.com/gh/Erotemic/pyhesaff.svg?style=svg
+    :target: https://circleci.com/gh/Erotemic/pyhesaff
+.. |Travis| image:: https://img.shields.io/travis/Erotemic/pyhesaff/main.svg?label=Travis%20CI
+   :target: https://travis-ci.org/Erotemic/pyhesaff?branch=main
+.. |Appveyor| image:: https://ci.appveyor.com/api/projects/status/github/Erotemic/pyhesaff?branch=master&svg=True
+   :target: https://ci.appveyor.com/project/Erotemic/pyhesaff/branch/main
+.. |Codecov| image:: https://codecov.io/github/Erotemic/pyhesaff/badge.svg?branch=main&service=github
+   :target: https://codecov.io/github/Erotemic/pyhesaff?branch=main
+.. |Pypi| image:: https://img.shields.io/pypi/v/pyhesaff.svg
+   :target: https://pypi.python.org/pypi/pyhesaff
+.. |Downloads| image:: https://img.shields.io/pypi/dm/pyhesaff.svg
+   :target: https://pypistats.org/packages/pyhesaff
+.. |ReadTheDocs| image:: https://readthedocs.org/projects/pyhesaff/badge/?version=latest
+    :target: http://pyhesaff.readthedocs.io/en/latest/
+.. |GithubActions| image:: https://github.com/Erotemic/pyhesaff/actions/workflows/tests.yml/badge.svg?branch=main
+    :target: https://github.com/Erotemic/pyhesaff/actions?query=branch%3Amain
