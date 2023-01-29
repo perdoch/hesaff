@@ -3,7 +3,7 @@
 # Based on ~/code/xcookie/xcookie/rc/tests.yml.in
 # Now based on ~/code/xcookie/xcookie/builders/github_actions.py
 
-name: BinPy Build and Test
+name: BinPyCI
 
 on:
   push:
@@ -92,12 +92,113 @@ jobs:
       with:
         name: wheels
         path: ./wheelhouse/pyhesaff*.whl
+  test_binpy_wheels:
+    name: ${{ matrix.python-version }} on ${{ matrix.os }}, arch=${{ matrix.arch }} with ${{ matrix.install-extras }}
+    runs-on: ${{ matrix.os }}
+    needs:
+    - build_and_test_binpy_wheels
+    strategy:
+      matrix:
+        include:
+        - python-version: '3.7'
+          os: ubuntu-latest
+          install-extras: tests-strict,runtime-strict,headless-strict
+          arch: auto
+        - python-version: '3.11'
+          os: ubuntu-latest
+          install-extras: tests-strict,runtime-strict,optional-strict,headless-strict
+          arch: auto
+        - python-version: '3.7'
+          os: ubuntu-latest
+          install-extras: tests,optional,headless
+          arch: auto
+        - python-version: '3.8'
+          os: ubuntu-latest
+          install-extras: tests,optional,headless
+          arch: auto
+        - python-version: '3.9'
+          os: ubuntu-latest
+          install-extras: tests,optional,headless
+          arch: auto
+        - python-version: '3.10'
+          os: ubuntu-latest
+          install-extras: tests,optional,headless
+          arch: auto
+        - python-version: '3.11'
+          os: ubuntu-latest
+          install-extras: tests,optional,headless
+          arch: auto
+    steps:
+    - name: Checkout source
+      uses: actions/checkout@v3
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v2
+      if: runner.os == 'Linux' && matrix.arch != 'auto'
+      with:
+        platforms: all
+    - name: Setup Python
+      uses: actions/setup-python@v4.5.0
+      with:
+        python-version: ${{ matrix.python-version }}
+    - uses: actions/download-artifact@v3
+      name: Download wheels and sdist
+      with:
+        name: wheels
+        path: wheelhouse
+    - name: Test wheel with ${{ matrix.install-extras }}
+      shell: bash
+      env:
+        INSTALL_EXTRAS: ${{ matrix.install-extras }}
+        CI_PYTHON_VERSION: py${{ matrix.python-version }}
+      run: |-
+        # Find the path to the wheel
+        ls wheelhouse
+        pip install tomli pkginfo
+        MOD_NAME=pyhesaff
+        echo "MOD_NAME=$MOD_NAME"
+        WHEEL_FPATH=$(python -c "import pathlib; print(str(sorted(pathlib.Path('wheelhouse').glob('$MOD_NAME*.whl'))[-1]).replace(chr(92), chr(47)))")
+        echo "WHEEL_FPATH=$WHEEL_FPATH"
+        MOD_VERSION=$(python -c "from pkginfo import Wheel; print(Wheel('$WHEEL_FPATH').version)")
+        echo "MOD_VERSION=$MOD_VERSION"
+        # Install the wheel (ensure we are using the version we just built)
+        # NOTE: THE VERSION MUST BE NEWER THAN AN EXISTING PYPI VERSION OR THIS MAY FAIL
+        pip install --prefer-binary "$MOD_NAME[$INSTALL_EXTRAS]==$MOD_VERSION" -f wheelhouse
+        # Create a sandboxed directory
+        WORKSPACE_DNAME="testdir_${CI_PYTHON_VERSION}_${GITHUB_RUN_ID}_${RUNNER_OS}"
+        mkdir -p $WORKSPACE_DNAME
+        cd $WORKSPACE_DNAME
+        # Get the path to the installed package and run the tests
+        MOD_DPATH=$(python -c "import pyhesaff, os; print(os.path.dirname(pyhesaff.__file__))")
+        echo "MOD_DPATH = $MOD_DPATH"
+        python -m pytest -p pytester -p no:doctest --xdoctest --cov-config ../pyproject.toml --cov-report term --cov="$MOD_NAME" "$MOD_DPATH" ../tests
+        # Move coverage file to a new name
+        mv .coverage "../.coverage.$WORKSPACE_DNAME"
+        cd ..
+    - name: Combine coverage Linux
+      if: runner.os == 'Linux'
+      run: |-
+        echo '############ PWD'
+        pwd
+        ls -al
+        python -m pip install coverage[toml]
+        echo '############ combine'
+        coverage combine .
+        echo '############ XML'
+        coverage xml -o ./tests/coverage.xml
+        echo '############ FIND'
+        find . -name .coverage.*
+        find . -name coverage.xml
+    - uses: codecov/codecov-action@v3
+      name: Codecov Upload
+      with:
+        file: ./tests/coverage.xml
   test_deploy:
     name: Uploading Test to PyPi
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && ! startsWith(github.event.ref, 'refs/tags') && ! startsWith(github.event.ref, 'refs/heads/release')
     needs:
     - build_and_test_binpy_wheels
+    - test_binpy_wheels
     steps:
     - name: Checkout source
       uses: actions/checkout@v3
@@ -140,6 +241,7 @@ jobs:
     if: github.event_name == 'push' && (startsWith(github.event.ref, 'refs/tags') || startsWith(github.event.ref, 'refs/heads/release'))
     needs:
     - build_and_test_binpy_wheels
+    - test_binpy_wheels
     steps:
     - name: Checkout source
       uses: actions/checkout@v3
