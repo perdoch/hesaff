@@ -33,7 +33,7 @@ jobs:
         python -m pip install mypy
         mypy --install-types --non-interactive ./pyhesaff
         mypy ./pyhesaff
-  build_and_test_binpy_wheels:
+  build_binpy_wheels:
     name: ${{ matrix.os }}, arch=${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -197,7 +197,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && ! startsWith(github.event.ref, 'refs/tags') && ! startsWith(github.event.ref, 'refs/heads/release')
     needs:
-    - build_and_test_binpy_wheels
+    - build_binpy_wheels
     - test_binpy_wheels
     steps:
     - name: Checkout source
@@ -240,7 +240,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && (startsWith(github.event.ref, 'refs/tags') || startsWith(github.event.ref, 'refs/heads/release'))
     needs:
-    - build_and_test_binpy_wheels
+    - build_binpy_wheels
     - test_binpy_wheels
     steps:
     - name: Checkout source

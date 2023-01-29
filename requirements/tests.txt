@@ -1,5 +1,5 @@
-ubelt >= 1.0.0
-utool >= 2.1.5
+ubelt >= 1.2.3
+utool >= 2.1.7
 
 xdoctest>=0.14.0
 
