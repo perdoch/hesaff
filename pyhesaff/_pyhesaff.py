@@ -687,7 +687,7 @@ def extract_vecs(img_fpath, kpts, **kwargs):
         >>> # Re-extract keypoints
         >>> vecs2 = extract_vecs(img_fpath, kpts)
         >>> # Descriptors should be the same
-        >>> errors = (vecs1.astype(np.float) - vecs2.astype(np.float)).sum(axis=1)
+        >>> errors = (vecs1.astype(float) - vecs2.astype(float)).sum(axis=1)
         >>> errors_index = np.nonzero(errors)[0]
         >>> print('errors = %r' % (errors,))
         >>> print('errors_index = %r' % (errors_index,))
@@ -818,7 +818,7 @@ def extract_desc_from_patches(patch_list):
         >>> # Extract descriptors from those patches
         >>> vecs_array = extract_desc_from_patches(patch_list)
         >>> # Comparse to see if they are close to the original descriptors
-        >>> errors = (vecs_list.astype(np.float) - vecs_array.astype(np.float)).sum(axis=1)
+        >>> errors = (vecs_list.astype(float) - vecs_array.astype(float)).sum(axis=1)
         >>> print('Errors: %r' % (errors,))
         >>> # xdoctest: +REQUIRES(--show)
         >>> import plottool as pt
