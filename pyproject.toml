@@ -9,6 +9,7 @@ build-verbosity = 1
 test-requires = [ "-r requirements/tests.txt",]
 test-command = "python {project}/run_tests.py"
 
+# See: ~/code/vtool_ibeis_ext/dev/build_base_docker2.py
 manylinux-x86_64-image = "quay.io/erotemic/manylinux2014_x86_64_for:opencv-zlib"
 manylinux-i686-image = "quay.io/erotemic/manylinux2014_i686_for:opencv-zlib"
 #manylinux-x86_64-image = "manylinux2014"
@@ -25,9 +26,7 @@ manylinux-i686-image = "quay.io/erotemic/manylinux2014_i686_for:opencv-zlib"
 #musllinux-ppc64le-image = "musllinux_1_1"
 #musllinux-s390x-image = "musllinux_1_1"
 
-
 #    quay.io/Erotemic/manylinux2014_x86_64_for:opencv
-
 
 [tool.mypy]
 ignore_missing_imports = true
