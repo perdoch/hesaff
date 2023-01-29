@@ -33,18 +33,19 @@ manylinux-i686-image = "quay.io/erotemic/manylinux2014_i686_for:opencv-zlib"
 ignore_missing_imports = true
 
 [tool.xcookie]
-tags = [ "github", "cv2", "erotemic", "binpy",]
+tags = [ "github", "cv2", "erotemic", "binpy", "nosrcdist"]
 mod_name = "pyhesaff"
+rel_mod_parent_dpath = "."
 #os = [ "linux", "osx", "win",]
 os = [ "linux" ]
 repo_name = "pyhesaff"
-authors = "Krystian Mikolajczyk, Michal Perdoch, Jon Crall, Avi Weinstock"
+author = "Krystian Mikolajczyk, Michal Perdoch, Jon Crall, Avi Weinstock"
 url = "https://github.com/Erotemic/pyhesaff"
 author_email = "erotemic@gmail.com"
 version = "{mod_dpath}/__init__.py::__version__"
 license = "Apache 2"
 dev_status = "beta"
-description = 'Routines for computation of hessian affine keypoints in images.'
+description = "Routines for computation of hessian affine keypoints in images."
 
 
 #URL_LIST = [
