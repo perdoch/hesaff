@@ -96,7 +96,7 @@ jobs:
     name: ${{ matrix.python-version }} on ${{ matrix.os }}, arch=${{ matrix.arch }} with ${{ matrix.install-extras }}
     runs-on: ${{ matrix.os }}
     needs:
-    - build_and_test_binpy_wheels
+    - build_binpy_wheels
     strategy:
       matrix:
         include:
