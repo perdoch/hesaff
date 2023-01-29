@@ -19,7 +19,16 @@ descriptor(Lowe 1999, Lowe 2004) computed.
 BUILDING
 --------
 
-There are wheels publishe on pypi using cibuildwheel.
+There are wheels published on pypi using cibuildwheel. You can install via:
+
+.. code:: bash
+
+   pip install pyhesaff
+           
+   
+TO build from scratch you will need development libraries for OpenCV and cmake
+(via scikit-build) should be able to find them.
+
 
 
 IMPLEMENTATION
