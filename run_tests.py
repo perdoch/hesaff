@@ -118,6 +118,7 @@ if __name__ == '__main__':
             '--cov-report', 'term',
             '--cov-report', 'xml',
             '--cov=' + package_name,
+            modpath, '.'
         ]
         if is_cibuildwheel():
             pytest_args.append('--cov-append')
