@@ -9,8 +9,8 @@ build-verbosity = 1
 test-requires = [ "-r requirements/tests.txt",]
 test-command = "python {project}/run_tests.py"
 
-manylinux-x86_64-image = "quay.io/erotemic/manylinux2014_x86_64_for:opencv"
-manylinux-i686-image = "quay.io/erotemic/manylinux2014_i686_for:opencv"
+manylinux-x86_64-image = "quay.io/erotemic/manylinux2014_x86_64_for:opencv-zlib"
+manylinux-i686-image = "quay.io/erotemic/manylinux2014_i686_for:opencv-zlib"
 #manylinux-x86_64-image = "manylinux2014"
 #manylinux-i686-image = "manylinux2014"
 #manylinux-aarch64-image = "manylinux2014"
