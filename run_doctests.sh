@@ -1,2 +1,2 @@
-#!/bin/bash
-xdoctest pyhesaff --style=google all
+#!/usr/bin/env bash
+xdoctest pyhesaff --style=google all "$@"
